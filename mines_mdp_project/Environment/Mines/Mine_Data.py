@@ -61,10 +61,10 @@ class Mine_Data:
 		self.pre_result=11
 		for i in range(0, self.map_size):	
 			for j in range(0, self.map_size):	
-				if self.PFS[i][j] is 0:
+				if self.seen[i][j] is False:
 					self.pre_result = self.pre_prime*self.pre_result+1
 				else:
-					self.pre_result = self.pre_prime*self.pre_result+1
+					self.pre_result = self.pre_prime*self.pre_result+2
 
 		return self.pre_result
 
@@ -100,7 +100,7 @@ class Mine_Data:
 
 
 	def measure_loc(self, loc, imaginary):
-
+		
 		if self.check_boundaries(loc) is False:
 			return
 

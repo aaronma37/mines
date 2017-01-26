@@ -12,7 +12,7 @@ import time
 
 
 #CHOOSE ENVIRONMENT PARAMETERS
-map_size=50
+map_size=10
 
 #CHOOSE AGENT PARAMETERS
 max_depth=map_size*2
@@ -20,6 +20,7 @@ depth=map_size
 Gamma=.9
 upper_confidence_c=1000
 action_space_num=9#GET THIS FROM ACTUAL MODEL
+num_steps=100
 
 class Simulation:
 
@@ -54,7 +55,7 @@ class Simulation:
 
 	def run(self):
 		while 1 is 1:
-			self.a.step(self.e.mine_data,50, self.a_imaginary)
+			self.a.step(self.e.mine_data,num_steps, self.a_imaginary)
 			self.count+=1
 			if self.e.mine_data.get_complete() is True:
 				self.reset_func()	

@@ -2,7 +2,6 @@
 
 from ActionSpace import ActionSpace
 from RewardPair import RewardPair
-from Agents import Agent0
 from Environment import Mines
 from Environment.Mines import Mine_Data
 from random import randint
@@ -26,27 +25,29 @@ class Solver:
 		self.pre_result=11
 		self.pre_hash_key=0
 
-		self.hash = {-1:ActionSpace(upper_confidence_c_,action_space_num_)}
+		#self.hash = {-1:ActionSpace(upper_confidence_c_,action_space_num_)}
 		self.max_depth=max_depth_
 		self.depth=depth_
 		self.reward_list=[]
-		self.agent = Agent0.Agent(0,0,action_space_num_)#
 		self.environment_data =Mine_Data(map_size_)#
 		self.Gamma=Gamma_
-		
 
-	def get_best_action(self, agent_, environment_data_):
-		
+	def OnlinePlanning(self,search_tree_,agent_,environment_data_,num_steps_,a_):
+		for i in range(0, num_steps_):
+			agent_.imprint(a_)
+			environment_data_.imprint(self.environment_data)
+			self.reward_list=[]
+			self.search(search_tree_,a_,self.environment_data,self.depth,0)
+		return self.get_best_action(search_tree_,agent_,environment_data_)
+
+
+	def get_best_action(self, search_tree_, agent_, environment_data_):
 		self.pre_hash_key=self.hash_generator(agent_,environment_data_)
-		if self.pre_hash_key in self.hash:
-			return self.hash.get(self.pre_hash_key).get_best_action().get_action_index()
+		if self.pre_hash_key in search_tree_:
+			return search_tree_.get(self.pre_hash_key).get_best_action().get_action_index()
 		else:
 			print "Missing Hash"
-			
-			#print hash_key
 
-
-		#uuv set location action
 
 
 	def p_info(self, action_space_):
@@ -73,43 +74,19 @@ class Solver:
 
 
 
-	def step(self, agent_, environment_data_,num_steps):
-
-		#if self.hash_generator(agent_,environment_data_) in  self.hash:
-		#print len(agent_.get_history())
-
-		for i in range(0, num_steps):
-			agent_.imprint(self.agent)
-			environment_data_.imprint(self.environment_data)
-			self.reward_list=[]
-			self.execute(self.agent,self.environment_data,self.depth,0)
-
-	def rollout(self, agent_, environment_data_,num_steps):
-		for i in range(0, num_steps):
-			base_reward = environment_data_.get_reward()
-			agent_.step(randint(0,agent_.get_action_size()),environment_data_,True)
-			self.reward_list.append(environment_data_.get_reward()-base_reward)
-			
-	
-	def explore(self, ARP, agent_,environment_data_):
-			base_reward = environment_data_.get_reward()
-			agent_.step(ARP.get_action_index(),environment_data_,True)
-			self.reward_list.append(environment_data_.get_reward()-base_reward)
-			agent_.update_history(ARP.get_action_index(),self.hash_generator_without_history(agent_,environment_data_))
-
-	def execute(self, agent_, environment_data_, depth_, iteration_):
+	def search(self, search_tree_,agent_, environment_data_, depth_, iteration_):
 		self.pre_hash_key=self.hash_generator(agent_,environment_data_)
-		if self.pre_hash_key not in self.hash:
-			self.hash[self.pre_hash_key] = ActionSpace(self.upper_confidence_c,self.action_space_num)
+		if self.pre_hash_key not in search_tree_:
+			search_tree_[self.pre_hash_key] = ActionSpace(self.upper_confidence_c,self.action_space_num)
 
 		cummulated_reward=0.
 
-		ARP = self.hash.get(self.pre_hash_key).get_ucb()
+		ARP = search_tree_.get(self.pre_hash_key).get_ucb()
 		self.explore(ARP,agent_,environment_data_)
 
 		if ARP.get_visited() > 1:
 			if iteration_ < self.max_depth+depth_:
-				self.execute(agent_,environment_data_,depth_,iteration_+1)
+				self.search(search_tree_,agent_,environment_data_,depth_,iteration_+1)
 		else:
 			self.rollout(agent_,environment_data_,depth_)
 
@@ -117,7 +94,20 @@ class Solver:
 			for i in range(iteration_, iteration_+depth_):
 				cummulated_reward+=math.pow(self.Gamma,(i-iteration_))*self.reward_list[i]
 
-		self.hash.get(self.pre_hash_key).visit(ARP,cummulated_reward)
+		search_tree_.get(self.pre_hash_key).visit(ARP,cummulated_reward)
+
+	def rollout(self, agent_, environment_data_,num_steps):
+		for i in range(0, num_steps):
+			base_reward = environment_data_.get_reward()
+			agent_.simulate(randint(0,agent_.get_action_size()),environment_data_)
+			self.reward_list.append(environment_data_.get_reward()-base_reward)
+			
+	
+	def explore(self, ARP, agent_,environment_data_):
+			base_reward = environment_data_.get_reward()
+			agent_.simulate(ARP.get_action_index(),environment_data_)
+			self.reward_list.append(environment_data_.get_reward()-base_reward)
+			agent_.update_history(ARP.get_action_index(),self.hash_generator_without_history(agent_,environment_data_))
 
 
 	def hash_generator(self, agent_, environment_data_):	

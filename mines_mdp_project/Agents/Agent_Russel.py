@@ -16,7 +16,7 @@ class Agent:
 		self.init_x=x_
 		self.init_y=y_
 
-		self.history = [(0,0)]
+		self.history = []
 		self.x=x_
 		self.y=y_
 		self.action_space_num=action_space_num_
@@ -26,11 +26,7 @@ class Agent:
 
 		self.reset()
 
-	def step(self):
-		a = OnlinePlanning()
-		execute(self,a,mine_data_):
-		update_history(self,action_,observation)
-		#PARTICLE FILTER
+
 
 
 	def reset(self):
@@ -70,7 +66,11 @@ class Agent:
 		if len(self.history) > 10:
 			self.history.pop(0)
 
-
+	def step(self):
+		a = OnlinePlanning()
+		execute(self,a,mine_data_):
+		update_history(self,action_,observation)
+		#PARTICLE FILTER
 
 	def execute(self,action_,mine_data_):
 		if mine_data_.check_boundaries(Location(self.x+get_transition_x(action_),self.y+get_transition_y(action_))) is True:

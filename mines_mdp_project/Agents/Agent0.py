@@ -4,6 +4,7 @@ from Action_Definition import get_transition_x
 from Action_Definition import get_transition_y
 from Environment.Mines import Location
 from Environment.Mines import Mine_Data
+from Solvers.UCT_SOLVER import UCT
 
 import numpy as np
 
@@ -11,12 +12,15 @@ import numpy as np
 class Agent: 
 
 
-	def __init__(self,x_,y_,action_space_num_):
+	def __init__(self,x_,y_,max_depth_,depth_,Gamma_,upper_confidence_c_,action_space_num_,map_size_):
 
 		self.init_x=x_
 		self.init_y=y_
 
-		self.history = [(0,0)]
+		self.solver = UCT.Solver(max_depth_,depth_,Gamma_,upper_confidence_c_,action_space_num_,map_size_)
+
+		self.history = []
+		self.search_tree={-1:0}
 		self.x=x_
 		self.y=y_
 		self.action_space_num=action_space_num_
@@ -61,15 +65,27 @@ class Agent:
 		if len(self.history) > 10:
 			self.history.pop(0)
 
+	def step(self,environment_data_,num_steps_,a_):
+		a = self.solver.OnlinePlanning(self.search_tree, self, environment_data_,num_steps_,a_)
+		self.execute(a,environment_data_)
+		self.update_history(a,self.solver.hash_generator_without_history(self,environment_data_))
 
-
-	def step(self,action_,mine_data_,imaginary):
-		if mine_data_.check_boundaries(Location(self.x+get_transition_x(action_),self.y+get_transition_y(action_))) is False:
-			return
-		self.x+=get_transition_x(action_)
-		self.y+=get_transition_y(action_)
+	def execute(self,action_,environment_data_):
+		if environment_data_.check_boundaries(Location(self.x+get_transition_x(action_),self.y+get_transition_y(action_))) is True:
+			self.x+=get_transition_x(action_)
+			self.y+=get_transition_y(action_)
 		self.recalculate_measurement_space()
-		self.measure(mine_data_,imaginary)
+		self.measure(environment_data_,False)
+
+	def simulate(self,action_,environment_data_):
+		base_reward= environment_data_.get_reward()	
+		if environment_data_.check_boundaries(Location(self.x+get_transition_x(action_),self.y+get_transition_y(action_))) is True:
+			self.x+=get_transition_x(action_)
+			self.y+=get_transition_y(action_)
+		
+		self.recalculate_measurement_space()
+		self.measure(environment_data_,True)
+		return (environment_data_,environment_data_.get_reward()-base_reward)
 
 
 	def recalculate_measurement_space(self):

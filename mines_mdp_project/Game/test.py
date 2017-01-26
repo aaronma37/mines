@@ -5,71 +5,70 @@ from OpenGLContext import testingcontext
 from drawing import basic_2
 from Environment import Mine_Environment
 from Agents import Agent0
-from Solvers.UCT_SOLVER import UCT
-
 
 import time
 
+#DIAGNOSTICS
 
 
-map_size=20
-max_depth=20*2
-depth=20
+#CHOOSE ENVIRONMENT PARAMETERS
+map_size=50
+
+#CHOOSE AGENT PARAMETERS
+max_depth=map_size*2
+depth=map_size
 Gamma=.9
 upper_confidence_c=1000
 action_space_num=9#GET THIS FROM ACTUAL MODEL
 
-start = time.time()
-end = time.time()+10
+class Simulation:
 
-count=0
-moving_total=[]
-rounds=0
+	def __init__(self):
+		self.e = Mine_Environment.Environment(map_size)
+		self.a = Agent0.Agent(map_size/2,map_size/2,max_depth,depth,Gamma,upper_confidence_c,action_space_num,map_size)
+		self.a_imaginary = Agent0.Agent(map_size/2,map_size/2,max_depth,depth,Gamma,upper_confidence_c,action_space_num,map_size)
+		self.count=0
+		self.moving_total=[]
 
-e = Mine_Environment.Environment(map_size)
-solver = UCT.Solver(max_depth,depth,Gamma,upper_confidence_c,action_space_num,map_size)
-a = Agent0.Agent(map_size/2,map_size/2,9)
-
-def draw():
-	basic_2.clear()
-	#basic_2.set_size(map_size)
-	for i in range(0, map_size):
-		for j in range(0, map_size):
-			basic_2.draw(e.get_loc_info(i,j).get_x(),e.get_loc_info(i,j).get_y(),e.get_loc_info(i,j).get_width(),e.get_loc_info(i,j).get_height(),0,e.get_mine_data().get_color(i,j)*map_size,0,-.1,map_size/10.)
+	def draw(self):
+		basic_2.clear()
+		for i in range(0, map_size):
+			for j in range(0, map_size):
+				basic_2.draw(self.e.get_loc_info(i,j).get_x(),self.e.get_loc_info(i,j).get_y(),self.e.get_loc_info(i,j).get_width(),self.e.get_loc_info(i,j).get_height(),0,self.e.get_mine_data().get_color(i,j)*map_size,0,-.1,map_size/10.)
 
 
-	basic_2.draw(e.get_loc_info(a.get_x(),a.get_y()).get_x(), e.get_loc_info(a.get_x(),a.get_y()).get_y(), e.get_loc_info(a.get_x(),a.get_y()).get_width(), e.get_loc_info(a.get_x(),a.get_y()).get_height(), 1, 1,0,-.1,map_size/10.)
+		basic_2.draw(self.e.get_loc_info(self.a.get_x(),self.a.get_y()).get_x(), self.e.get_loc_info(self.a.get_x(),self.a.get_y()).get_y(), self.e.get_loc_info(self.a.get_x(),self.a.get_y()).get_width(), self.e.get_loc_info(self.a.get_x(),self.a.get_y()).get_height(), 1, 1,0,-.1,map_size/10.)
 	
-	basic_2.draw(e.get_loc_info(e.mine_data.get_mine_location().get_x(),e.mine_data.get_mine_location().get_y()).get_x(), e.get_loc_info(e.mine_data.get_mine_location().get_x(),e.mine_data.get_mine_location().get_y()).get_y(), e.get_loc_info(e.mine_data.get_mine_location().get_x(),e.mine_data.get_mine_location().get_y()).get_width(), e.get_loc_info(e.mine_data.get_mine_location().get_x(),e.mine_data.get_mine_location().get_y()).get_height(), 1, 1,0,-.1,map_size/10.)
+		basic_2.draw(self.e.get_loc_info(self.e.mine_data.get_mine_location().get_x(),self.e.mine_data.get_mine_location().get_y()).get_x(), self.e.get_loc_info(self.e.mine_data.get_mine_location().get_x(),self.e.mine_data.get_mine_location().get_y()).get_y(), self.e.get_loc_info(self.e.mine_data.get_mine_location().get_x(),self.e.mine_data.get_mine_location().get_y()).get_width(), self.e.get_loc_info(self.e.mine_data.get_mine_location().get_x(),self.e.mine_data.get_mine_location().get_y()).get_height(), 1, 1,0,-.1,map_size/10.)
 
-	basic_2.end_draw()
+		basic_2.end_draw()
 
+	def reset_func(self):
+		self.e.mine_data.reset()
+		self.a.reset()
+		self.moving_total.append(self.count)
+		if len(self.moving_total) > 10:
+			self.moving_total.pop(0)
+		print "FINISHED IN: ", self.count, " AVERAGE IS: ", sum(self.moving_total)/len(self.moving_total)
+		self.count=0
 
+	def run(self):
+		while 1 is 1:
+			self.a.step(self.e.mine_data,50, self.a_imaginary)
+			self.count+=1
+			if self.e.mine_data.get_complete() is True:
+				self.reset_func()	
 
+			self.draw()
 
-
-
-
-
-while 1 is 1:
-	#if (end - start)  > 5:
-
-
-		solver.step(a,e.mine_data,50)
-		solver.get_best_action_and_step(a,e.mine_data)
-		count+=1
-		
-		if e.mine_data.get_complete() is True:
-			e.mine_data.reset()
-			a.reset()
-			moving_total.append(count)
-			if len(moving_total) > 10:
-				moving_total.pop(0)
-			print "FINISHED IN: ", count, " AVERAGE IS: ", sum(moving_total)/len(moving_total)
-			count=0
-	#	start = time.time()
-		draw()
+s = Simulation()
+s.run()
 
 
-	#end = time.time()
+
+
+
+
+
+
 

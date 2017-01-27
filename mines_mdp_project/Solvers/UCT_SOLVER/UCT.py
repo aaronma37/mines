@@ -6,10 +6,11 @@ from Environment import Mines
 from Environment.Mines import Mine_Data
 from random import randint
 from Agents import Action_Definition
-
+from multiprocessing import Process, Manager
 import math
 import numpy as np
 
+manager=Manager()
 
 class Solver: 
 
@@ -19,10 +20,10 @@ class Solver:
 		self.upper_confidence_c=upper_confidence_c_		
 		self.action_space_num=action_space_num_
 
+		self.T=manager.dict()
 
-
-		self.pre_prime=31
-		self.pre_result=11
+		self.pre_prime=13
+		self.pre_result=1
 		self.pre_hash_key=0
 
 		#self.hash = {-1:ActionSpace(upper_confidence_c_,action_space_num_)}
@@ -32,13 +33,33 @@ class Solver:
 		self.environment_data =Mine_Data(map_size_)#
 		self.Gamma=Gamma_
 
-	def OnlinePlanning(self,search_tree_,agent_,environment_data_,num_steps_,a_):
+	def imagine(self,T,agent_,environment_data_,num_steps_,a_):
 		for i in range(0, num_steps_):
 			agent_.imprint(a_)
 			environment_data_.imprint(self.environment_data)
 			self.reward_list=[]
-			self.search(search_tree_,a_,self.environment_data,self.depth,0)
-		return self.get_best_action(search_tree_,agent_,environment_data_)
+			self.search(T,a_,self.environment_data,self.depth,0)
+
+
+
+
+	def OnlinePlanning(self,search_tree_,agent_,environment_data_,num_steps_,a_):
+		self.imagine(search_tree_,agent_,environment_data_,num_steps_,a_)
+		#self.T=manager.dict()
+		#self.T=search_tree_
+	       # p1 = Process(target=self.imagine, args=(search_tree_,agent_,environment_data_,num_steps_,a_))
+	    #p2 = Process(target=f, args=(d,))
+	        #p1.start()
+	    #p2 .start()
+	        #p1.join()
+	    #p2.join()
+		#print len(self.T)
+		#return self.T
+
+		
+		
+
+		#return self.get_best_action(search_tree,agent_,environment_data_)
 
 
 	def get_best_action(self, search_tree_, agent_, environment_data_):
@@ -77,7 +98,7 @@ class Solver:
 	def search(self, search_tree_,agent_, environment_data_, depth_, iteration_):
 		self.pre_hash_key=self.hash_generator(agent_,environment_data_)
 		if self.pre_hash_key not in search_tree_:
-			search_tree_[self.pre_hash_key] = ActionSpace(self.upper_confidence_c,self.action_space_num)
+			search_tree_[int(self.pre_hash_key)] = ActionSpace(self.upper_confidence_c,self.action_space_num)
 
 		cummulated_reward=0.
 
@@ -111,7 +132,7 @@ class Solver:
 
 
 	def hash_generator(self, agent_, environment_data_):	
-		self.pre_result = 11
+		self.pre_result = 1
 		
 		self.pre_result = self.pre_result*self.pre_prime + environment_data_.get_hash()
 		self.pre_result = self.pre_result*self.pre_prime + agent_.get_hash()
@@ -120,7 +141,7 @@ class Solver:
 		return self.pre_result
 
 	def hash_generator_without_history(self, agent_, environment_data_):	
-		self.pre_result = 11
+		self.pre_result = 1
 		
 		self.pre_result = self.pre_result*self.pre_prime + environment_data_.get_hash()
 		self.pre_result = self.pre_result*self.pre_prime + agent_.get_hash()

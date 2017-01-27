@@ -9,10 +9,11 @@ from Agents import Agent0
 import time
 
 #DIAGNOSTICS
-
+sample_size=100
+max_num_steps=100
 
 #CHOOSE ENVIRONMENT PARAMETERS
-map_size=10
+map_size=8
 
 #CHOOSE AGENT PARAMETERS
 max_depth=map_size*2
@@ -20,7 +21,6 @@ depth=map_size
 Gamma=.9
 upper_confidence_c=1000
 action_space_num=9#GET THIS FROM ACTUAL MODEL
-num_steps=100
 
 class Simulation:
 
@@ -30,6 +30,9 @@ class Simulation:
 		self.a_imaginary = Agent0.Agent(map_size/2,map_size/2,max_depth,depth,Gamma,upper_confidence_c,action_space_num,map_size)
 		self.count=0
 		self.moving_total=[]
+		self.total=[(0,0)]
+		self.num_steps=10
+
 
 	def draw(self):
 		basic_2.clear()
@@ -48,17 +51,28 @@ class Simulation:
 		self.e.mine_data.reset()
 		self.a.reset()
 		self.moving_total.append(self.count)
-		if len(self.moving_total) > 10:
-			self.moving_total.pop(0)
-		print "FINISHED IN: ", self.count, " AVERAGE IS: ", sum(self.moving_total)/len(self.moving_total)
-		self.count=0
+		if len(self.moving_total) > sample_size:
+			self.total.append((self.num_steps,self.count/sample_size))
+			self.num_steps+=10
+			if self.num_steps>max_num_steps:
+				print "finished"
+				return True
+			print self.num_steps
+			self.moving_total=[]
+			self.count=0
+			
+			print self.total
+		return False
+
 
 	def run(self):
 		while 1 is 1:
-			self.a.step(self.e.mine_data,num_steps, self.a_imaginary)
+			self.a.step(self.e.mine_data,self.num_steps, self.a_imaginary)
 			self.count+=1
 			if self.e.mine_data.get_complete() is True:
-				self.reset_func()	
+				if self.reset_func() is True:
+					print "finished"
+					break	
 
 			self.draw()
 

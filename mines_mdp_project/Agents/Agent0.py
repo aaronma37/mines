@@ -6,7 +6,10 @@ from Environment.Mines import Location
 from Environment.Mines import Mine_Data
 from Solvers.UCT_SOLVER import UCT
 
+
+
 import numpy as np
+
 
 
 class Agent: 
@@ -19,8 +22,9 @@ class Agent:
 
 		self.solver = UCT.Solver(max_depth_,depth_,Gamma_,upper_confidence_c_,action_space_num_,map_size_)
 
-		self.history = []
-		self.search_tree={-1:0}
+		self.history = [0,0]
+		#self.search_tree=manager.dict()
+		self.search_tree=dict()
 		self.x=x_
 		self.y=y_
 		self.action_space_num=action_space_num_
@@ -33,6 +37,7 @@ class Agent:
 		self.x=self.init_x
 		self.y=self.init_y
 		self.history = [(0,0)]
+		self.search_tree.clear()
 
 	def imprint(self, u):
 		u.set_x(self.get_x())
@@ -66,7 +71,20 @@ class Agent:
 			self.history.pop(0)
 
 	def step(self,environment_data_,num_steps_,a_):
-		a = self.solver.OnlinePlanning(self.search_tree, self, environment_data_,num_steps_,a_)
+
+	      #  p1 = Process(target=self.solver.OnlinePlanning, args=(self.search_tree, self, environment_data_,num_steps_,a_,))
+	    #p2 = Process(target=f, args=(d,))
+	       # p1.start()
+	    #p2 .start()
+	      # p1.join()
+	    #p2.join()
+
+
+		self.solver.OnlinePlanning(self.search_tree, self, environment_data_,num_steps_,a_)
+
+
+
+		a = self.solver.get_best_action(self.search_tree,self,environment_data_)
 		self.execute(a,environment_data_)
 		self.update_history(a,self.solver.hash_generator_without_history(self,environment_data_))
 

@@ -7,6 +7,9 @@ from Environment.Mines import Mine_Data
 from random import randint
 from Agents import Action_Definition
 from multiprocessing import Process, Manager
+import time
+
+
 import math
 import numpy as np
 
@@ -98,7 +101,7 @@ class Solver:
 	def search(self, search_tree_,agent_, environment_data_, depth_, iteration_):
 		self.pre_hash_key=self.hash_generator(agent_,environment_data_)
 		if self.pre_hash_key not in search_tree_:
-			search_tree_[int(self.pre_hash_key)] = ActionSpace(self.upper_confidence_c,self.action_space_num)
+			search_tree_[self.pre_hash_key] = ActionSpace(self.upper_confidence_c,self.action_space_num)
 
 		cummulated_reward=0.
 
@@ -132,20 +135,20 @@ class Solver:
 
 
 	def hash_generator(self, agent_, environment_data_):	
-		self.pre_result = 1
+		#self.pre_result = 1
 		
-		self.pre_result = self.pre_result*self.pre_prime + environment_data_.get_hash()
-		self.pre_result = self.pre_result*self.pre_prime + agent_.get_hash()
-		self.pre_result = self.pre_result*self.pre_prime + agent_.get_hash_history()
-
-		return self.pre_result
+		#self.pre_result = self.pre_result*self.pre_prime + environment_data_.get_hash()
+		#self.pre_result = self.pre_result*self.pre_prime + agent_.get_hash()
+		#self.pre_result = self.pre_result*self.pre_prime + agent_.get_hash_history()
+		
+		return environment_data_.get_hash()+agent_.get_hash()+ agent_.get_hash_history()
 
 	def hash_generator_without_history(self, agent_, environment_data_):	
-		self.pre_result = 1
+		#self.pre_result = 1
 		
-		self.pre_result = self.pre_result*self.pre_prime + environment_data_.get_hash()
-		self.pre_result = self.pre_result*self.pre_prime + agent_.get_hash()
+		#self.pre_result = self.pre_result*self.pre_prime + environment_data_.get_hash()
+		#self.pre_result = self.pre_result*self.pre_prime + agent_.get_hash()
 
-		return self.pre_result
+		return environment_data_.get_hash()+agent_.get_hash()
 
 

@@ -5,15 +5,19 @@ from OpenGLContext import testingcontext
 from drawing import basic_2
 from Environment import Mine_Environment
 from Agents import Agent0
-
+from multiprocessing import Process, Queue
+import multiprocessing
 import time
 
 #DIAGNOSTICS
 sample_size=100
 max_num_steps=100
+num_workers=multiprocessing.cpu_count()
+time_to_work=60
+num_steps=20
 
 #CHOOSE ENVIRONMENT PARAMETERS
-map_size=8
+map_size=20
 
 #CHOOSE AGENT PARAMETERS
 max_depth=map_size*2
@@ -30,8 +34,9 @@ class Simulation:
 		self.a_imaginary = Agent0.Agent(map_size/2,map_size/2,max_depth,depth,Gamma,upper_confidence_c,action_space_num,map_size)
 		self.count=0
 		self.moving_total=[]
-		self.total=[(0,0)]
+		self.total=0
 		self.num_steps=10
+		self.rounds=0
 
 
 	def draw(self):
@@ -50,34 +55,62 @@ class Simulation:
 	def reset_func(self):
 		self.e.mine_data.reset()
 		self.a.reset()
-		self.moving_total.append(self.count)
-		if len(self.moving_total) > sample_size:
-			self.total.append((self.num_steps,self.count/sample_size))
-			self.num_steps+=10
-			if self.num_steps>max_num_steps:
-				print "finished"
-				return True
-			print self.num_steps
-			self.moving_total=[]
-			self.count=0
+		self.rounds+=1
+		self.total+=self.count
+		self.count=0
 			
-			print self.total
-		return False
 
 
-	def run(self):
-		while 1 is 1:
-			self.a.step(self.e.mine_data,self.num_steps, self.a_imaginary)
+	def run(self, to_draw, q,time_to_work,num_steps):
+		start = time.time()
+		end = time.time()
+		while end - start < time_to_work:
+			self.a.step(self.e.mine_data,num_steps, self.a_imaginary)
 			self.count+=1
 			if self.e.mine_data.get_complete() is True:
-				if self.reset_func() is True:
-					print "finished"
-					break	
+				self.reset_func()
+				end = time.time()
+			if self.count>map_size*map_size:
+				self.reset_func()
+				end = time.time()
+	
+			if to_draw is True:
+				self.draw()
+		q.put((self.rounds,self.total))
 
-			self.draw()
+print "Starting threads... Machine limit: ", multiprocessing.cpu_count()
 
-s = Simulation()
-s.run()
+for i in range(0,100):
+	num_steps=map_size+i*5
+		
+	s=[]
+	q=[]
+	p=[]
+	evaluation=()
+	rounds=0
+	total=0
+
+	for i in range(0,num_workers):
+		s.append(Simulation())
+		q.append(Queue())
+		p.append(Process(target=s[i].run, args=(False,q[i],time_to_work,num_steps)))
+
+	for i in range(0,num_workers):
+		p[i].start()
+
+	for i in range(0,num_workers):
+		evaluation=(q[i].get())
+		rounds+=evaluation[0]
+		total+=evaluation[1]
+
+	for i in range(0,num_workers):
+		p[i].join()
+
+
+
+
+	print "#", num_steps," Average: ", total/rounds, " for ", rounds, " rounds"
+
 
 
 

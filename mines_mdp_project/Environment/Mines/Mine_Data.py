@@ -3,6 +3,7 @@
 
 from Location import Location
 from random import randint
+import xxhash
 import random
 import numpy as np
 
@@ -10,13 +11,14 @@ import numpy as np
 class Mine_Data: 
 
 	def __init__(self, map_size):
+		self.h = xxhash.xxh64
 		self.pre_num_unknown_locations=map_size*map_size
 		self.pre_prime=13
 		self.pre_result=1
 
-		self.PFS = []
-		self.color = []
-		self.seen = []
+		self.PFS = np.ndarray(shape=(map_size,map_size), dtype=float)
+		self.color = np.ndarray(shape=(map_size,map_size), dtype=float)
+		self.seen = np.ndarray(shape=(map_size,map_size), dtype=bool)
 
 		self.map_size=map_size
 		self.mine_location = Location(randint(0,self.map_size-1),randint(0,self.map_size-1))
@@ -29,19 +31,11 @@ class Mine_Data:
 
 	def reset(self):
 
-		self.PFS = []
-		self.color = []
-		self.seen = []
+		self.PFS = np.ndarray(shape=(self.map_size,self.map_size), dtype=float)
+		self.PFS.fill(1.0/(self.map_size*self.map_size))
+		self.color.fill(1.0)
+		self.seen.fill(False)
 
-
-		for i in range(0, self.map_size):
-			self.PFS.append([])	
-			self.color.append([])			
-			self.seen.append([])					
-			for j in range(0, self.map_size):
-				self.PFS[i].append(1.0/(self.map_size*self.map_size))
-				self.color[i].append(1.0)
-				self.seen[i].append(False)
 
 		self.mine_location = Location(randint(0,self.map_size-1),randint(0,self.map_size-1))
 		self.complete=False
@@ -49,24 +43,21 @@ class Mine_Data:
 
 
 	def update_probabilities(self):
-		for i in range(0, self.map_size):	
-			for j in range(0, self.map_size):
-				if self.seen[i][j] is False:
-					self.PFS[i][j]=1./self.pre_num_unknown_locations
-
-
-
+		self.PFS.fill(1./self.pre_num_unknown_locations)
 
 	def get_hash(self):
-		self.pre_result=1
-		for i in range(0, self.map_size):	
-			for j in range(0, self.map_size):	
-				if self.seen[i][j] is False:
-					self.pre_result = self.pre_prime*self.pre_result+1
-				else:
-					self.pre_result = self.pre_prime*self.pre_result+2
 
-		return self.pre_result
+		return xxhash.xxh64(self.seen).hexdigest()
+
+#		self.pre_result=1
+#		for i in range(0, self.map_size):	
+#			for j in range(0, self.map_size):	
+#				if self.seen[i][j] is False:
+#					self.pre_result = self.pre_prime*self.pre_result+1
+#				else:
+#					self.pre_result = self.pre_prime*self.pre_result+2
+#
+		#return self.pre_result
 
 	def set_complete(self, complete_):
 		self.complete=complete_
@@ -82,11 +73,14 @@ class Mine_Data:
 		a.mine_location.set_x(self.mine_location.get_x())
 		a.mine_location.set_y(self.mine_location.get_y())
 		a.max_reward = self.max_reward
+		a.PFS=self.PFS.copy()
+		a.seen=self.seen.copy()
 
-		for i in range(0, self.map_size):	
-			for j in range(0, self.map_size):
-				a.PFS[i][j] =  self.PFS[i][j]
-				a.seen[i][j]= self.seen[i][j]
+
+		#for i in range(0, self.map_size):	
+		#	for j in range(0, self.map_size):
+		#		a.PFS[i][j] =  self.PFS[i][j]
+		#		a.seen[i][j]= self.seen[i][j]
 
 		a.set_pre_unknown(self.pre_num_unknown_locations)
 
@@ -104,7 +98,7 @@ class Mine_Data:
 		if self.check_boundaries(loc) is False:
 			return
 
-		if self.seen[loc.get_x()][loc.get_y()] is True:
+		if bool(self.seen[loc.get_x()][loc.get_y()]) is True:
 			return
 
 
@@ -115,16 +109,13 @@ class Mine_Data:
 			if self.complete is True:
 				return
 			if self.mine_location.get_x() is loc.get_x() and self.mine_location.get_y() is loc.get_y():
+
+				self.PFS.fill(0.0)
+				self.color.fill(0.0)
+
 				self.PFS[loc.get_x()][loc.get_y()] = 1.0
 				self.color[loc.get_x()][loc.get_y()] = 1.0
 
-		 		for i in range(0, self.map_size):
-					for j in range(0, self.map_size):
-						if i is loc.get_x() and j is loc.get_y():
-							continue
-						else:
-							self.PFS[i][j]=0.0
-							self.color[i][j]=0.0
 	
 				self.complete = True
 				self.pre_num_unknown_locations=1
@@ -132,21 +123,20 @@ class Mine_Data:
 			else:	
 				self.PFS[loc.get_x()][loc.get_y()]=0.0
 				self.color[loc.get_x()][loc.get_y()]=0.0
-				self.pre_num_unknown_locations-=1
+				self.pre_num_unknown_locations-= 1
 				self.update_probabilities()
 
 		else:
 			if self.complete is True:
 				return
 			if self.PFS[loc.get_x()][loc.get_y()] > random.random():
+				self.PFS.fill(0.0)
+				self.color.fill(0.0)
+
 				self.PFS[loc.get_x()][loc.get_y()] = 1.0
 				self.color[loc.get_x()][loc.get_y()] = 1.0
 
-	 			for i in range(0, self.map_size):
-					for j in range(0, self.map_size):
-						if i is not loc.get_x() and j is not loc.get_y():
-							self.PFS[i][j]=0.0
-							self.color[i][j]=0.0
+	
 				self.complete = True
 				self.pre_num_unknown_locations=1
 

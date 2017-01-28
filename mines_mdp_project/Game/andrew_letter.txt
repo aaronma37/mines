@@ -1,0 +1,10 @@
+So over the summer I learned basics of using ros with cpp and python. I familiarized myself with orb slam and control methods like pid. I feel like I haven't produced much results so I hope to work harder at working with the controls of the new project. 
+
+
+
+Andrew joned the lab during the summer of 2016 learned and developed scripts using ros with CPP and Python.  His goal for joining the lab was to help the MURO lab with robotic self localization.  In order to aid us, he familiarized himself with several SLAM methods, mainly ORB-SLAM.  In a team, Andrew developed code to generate and merge ORB-SLAM point cloud maps.  This is important for our multi-agent robotics lab because we want the robots to be able to share with each otherthe maps that they create while exploring 
+
+
+Javier joined the lab during the summer of 2016 where is currently spending time to implement distributed algorithms in ROS.  He took a couple weeks to learn ROS (very quickly) and worked on implementing a distributed formation control algorithm. In order to implement the algorithm, he read a publication from Professor Cortes, “Global and robust formation-shape stabilization of relative sensing networks”.  He used the distributed controls theory in the paper and help develop and implement a new formation control algorithm that allows for time-varying formations.  He spent roughly 30-40 hours a week in lab working towards this goal.  Javier learns at a quick rate, and is dedicated to learning theory that is outside of his prior knowledge in controls, as demonstrated by his efforts and understanding of the publication, “Global and robust formation-shape stabilization of relative sensing networks”.  
+
+In addition to what I wrote Sonia, it might be important to add his contributions to the algorithm.  He found that it wouldn't work immediately (there was steady state error in the formation) and so he contributed an integral term so that the formation would get to the desired formation at a user specified point in space with the help of a leader in the network.

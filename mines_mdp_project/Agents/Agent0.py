@@ -5,7 +5,7 @@ from Action_Definition import get_transition_y
 from Environment.Mines import Location
 from Environment.Mines import Mine_Data
 from Solvers.UCT_SOLVER import UCT
-
+import xxhash
 
 
 import numpy as np
@@ -22,8 +22,8 @@ class Agent:
 
 		self.solver = UCT.Solver(max_depth_,depth_,Gamma_,upper_confidence_c_,action_space_num_,map_size_)
 
-		self.history = [0,0]
-		#self.search_tree=manager.dict()
+		self.history =  "start"
+		self.location = np.ndarray(shape=(1,2), dtype=float)
 		self.search_tree=dict()
 		self.x=x_
 		self.y=y_
@@ -36,7 +36,7 @@ class Agent:
 	def reset(self):
 		self.x=self.init_x
 		self.y=self.init_y
-		self.history = [(0,0)]
+		self.history =  "start"
 		self.search_tree.clear()
 
 	def imprint(self, u):
@@ -45,10 +45,9 @@ class Agent:
 		u.set_history(self.get_history())
 
 	def set_history(self,h):
-		self.history = []
-	
-		for i in range(0, len(h)):
-			self.history.append((h[i][0],h[i][1]))
+		
+		self.history = h
+		
 
 	def get_history(self):
 		return self.history
@@ -66,9 +65,7 @@ class Agent:
 		return self.y
 
 	def update_history(self,action_,observation_hash_):
-		self.history.append((action_,observation_hash_))
-		if len(self.history) > 10:
-			self.history.pop(0)
+		self.history+=observation_hash_
 
 	def step(self,environment_data_,num_steps_,a_):
 
@@ -118,18 +115,19 @@ class Agent:
 
 
 	def get_hash(self):
-		prime = 31
-		result = 11
-		result = result*prime + self.x
-		result = result*prime + self.y
-		return result	
+		self.location[0][0]=self.x
+		self.location[0][1]=self.y
+		return xxhash.xxh64(self.location).hexdigest()
+
+		#prime = 31
+		#result = 11
+		#result = result*prime + self.x
+		#result = result*prime + self.y
+		#return result	
 
 	def get_hash_history(self):
-		prime = 31
-		result = 11
-		for i in range(0,len(self.history)):
-			result = result*prime + self.get_single_history_hash(self.history[i][0],self.history[i][1])*i
-		return result
+		return xxhash.xxh64(self.history).hexdigest()
+
 
 	def get_single_history_hash(self,a,o):
 		prime=31

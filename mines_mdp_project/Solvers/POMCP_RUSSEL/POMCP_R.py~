@@ -45,13 +45,15 @@ class Solver:
 
 	
 	
-	def OnlinePlanning(self,search_tree_,agent_,environment_data_,num_steps_,a_,abf):
+	def OnlinePlanning(self,search_tree_,agent_,environment_data_,num_steps_,a_):
 		for i in range(0, num_steps_):
 			agent_.imprint(a_)
 			environment_data_.imprint(self.environment_data)
-			self.search(root_task,self.environment_data,a_.get_hash_history(),self.depth,T,abf)
+
+			self.search(root_task,self.environment_data,a_.get_hash_history(),self.depth,T,abf())
 
 
+	def search(self,t,s,h,d,T,abf):
 
 	def get_best_action(self, search_tree_, agent_, environment_data_):
 		self.pre_hash_key=self.hash_generator(agent_,environment_data_)
@@ -98,6 +100,8 @@ class Solver:
 	def search(self,t,s,h,d,T,abf):
 		if t is primitive:
 			(s1,r) = agent.simulate(t,s)
+			#simulate
+			#get abstracted state from abf()
 			x = abf(s1)
 			return (r,1,h++xxhash.xxh64(t).hexdigest()++xxhash.xxh64(x).hexdigest(),s1)
 		else:

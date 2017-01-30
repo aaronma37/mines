@@ -32,9 +32,6 @@ class Agent:
 		self.local_action=0
 
 		self.reset()
-	
-	def get_action_space_num_(self):
-		return self.action_space_num
 
 	def reset(self):
 		self.x=self.init_x

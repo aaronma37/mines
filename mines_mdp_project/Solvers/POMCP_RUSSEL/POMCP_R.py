@@ -14,6 +14,7 @@ import xxhash
 import math
 import numpy as np
 
+
 class Solver: 
 
 
@@ -31,16 +32,16 @@ class Solver:
 		self.reward_list=[]
 		self.environment_data =Mine_Data(map_size_)#
 		self.Gamma=Gamma_
-		self.H=max_depth_
-		self.c=1000.
+		self.H=20
+		self.c=15.
 		self.history_length=32
 
-	def GetGreedyPrimitive(self,t,h):
+	def GetGreedyPrimitive(self,t,h,s,abf):
 		if t.get_primitive() is True:
 			return t
 		else:
-			a_star= self.arg_max(t,h)
-			return self.GetGreedyPrimitive(a_star,h)
+			a_star= self.arg_max(t,h,s,abf)
+			return self.GetGreedyPrimitive(a_star,h,s,abf)
 
 	def GetPrimitive(self,t,h):
 		if t.get_primitive() is True:
@@ -53,18 +54,21 @@ class Solver:
 	
 	def OnlinePlanning(self,root_task,T,agent_,environment_data_,num_steps_,a_,abf):
 
+		#print "SEEN", self.N.get(self.hash_generator_1(root_task,agent_.get_history()))
+		#print agent_.get_history()
 		for i in range(0, num_steps_):
 			agent_.imprint(a_)
 			environment_data_.imprint(self.environment_data)
+
 			self.search(a_,root_task,self.environment_data,a_.get_history(),0,T,abf)
 
-		a =self.GetGreedyPrimitive(root_task,abf(environment_data_))
+		a =self.GetGreedyPrimitive(root_task,agent_.get_history(),environment_data_,abf)
 		
-		return self.GetGreedyPrimitive(root_task,abf(environment_data_))
+		return a
 
 
 
-	def arg_max(self,t,h):
+	def arg_max(self,t,h,s,abf):
 		a_star = t.get_sub_tasks()[0]
 		max= -1
 		c=0
@@ -74,13 +78,11 @@ class Solver:
 
 
 
-			if a.available(h) is True:
+			if a.available(abf(s)) is True:
 				c+=1
  
 				if self.hash_generator_2(t,h,a) not in self.Q.keys():
 					self.Q[self.hash_generator_2(t,h,a)]=0.
-
-				#print a.get_index(),a.get_message(), self.Q[self.hash_generator_2(t,h,a)], self.Na.get(self.hash_generator_2(t,h,a))
 
 				if self.Q.get(self.hash_generator_2(t,h,a)) > max:
 					a_star=a
@@ -91,7 +93,7 @@ class Solver:
 			print "NO OPTIONS"
 		return a_star
 
-	def arg_max_ucb(self,t,h):
+	def arg_max_ucb(self,t,h,s,abf):
 		a_star = t.get_sub_tasks()[0]
 
 		if self.hash_generator_1(t,h) not in self.N.keys():
@@ -112,7 +114,7 @@ class Solver:
 
 		for a in t.get_sub_tasks():
 
-			if a.available(h) is True:
+			if a.available(abf(s)) is True:
 				if self.hash_generator_2(t,h,a) not in self.Q.keys():
 					self.Q[self.hash_generator_2(t,h,a)]=0.
 
@@ -141,8 +143,6 @@ class Solver:
 		s1 = Mine_Data(s.map_size)
 		s2 = Mine_Data(s.map_size)
 
-	
-
 
 		s.imprint(s0)
 
@@ -150,63 +150,80 @@ class Solver:
 			(sTemp,r) = a_.simulate(t,s0)
 			sTemp.imprint(s1)
 			x = abf(s1)
-			return (r,1,x,s1)
+			return (r,1,xxhash.xxh64(h+t.get_hash()+x).hexdigest(),s1)
 		else:
 			if d>=self.H or t.check_termination(abf(s)) is True:
+
 				if t.check_termination(abf(s)) is True:
-					print "MADE IT"
+					#print t.get_message(), " completed"
+					return (0,0,h,s0)
 				return (0,0,h,s0)
 			else:
-				self.pre_hash_key= self.hash_generator_1(t,abf(s0))
+				self.pre_hash_key= self.hash_generator_1(t,h)
 				if  self.pre_hash_key not in T:
 					T[self.pre_hash_key] = 1
-					return self.rollout(a_, t,s,abf(s0),d,abf)
+					return self.rollout(a_, t,s0,h,d,abf)
 				else:
-					a_star = self.arg_max_ucb(t,abf(s0))
+					a_star = self.arg_max_ucb(t,h,s0,abf)
 					(r1,n1,h1,sTemp)= self.search(a_,a_star,s0,h,d,T,abf)
 					sTemp.imprint(s1)
+					#print "h",h
+					if len(h)>25:
+						print t.get_message()
+						print a_.get_history()
+						print d
+					#print "h1",h1
 					(r2,n2,h2,sTemp2)= self.search(a_,t,s1,h1,d+n1,T,abf)
 					sTemp2.imprint(s2)
+					
 
 
-
-					if self.hash_generator_1(t,abf(s0)) in self.N:
-						self.N[self.hash_generator_1(t,abf(s0))] +=1.0
+					if self.hash_generator_1(t,h) in self.N:
+						self.N[self.hash_generator_1(t,h)] +=1.0
 					else:
-						self.N[self.hash_generator_1(t,abf(s0))] = 1.0
+						self.N[self.hash_generator_1(t,h)] = 1.0
 
 
-					if self.hash_generator_2(t,abf(s0),a_star) in self.Na:
-						self.Na[self.hash_generator_2(t,abf(s0),a_star)] +=1.0
+					if self.hash_generator_2(t,h,a_star) in self.Na:
+						self.Na[self.hash_generator_2(t,h,a_star)] +=1.0
 					else:
-						self.Na[self.hash_generator_2(t,abf(s0),a_star)] = 1.0
+						self.Na[self.hash_generator_2(t,h,a_star)] = 1.0
 
 					
 					#print self.Na[self.hash_generator_2(t,abf(s),a_star)]
 
 					r= r1+math.pow(self.Gamma,n1)*r2
 
-					if self.hash_generator_2(t,abf(s0),a_star) in self.Q:
-               					self.Q[self.hash_generator_2(t,abf(s0),a_star)] = self.Q[self.hash_generator_2(t,abf(s0),a_star)] + (r-self.Q[self.hash_generator_2(t,abf(s0),a_star)])/self.Na[self.hash_generator_2(t,abf(s0),a_star)]
+					if self.hash_generator_2(t,h,a_star) in self.Q:
+               					self.Q[self.hash_generator_2(t,h,a_star)] = self.Q[self.hash_generator_2(t,h,a_star)] + (r-self.Q[self.hash_generator_2(t,h,a_star)])/self.Na[self.hash_generator_2(t,h,a_star)]
 					else:
-						self.Q[self.hash_generator_2(t,abf(s0),a_star)] = r
+						self.Q[self.hash_generator_2(t,h,a_star)] = r
 
-	
+					
 					return (r,n1+n2,h2,s2)
 
 
 
 
 	def rollout(self, a_, t, s, h, d, abf):
-		if d>= self.H or t.check_termination(abf(s)) is True:
-			return (0,0,abf(s),s)
+
+		s0 = Mine_Data(s.map_size)
+		s1 = Mine_Data(s.map_size)
+		s2 = Mine_Data(s.map_size)
+
+		s.imprint(s0)
+
+		if d>= self.H or t.check_termination(abf(s0)) is True:
+			return (0,0,h,s0)
 		else:
-			a = self.GetPrimitive(t,abf(s))
-			(s1,r1) = a_.simulate(a,s)
+			a = self.GetPrimitive(t,h)
+			(sTemp1,r1) = a_.simulate(a,s0)
+			sTemp1.imprint(s1)
 			x = abf(s1)
-			(r2,n,h2,s2) = self.rollout(a_,t,s1,x,d+1,abf)
+			(r2,n,h2,sTemp2) = self.rollout(a_,t,s1,xxhash.xxh64(h+a.get_hash()+x).hexdigest(),d+1,abf)
+			sTemp2.imprint(s2)
 			r = r1 + self.Gamma * r2
-			return (r,n+1,abf(s2),s2)
+			return (r,n+1,h2,s2)
 
 
 

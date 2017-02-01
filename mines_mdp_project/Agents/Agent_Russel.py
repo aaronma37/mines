@@ -6,6 +6,7 @@ from Environment.Mines import Location
 from Environment.Mines import Mine_Data
 from Solvers.POMCP_RUSSEL import POMCP_R
 import xxhash
+import time
 
 
 import numpy as np
@@ -123,21 +124,21 @@ class Abstractions:
 
 	def abf(self,s):
 		c=0
-		hash = xxhash.xxh64(str(self.get_abstraction_index(s.get_agent_x(),s.get_agent_y()))).hexdigest()
+
 		for (x,y) in self.get_abstraction(s.get_agent_x(),s.get_agent_y()).get_state():
 			if bool(s.get_seen(x,y)) is False:
 				c+=1
 			else:
-				c-=1
+				c-=100
 	
-		if c > 0:
-			return hash+ xxhash.xxh64(str(False)).hexdigest()
+		if c > -50:
+			return xxhash.xxh64(str(self.get_abstraction_index(s.get_agent_x(),s.get_agent_y()))+str(False)).hexdigest()
 		else:
-			return hash+ xxhash.xxh64(str(True)).hexdigest()
+			return xxhash.xxh64(str(self.get_abstraction_index(s.get_agent_x(),s.get_agent_y()))+str(True)).hexdigest()
 
 
 	def abf_init(self,abstraction_index,all_visible):
-		return xxhash.xxh64(str(abstraction_index)).hexdigest()+xxhash.xxh64(str(all_visible)).hexdigest()
+		return xxhash.xxh64(str(abstraction_index)+str(all_visible)).hexdigest()
 		
 
 class RootTask:
@@ -374,6 +375,7 @@ class Agent:
 		return self.action_space_num
 
 	def reset(self):
+		print len(self.solver.N)
 		self.x=self.init_x
 		self.y=self.init_y
 		self.history =  self.abstractions.abf_init(self.abstractions.get_abstraction_index(self.x,self.y),False)
@@ -385,7 +387,6 @@ class Agent:
 		u.set_history(self.get_history())
 
 	def set_history(self,h):
-		
 		self.history = h
 		
 
@@ -405,14 +406,14 @@ class Agent:
 		return self.y
 
 	def update_history(self,action_,observation_hash_):
-		self.history+=observation_hash_
+		self.history=xxhash.xxh64(self.history+action_.get_hash()+observation_hash_).hexdigest()
 
 	def step(self,environment_data_,num_steps_,a_):
 		self.search_tree.clear()
 		environment_data_.update_agent_location(self.x,self.y)
 		a = self.solver.OnlinePlanning(self.root_task,self.search_tree, self, environment_data_,num_steps_,a_,self.abstractions.abf)
 		self.execute(a,environment_data_)
-		self.update_history(a,self.solver.hash_generator_without_history(self,environment_data_))
+		self.update_history(a, self.abstractions.abf(environment_data_))
 
 	def execute(self,action_,environment_data_):
 		if environment_data_.check_boundaries(Location(self.x+get_transition_x(action_.get_index()),self.y+get_transition_y(action_.get_index()))) is True:
@@ -420,7 +421,7 @@ class Agent:
 			self.y+=get_transition_y(action_.get_index())
 		self.recalculate_measurement_space()
 		self.measure(environment_data_,False)
-		self.history = self.abstractions.abf(environment_data_)
+		#self.history = self.abstractions.abf(environment_data_)
 
 		environment_data_.update_agent_location(self.x,self.y)
 
@@ -450,24 +451,6 @@ class Agent:
 			mine_data_.measure_loc(loc,imaginary)
 
 
-	def get_hash(self):
-		self.location[0][0]=self.x
-		self.location[0][1]=self.y
-		return xxhash.xxh64(self.location).hexdigest()
-
-		#prime = 31
-		#result = 11
-		#result = result*prime + self.x
-		#result = result*prime + self.y
-		#return result	
-
-
-	def get_single_history_hash(self,a,o):
-		prime=31
-		result =11
-		result=result*prime + a
-		result=result*prime + o
-		return result
 
 	
 

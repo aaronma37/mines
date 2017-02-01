@@ -17,7 +17,7 @@ time_to_work=60000
 num_steps=5
 
 #CHOOSE ENVIRONMENT PARAMETERS
-map_size=21
+map_size=12
 
 #CHOOSE AGENT PARAMETERS
 max_depth=10

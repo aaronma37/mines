@@ -382,7 +382,7 @@ class Agent:
 	def reset(self):
 		self.x=2
 		self.y=2
-		#self.x=randint(0,self.map_size-1)
+		self.x=randint(0,self.map_size-1)
 		#self.y=randint(0,self.map_size-1)
 		self.history =  self.abstractions.abf_init(self.abstractions.get_abstraction_index(self.x,self.y),False)
 		print self.history

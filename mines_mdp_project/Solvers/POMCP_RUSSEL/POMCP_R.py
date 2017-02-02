@@ -148,8 +148,7 @@ class Solver:
 
 	def put_in_N(self,t,h,n):
 		if self.N.get(t.get_hash()) is None:
-			self.N[t.get_hash()]={}
-			self.N[t.get_hash()][h]=n
+			self.N[t.get_hash()]={h:n}
 		elif self.N.get(t.get_hash()).get(h) is None:
 			self.N[t.get_hash()][h]=n
 		else:
@@ -164,14 +163,9 @@ class Solver:
 
 	def put_in_Na(self,t,h,a,n):
 		if self.Na.get(t.get_hash()) is None:
-			self.Na[t.get_hash()]={}
-			self.Na[t.get_hash()][h]={}
-			self.Na[t.get_hash()][h][a.get_hash()]=n
-
+			self.Na[t.get_hash()]={h:{a.get_hash():n}}
 		elif self.Na.get(t.get_hash()).get(h) is None:
-			self.Na[t.get_hash()][h]={}
-			self.Na[t.get_hash()][h][a.get_hash()]=n
-
+			self.Na[t.get_hash()][h]={a.get_hash():n}
 		elif self.Na.get(t.get_hash()).get(h).get(a.get_hash()) is None:
 			self.Na[t.get_hash()][h][a.get_hash()]=n
 		else:
@@ -199,14 +193,9 @@ class Solver:
 
 	def put_in_Q(self,t,h,a,r):
 		if self.Q.get(t.get_hash()) is None:
-			self.Q[t.get_hash()]={}
-			self.Q[t.get_hash()][h]={}
-			self.Q[t.get_hash()][h][a.get_hash()]=r
-
+			self.Q[t.get_hash()]={h:{a.get_hash():r}}
 		elif self.Q.get(t.get_hash()).get(h) is None:
-			self.Q[t.get_hash()][h]={}
-			self.Q[t.get_hash()][h][a.get_hash()]=r
-
+			self.Q[t.get_hash()][h]={a.get_hash():r}
 		elif self.Q.get(t.get_hash()).get(h).get(a.get_hash()) is None:
 			self.Q[t.get_hash()][h][a.get_hash()]=r
 		else:

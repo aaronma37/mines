@@ -13,11 +13,11 @@ import time
 sample_size=100
 max_num_steps=5
 num_workers=multiprocessing.cpu_count()
-time_to_work=60000
+time_to_work=.15
 num_steps=5
 
 #CHOOSE ENVIRONMENT PARAMETERS
-map_size=21
+map_size=12
 
 #CHOOSE AGENT PARAMETERS
 max_depth=10
@@ -38,8 +38,11 @@ class Simulation:
 		self.count=0
 		self.moving_total=[]
 		self.total=0
-		self.num_steps=10
+		self.num_steps=25
 		self.rounds=0
+		self.evaluation=[]
+		self.last_round=0
+		self.eval_num=10.
 
 
 	def draw(self):
@@ -59,22 +62,57 @@ class Simulation:
 	def reset_func(self):
 		self.e.mine_data.reset()
 		self.a.reset()
+		self.a_imaginary.reset()
+		self.a_imaginary.set_x(self.a.get_x())
+		self.a_imaginary.set_y(self.a.get_y())
 		self.e.mine_data.update_agent_location(self.a.get_x(),self.a.get_y())
+		self.a.set_history_from_e(self.e.mine_data)
+		self.a_imaginary.set_history_from_e(self.e.mine_data)
 		self.rounds+=1
-		print self.rounds, self.count
 		self.total+=self.count
 		self.count=0
-			
+
+
+	def evaluate_reset(self):
+		self.e.mine_data.reset()
+		self.a.reset()
+		self.a_imaginary.reset()
+		self.a_imaginary.set_x(self.a.get_x())
+		self.a_imaginary.set_y(self.a.get_y())
+		self.a_imaginary.set_history_from_e(self.e.mine_data)
+		self.e.mine_data.update_agent_location(self.a.get_x(),self.a.get_y())
+		self.a.set_history_from_e(self.e.mine_data)
+		self.evaluation[len(self.evaluation)-1]+=self.count
+		self.count=0	
+
+
+	def evaluate(self,to_draw):
+		print "Evaluating at", self.rounds
+		self.evaluation.append(0.)
+		i=0
+		while i < self.eval_num:
+
+			self.a.step(self.e.mine_data,0, self.a_imaginary,0)
+			self.count+=1
+			if self.e.mine_data.get_complete() is True:
+				self.evaluate_reset()
+				i+=1
+			if self.count>map_size*map_size/2 :
+				self.evaluate_reset()
+				i+=1
+			if to_draw is True:
+				self.draw()
+		print "ROUND: ", self.rounds, "AVERAGE", self.evaluation[len(self.evaluation)-1]/self.eval_num
+
+
 
 
 	def run(self, to_draw, q,time_to_work,num_steps):
 		start = time.time()
 		end = time.time()
-		while end - start < time_to_work:
-			if self.rounds < 10:
-				self.a.step(self.e.mine_data,100, self.a_imaginary)
-			else:
-				self.a.step(self.e.mine_data,0, self.a_imaginary)
+		while end - start < 50000:
+
+			self.a.step(self.e.mine_data,100, self.a_imaginary,time_to_work)
 			self.count+=1
 			if self.e.mine_data.get_complete() is True:
 				self.reset_func()
@@ -83,6 +121,12 @@ class Simulation:
 				self.reset_func()
 				end = time.time()
 				print "max reached"
+
+			if self.rounds % 10 is 0 and self.rounds > self.last_round:
+				self.last_round=self.rounds
+				self.evaluate(to_draw)
+
+
 	
 			if to_draw is True:
 				self.draw()

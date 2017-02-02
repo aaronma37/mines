@@ -4,6 +4,7 @@ from Action_Definition import get_transition_x
 from Action_Definition import get_transition_y
 from Environment.Mines import Location
 from Environment.Mines import Mine_Data
+from random import randint
 from Solvers.POMCP_RUSSEL import POMCP_R
 import xxhash
 import time
@@ -27,7 +28,7 @@ class task:
 		return self.primitive
 
 	def get_hash(self):
-		return xxhash.xxh64("primitive").hexdigest() + xxhash.xxh64(str(self.index)).hexdigest()
+		return xxhash.xxh64("primitive"+str(self.index)).hexdigest()
 
 	def get_hierarchy(self):
 		return "primitive"
@@ -74,7 +75,7 @@ class Option:
 		return self.primitive
 
 	def get_hash(self):
-		return xxhash.xxh64("Option").hexdigest() + xxhash.xxh64(str(self.index)).hexdigest()
+		return xxhash.xxh64("Option"+str(self.index)).hexdigest() 
 
 	def get_sub_tasks(self):
 		return self.sub_tasks
@@ -356,30 +357,40 @@ class Agent:
 		self.init_x=x_
 		self.init_y=y_
 
-		self.solver = POMCP_R.Solver(max_depth_,depth_,Gamma_,upper_confidence_c_,action_space_num_,map_size_)
+		self.solver = POMCP_R.Solver(max_depth_,depth_,Gamma_,upper_confidence_c_,action_space_num_,Mine_Data,map_size_)
 
 
 		self.location = np.ndarray(shape=(1,2), dtype=float)
 		self.search_tree=dict()
 		self.x=x_
 		self.y=y_
+		self.map_size=map_size_
+
 		self.action_space_num=action_space_num_
 		self.measurement_space=[]
 		self.local_action=0
 		self.root_task=RootTask(map_size_)
 		self.abstractions = Abstractions(map_size_)
 		self.history =  self.abstractions.abf_init(self.abstractions.get_abstraction_index(self.x,self.y),False)
+		#print self.abstractions.abf_init(self.abstractions.get_abstraction_index(5,5),False)
+		#time.sleep(5)
 		self.reset()
 	
 	def get_action_space_num_(self):
 		return self.action_space_num
 
 	def reset(self):
-		print len(self.solver.N)
-		self.x=self.init_x
-		self.y=self.init_y
+		self.x=2
+		self.y=2
+		#self.x=randint(0,self.map_size-1)
+		#self.y=randint(0,self.map_size-1)
 		self.history =  self.abstractions.abf_init(self.abstractions.get_abstraction_index(self.x,self.y),False)
+		print self.history
+		print self.abstractions.get_abstraction_index(self.x,self.y)
 		#self.search_tree.clear()
+
+	def set_history_from_e(self,e):
+		self.history = self.abstractions.abf(e)
 
 	def imprint(self, u):
 		u.set_x(self.get_x())
@@ -408,10 +419,10 @@ class Agent:
 	def update_history(self,action_,observation_hash_):
 		self.history=xxhash.xxh64(self.history+action_.get_hash()+observation_hash_).hexdigest()
 
-	def step(self,environment_data_,num_steps_,a_):
+	def step(self,environment_data_,num_steps_,a_,time_to_work):
 		self.search_tree.clear()
 		environment_data_.update_agent_location(self.x,self.y)
-		a = self.solver.OnlinePlanning(self.root_task,self.search_tree, self, environment_data_,num_steps_,a_,self.abstractions.abf)
+		a = self.solver.OnlinePlanning(self.root_task,self.search_tree, self, environment_data_,num_steps_,a_,self.abstractions.abf,time_to_work)
 		self.execute(a,environment_data_)
 		self.update_history(a, self.abstractions.abf(environment_data_))
 

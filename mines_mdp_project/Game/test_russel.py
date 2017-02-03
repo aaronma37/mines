@@ -15,9 +15,10 @@ max_num_steps=5
 num_workers=multiprocessing.cpu_count()
 time_to_work=1
 num_steps=5
+num_agents=1
 
 #CHOOSE ENVIRONMENT PARAMETERS
-map_size=12
+map_size=21
 
 #CHOOSE AGENT PARAMETERS
 max_depth=10
@@ -30,11 +31,14 @@ class Simulation:
 
 	def __init__(self):
 		self.e = Mine_Environment.Environment(map_size)
-		self.a = Agent_Russel.Agent(map_size/2,map_size/2,max_depth,depth,Gamma,upper_confidence_c,action_space_num,map_size)
-		self.e.mine_data.update_agent_location(self.a.get_x(),self.a.get_y())	
-		for o in self.a.root_task.get_sub_tasks():
-			o.available(self.a.abstractions.abf(self.e.mine_data))
-		self.a_imaginary = Agent_Russel.Agent(map_size/2,map_size/2,max_depth,depth,Gamma,upper_confidence_c,action_space_num,map_size)
+		self.a = Agent_Russel.Agent(map_size/2,map_size/2,max_depth,depth,Gamma,upper_confidence_c,action_space_num,map_size,self.e.mine_data)
+		self.a_imaginary = Agent_Russel.Agent(map_size/2,map_size/2,max_depth,depth,Gamma,upper_confidence_c,action_space_num,map_size,self.e.mine_data)
+		self.e.mine_data.update_agent_location((self.a.get_x(),self.a.get_y()))
+
+	
+		#for o in self.a.root_task.get_sub_tasks():
+		#	o.available(self.a.abstractions.abf(self.e.mine_data))
+
 		self.count=0
 		self.moving_total=[]
 		self.total=0
@@ -61,13 +65,12 @@ class Simulation:
 
 	def reset_func(self):
 		self.e.mine_data.reset()
-		self.a.reset()
-		self.a_imaginary.reset()
-		self.a_imaginary.set_x(self.a.get_x())
-		self.a_imaginary.set_y(self.a.get_y())
-		self.e.mine_data.update_agent_location(self.a.get_x(),self.a.get_y())
-		self.a.set_history_from_e(self.e.mine_data)
-		self.a_imaginary.set_history_from_e(self.e.mine_data)
+
+		self.a.reset(self.e.mine_data)
+		self.a_imaginary.reset(self.e.mine_data)
+		self.e.mine_data.update_agent_location((self.a.get_x(),self.a.get_y()))
+
+
 		self.rounds+=1
 		self.total+=self.count
 		self.count=0
@@ -75,13 +78,11 @@ class Simulation:
 
 	def evaluate_reset(self):
 		self.e.mine_data.reset()
-		self.a.reset()
-		self.a_imaginary.reset()
-		self.a_imaginary.set_x(self.a.get_x())
-		self.a_imaginary.set_y(self.a.get_y())
-		self.a_imaginary.set_history_from_e(self.e.mine_data)
-		self.e.mine_data.update_agent_location(self.a.get_x(),self.a.get_y())
-		self.a.set_history_from_e(self.e.mine_data)
+
+		self.a.reset(self.e.mine_data)
+		self.a_imaginary.reset(self.e.mine_data)
+		self.e.mine_data.update_agent_location((self.a.get_x(),self.a.get_y()))
+
 		self.evaluation[len(self.evaluation)-1]+=self.count
 		self.count=0	
 
@@ -92,7 +93,8 @@ class Simulation:
 		i=0
 		while i < self.eval_num:
 
-			self.a.step(self.e.mine_data,0, self.a_imaginary,0)
+			for j in range(num_agents):
+				self.a.step(self.e.mine_data,0, self.a_imaginary,0)
 			self.count+=1
 			if self.e.mine_data.get_complete() is True:
 				self.evaluate_reset()
@@ -112,7 +114,8 @@ class Simulation:
 		end = time.time()
 		while end - start < 50000:
 
-			self.a.step(self.e.mine_data,100, self.a_imaginary,time_to_work)
+			for j in range(num_agents):
+				self.a.step(self.e.mine_data,100, self.a_imaginary,time_to_work)
 			self.count+=1
 			if self.e.mine_data.get_complete() is True:
 				self.reset_func()
@@ -122,7 +125,7 @@ class Simulation:
 				end = time.time()
 				print "max reached"
 
-			if self.rounds % 10 is 0 and self.rounds > self.last_round:
+			if self.rounds % 3 is 0 and self.rounds > self.last_round:
 				self.last_round=self.rounds
 				self.evaluate(to_draw)
 

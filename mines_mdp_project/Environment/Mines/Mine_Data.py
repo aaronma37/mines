@@ -12,8 +12,7 @@ class Mine_Data:
 
 	def __init__(self, map_size):
 		self.h = xxhash.xxh64
-		self.agent_x=0
-		self.agent_y=0
+		self.agent_loc=(0,0)
 		self.pre_num_unknown_locations=map_size*map_size
 		self.pre_prime=13
 		self.pre_result=1
@@ -35,14 +34,16 @@ class Mine_Data:
 		return self.mine_location
 
 	def get_agent_x(self):
-		return self.agent_x
+		return self.agent_loc[0]
 	
 	def get_agent_y(self):
-		return self.agent_y
+		return self.agent_loc[1]
 
-	def update_agent_location(self,x,y):
-		self.agent_x=x
-		self.agent_y=y
+	def get_agent_location(self):
+		return self.agent_loc
+
+	def update_agent_location(self,locations):
+		self.agent_loc=locations
 
 	def get_seen(self,x,y):
 		return self.seen[x][y]
@@ -93,7 +94,7 @@ class Mine_Data:
 		a.max_reward = self.max_reward
 		a.PFS=self.PFS.copy()
 		a.seen=self.seen.copy()
-		a.update_agent_location(self.get_agent_x(),self.get_agent_y())
+		a.update_agent_location(self.agent_loc)
 
 
 		#for i in range(0, self.map_size):	
@@ -137,7 +138,7 @@ class Mine_Data:
 
 	
 				self.complete = True
-				self.pre_num_unknown_locations=1
+				self.pre_num_unknown_locations-=1
 			
 			else:	
 				self.PFS[loc.get_x()][loc.get_y()]=0.0
@@ -157,7 +158,7 @@ class Mine_Data:
 
 	
 				self.complete = True
-				self.pre_num_unknown_locations=1
+				self.pre_num_unknown_locations-=1
 
         		else:
         			self.PFS[loc.get_x()][loc.get_y()]=0.0

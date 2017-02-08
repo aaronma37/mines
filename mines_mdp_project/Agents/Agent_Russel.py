@@ -141,11 +141,11 @@ class Abstractions:
 				if bool(s.get_seen(x,y)) is False:
 					c+=1
 				else:
-					c-=100
-				if c >-50:
-					to_return+="1"
-				else:
-					to_return+="0"
+					c-=1
+			if c >0:
+				to_return+="1"
+			else:
+				to_return+="0"
 
 		return xxhash.xxh64(to_return).hexdigest()	
 
@@ -158,10 +158,10 @@ class Abstractions:
 					c+=1
 				else:
 					c-=1
-				if c < 0:
-					to_return+="1"
-				else:
-					to_return+="0"
+			if c < 0:
+				to_return+="1"
+			else:
+				to_return+="0"
 
 		return xxhash.xxh64(to_return).hexdigest()
 
@@ -174,10 +174,10 @@ class Abstractions:
 					c+=1
 				else:
 					c-=1
-				if c < 0 or i is j:
-					to_return+="1"
-				else:
-					to_return+="0"
+			if c < 0 or i is j:
+				to_return+="1"
+			else:
+				to_return+="0"
 
 		return xxhash.xxh64(to_return).hexdigest()
 

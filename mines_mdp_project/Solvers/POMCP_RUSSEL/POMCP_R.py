@@ -171,7 +171,7 @@ class Solver:
 			return False
 
 		elif self.Q.get(t).get(h).get(a) is None:
-			return FalseRaspbian stuck in read-only
+			return False
 		return True
 
 	def put_in_Q(self,t,h,a,r):

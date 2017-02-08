@@ -5,7 +5,7 @@ from Action_Definition import get_transition_y
 from Environment.Mines import Location
 from Environment.Mines import Mine_Data
 from random import randint
-from Solvers.POMCP_RUSSEL import POMCP_R
+from Solvers.POMCP_RUSSEL import POMCP_R_with_supple_tree
 import xxhash
 import time
 
@@ -205,7 +205,7 @@ class Agent:
 		self.init_x=x_
 		self.init_y=y_
 
-		self.solver = POMCP_R.Solver(max_depth_,depth_,Gamma_,upper_confidence_c_,action_space_num_,Mine_Data,map_size_)
+		self.solver = POMCP_R_with_supple_tree.Solver(max_depth_,depth_,Gamma_,upper_confidence_c_,action_space_num_,Mine_Data,map_size_)
 
 
 		self.location = np.ndarray(shape=(1,2), dtype=float)

@@ -24,38 +24,40 @@ away=(0,-1)
 to=(0,1)
 right=(1,0)
 left=(-1,0)
-top_level=3
+top_level=4
 top_level_choices=[]
-top_level_choices.append(to)
-top_level_choices.append(right)
-top_level_choices.append(left)
-top_level_choices.append(away)
+top_level_choices.append((to))
+top_level_choices.append((right))
+top_level_choices.append((left))
+top_level_choices.append((away))
 
 action_space=[]
 
 
-action_space.append(((to,to,to),len(action_space)))
-action_space.append(((away,to,to,to,to),len(action_space)))
+action_space.append((to,to,to))
+action_space.append((away,to,to,to,to))
 
-action_space.append(((right,to,to,to,left),len(action_space)))
-action_space.append(((right,to,left,to,to),len(action_space)))
-action_space.append(((right,to,to,left,to),len(action_space)))
-action_space.append(((right,left,to,to,to),len(action_space)))
-action_space.append(((to,right,to,left,to),len(action_space)))
-action_space.append(((to,right,to,to,left),len(action_space)))
-action_space.append(((to,to,right,to,left),len(action_space)))
-action_space.append(((to,right,left,to,to),len(action_space)))
-action_space.append(((to,to,right,left,to),len(action_space)))
+action_space.append((right,to,to,to,left))
+action_space.append((right,to,left,to,to))
+action_space.append((right,to,to,left,to))
+action_space.append((right,left,to,to,to))
+action_space.append((to,right,to,left,to))
+action_space.append((to,right,to,to,left))
+action_space.append((to,to,right,to,left))
+action_space.append((to,right,left,to,to))
+action_space.append((to,to,right,left,to))
 
-action_space.append(((left,to,to,to,right),len(action_space)))
-action_space.append(((left,to,right,to,to),len(action_space)))
-action_space.append(((left,to,to,right,to),len(action_space)))
-action_space.append(((left,right,to,to,to),len(action_space)))
-action_space.append(((to,left,to,right,to),len(action_space)))
-action_space.append(((to,left,to,to,right),len(action_space)))
-action_space.append(((to,to,left,to,right),len(action_space)))
-action_space.append(((to,left,right,to,to),len(action_space)))
-action_space.append(((to,to,left,right,to),len(action_space)))
+action_space.append((left,to,to,to,right))
+action_space.append((left,to,right,to,to))
+action_space.append((left,to,to,right,to))
+action_space.append((left,right,to,to,to))
+action_space.append((to,left,to,right,to))
+action_space.append((to,left,to,to,right))
+action_space.append((to,to,left,to,right))
+action_space.append((to,left,right,to,to))
+action_space.append((to,to,left,right,to))
+
+
 
 
 def print_seen(s):
@@ -182,23 +184,23 @@ class Solver:
 
 
 
-	def GetGreedyPrimitive(self,x,y,direction,s):
-		action = [direction]	
+	def GetGreedyPrimitive(self,x,y,direction,s,lvl):
+		action = []	
 		final_dir = direction	
-		for i in range(top_level-1,0,-1):
+		for i in range(lvl,0,-1):
 			(a,m) = self.arg_max(x,y,direction,s,i)
 			action.append(a)
-			direction = get_dir(direction,action[len(action)-1][0][0])
+			direction = get_dir(direction,action[len(action)-1][0])
 		
 		#print "FINAL DIRECTION", direction
 		return (action,direction)
 	
-	def OnlinePlanning(self,agent_,environment_data_,a_,time_to_work):
-		level=top_level-1
+	def OnlinePlanning(self,agent_,environment_data_,a_,time_to_work, top):
+		level=top-1
 		start = time.time()
 		end = start
 		agent_.imprint(a_)
-		self.print_n()
+		#self.print_n()
 		environment_data_.imprint(self.environment_data)
 		while end - start < time_to_work:
 			agent_.imprint(a_)
@@ -210,10 +212,11 @@ class Solver:
 
 		x=agent_.x
 		y=agent_.y
-		a,b =self.GetGreedyPrimitive(x,y,to,environment_data_)
+		#a,b =self.GetGreedyPrimitive(x,y,to,environment_data_)
+		#print_dir(b)
+		#return a
 
-		print a
-		return b
+	
 
 	def search(self,a_,direction,level,s):
 		#where t is a policy ((directions), policy num)		
@@ -235,7 +238,7 @@ class Solver:
 			self.s_[iteration_index][0].imprint(self.s_[iteration_index][1])
 			r1_total=0.
 			temp_dir = direction
-			for sub_sub_task in sub_task[0]:
+			for sub_sub_task in sub_task:
 				(r1,self.sTemp)= self.search(a_,get_dir(temp_dir,sub_sub_task),level-1,self.s_[iteration_index][1])
 				temp_dir=get_dir(temp_dir,sub_sub_task)
 				self.sTemp.imprint(self.s_[iteration_index][1])
@@ -310,7 +313,7 @@ class Solver:
 		#score=abf(get_dir(direction,sub_task[0][0]),x,y,s,level)
 		#print_dir(get_dir(direction,sub_task[0][0]))
 		#print score
-		for task in sub_task[0]:
+		for task in sub_task:
 			self.append_dict(self.Q,level,abf(get_dir(direction,task),x,y,s,level),0)
 			score+=self.Q[level][abf(get_dir(direction,task),x,y,s,level)]
 			direction = get_dir(direction,task)

@@ -89,14 +89,14 @@ def draw(x, y, width, height, graphics_index, alpha, orientation, depth, canvas_
 
 	glBegin(GL_QUADS)
 
-
-	glVertex3f(x+p1x, y+p1y, -1.0)
-	glTexCoord2f(1.0, 0.0)
-	glVertex3f(x+p2x, y+p2y, -1.0)
-	glTexCoord2f(1.0, 1.0)
-	glVertex3f(x+p3x, y+p3y, -1.0)
-	glTexCoord2f(0.0, 1.0)
-	glVertex3f(x+p4x, y+p4y, -1.0)
+#	glTexCoord2f(0.0, 0.0)
+#	glVertex3f(x+p1x, y+p1y, -1.0)
+#	glTexCoord2f(1.0, 0.0)
+#	glVertex3f(x+p2x, y+p2y, -1.0)
+#	glTexCoord2f(1.0, 1.0)
+#	glVertex3f(x+p3x, y+p3y, -1.0)
+#	glTexCoord2f(0.0, 1.0)
+#	glVertex3f(x+p4x, y+p4y, -1.0)
 
 	glTexCoord2f(0.0, 0.0)
 	glVertex3f(x+p1x, y+p1y, depth)
@@ -138,5 +138,7 @@ images =  [TexFromPNG (os.path.dirname(os.path.abspath(__file__))
 + "/object.png")]
 images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__))
 + "/uuv.png"))
+images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__))
++ "/arrow.png"))
 
 

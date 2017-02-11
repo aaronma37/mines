@@ -18,8 +18,7 @@ num_steps=5
 num_agents=1
 
 #CHOOSE ENVIRONMENT PARAMETERS
-map_size=50
-
+map_size=100
 #CHOOSE AGENT PARAMETERS
 max_depth=10
 depth=1
@@ -68,6 +67,7 @@ class Simulation:
 
 
 	def draw(self):
+		loc=(self.a.x,self.a.y)
 		basic_2.clear()
 		for i in range(0, map_size):
 			for j in range(0, map_size):
@@ -75,9 +75,41 @@ class Simulation:
 					basic_2.draw(self.e.get_loc_info(i,j).get_x(),self.e.get_loc_info(i,j).get_y(),self.e.get_loc_info(i,j).get_width(),self.e.get_loc_info(i,j).get_height(),0,self.e.get_mine_data().get_color(i,j)*map_size,0,-.1,map_size/10.)
 				
 
+		for arrow in self.a.arrows:
+			print arrow
+			X=arrow[0][0]
+			Y=arrow[0][1]
+			if arrow[1] == (1,0):
+				ww=arrow[2]/5
+				hh=arrow[2]
+				dire=4
+			elif arrow[1] == (-1,0):
+				ww=arrow[2]/5
+				hh=arrow[2]
+				dire=0
+			elif arrow[1] == (0,1):
+				ww=arrow[2]
+				hh=arrow[2]/5
+				dire=6
+			else:
+				dire=2
+				ww=arrow[2]
+				hh=arrow[2]/5	
+
+
+			basic_2.draw(self.e.get_sqr_loc(X), self.e.get_sqr_loc(Y), self.e.get_norm_size()*ww, self.e.get_norm_size()*hh, 2, 1,dire,-.1,map_size/10.)
+
 		basic_2.draw(self.e.get_loc_info(self.a.get_x(),self.a.get_y()).get_x(), self.e.get_loc_info(self.a.get_x(),self.a.get_y()).get_y(), self.e.get_loc_info(self.a.get_x(),self.a.get_y()).get_width(), self.e.get_loc_info(self.a.get_x(),self.a.get_y()).get_height(), 1, 1,0,-.1,map_size/10.)
 	
 		basic_2.draw(self.e.get_loc_info(self.e.mine_data.get_mine_location().get_x(),self.e.mine_data.get_mine_location().get_y()).get_x(), self.e.get_loc_info(self.e.mine_data.get_mine_location().get_x(),self.e.mine_data.get_mine_location().get_y()).get_y(), self.e.get_loc_info(self.e.mine_data.get_mine_location().get_x(),self.e.mine_data.get_mine_location().get_y()).get_width(), self.e.get_loc_info(self.e.mine_data.get_mine_location().get_x(),self.e.mine_data.get_mine_location().get_y()).get_height(), 1, 1,0,-.1,map_size/10.)
+
+
+
+
+
+
+
+
 
 		basic_2.end_draw()
 

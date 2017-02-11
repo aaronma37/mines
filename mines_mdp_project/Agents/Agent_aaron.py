@@ -6,7 +6,7 @@ from random import randint
 from Solvers.POMCP_RUSSEL import hierarchy_policy
 import xxhash
 import time
-
+import math
 
 import numpy as np
 
@@ -24,6 +24,13 @@ def print_dir(direction):
 		print "LEFT"
 	else:
 		print "RIGHT"
+
+def get_next(x,y,direction,level):
+	dist=int(math.pow(3,level))
+
+	x+=dist*direction[0]
+	y+=dist*direction[1]
+	return (x,y)
 
 def get_dir(direction,t):
 
@@ -57,7 +64,7 @@ def get_dir(direction,t):
 		else:
 			return (0,1)
 
-	print t,"WARNING NOT FOUND"
+	print t,"AGENT"
 
 
 class Agent: 
@@ -79,10 +86,67 @@ class Agent:
 		self.measurement_space=[]
 
 		self.reset(s)
-	
+		self.top_level=3
+		self.current_action_set=[]
+		for i in range(self.top_level):
+			self.current_action_set.append([])
+		self.arrows=[]
+		self.required_action=self.top_level
+
+	def make_arrows(self):
+		self.arrows=[]
+		direction = to
+		loc=(self.x,self.y)
+		print "new"
+		for i in range(len(self.current_action_set)-1,-1,-1):
+			
+			#direction = self.iterate_for_dir(self.current_action_set, len(self.current_action_set)-i-1)
+			for act in self.current_action_set[i][1:]:
+				print_dir(act)
+				#direction=get_dir(direction,act)
+				self.arrows.append((loc,get_dir(direction,act),math.pow(3,len(self.current_action_set)-1-i)))
+
+				loc = get_next(loc[0],loc[1],get_dir(direction,act),len(self.current_action_set)-1-i)				
+				print loc
+				
+		direction = self.iterate_for_dir(self.current_action_set, 0)
+		
+		#for i in range(0,self.top_level-1):
+		#	direction = get_dir(direction,self.current_action_set[i][0])
+
+		direction = get_dir(to,self.current_action_set[len(self.current_action_set)-1][0])
+		self.required_action= self.remove_from_action_space(self.current_action_set,len(self.current_action_set)-1)
+
+		#print len(self.current_action_set)
+		#if len(self.current_action_set[i][0]) == 0:
+			# remove element from i-1
+			#if len ==0
+			# remove element from i-1
+			#...	
+
+		#time.sleep(5)
+				
+		return direction	
+
+	def iterate_for_dir(self,s,end):
+		if len(s[0]) is 0:
+			return to
+		direction = to		
+		for i in range(len(s)-end):
+			direction = get_dir(direction,s[i][0])
+		return direction
+
 	def get_action_space_num_(self):
 		return self.action_space_num
 
+	def remove_from_action_space(self, s,i):
+		if i < 0:
+			return len(s)-1-i
+		s[i] = s[i][1:]
+		if len(s[i]) == 0:
+			return self.remove_from_action_space(s,i-1)
+
+		return len(s)-1-i
 
 	def reset(self,s):
 		self.x=self.init_x
@@ -115,14 +179,27 @@ class Agent:
 
 	def step(self,environment_data_,num_steps_,a_,time_to_work):
 		environment_data_.update_agent_location((self.x,self.y))
-		a = self.solver.OnlinePlanning(self, environment_data_,a_,time_to_work)
+		self.solver.OnlinePlanning(self, environment_data_,a_,time_to_work,self.top_level)
+		if self.required_action > 0:
+			#direction= self.iterate_for_dir(self.current_action_set,self.required_action)
+			direction=to			
+			a,b =self.solver.GetGreedyPrimitive(self.x,self.y,direction,environment_data_,self.required_action)
 
-		#print "CHOSE: UP"
-		#print_dir(a[len(a)-3][0][0])
-		#print_dir(a[len(a)-2][0][0])
-		#print_dir(a[len(a)-1][0][0])
+			for i in range(self.required_action):
+				for ele in a[i]:
+					self.current_action_set[len(self.current_action_set)-1-i].append(ele)
+			self.required_action=0
 
-		self.execute(a,environment_data_)
+
+#		for i in range(len(self.current_action_set)-1):
+#				for ele in self.current_action_set[i]:
+#					print_dir(ele)
+
+
+
+		direction = self.make_arrows()
+
+		self.execute(direction,environment_data_)
 
 
 	def execute(self,action_,environment_data_):

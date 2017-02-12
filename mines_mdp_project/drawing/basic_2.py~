@@ -105,9 +105,8 @@ def draw(x, y, width, height, graphics_index, alpha, orientation, depth, canvas_
 
         glTexCoord2f(0.0, 1.0); glVertex3f(x+px[0], y+py[0],  depth);
         glTexCoord2f(1.0, 1.0); glVertex3f( x+px[1], y+py[1],  depth);
-        glTexCoord2f(1.0, 0.0); glVertex3f(x+px[3],  y+py[3],  depth);
         glTexCoord2f(0.0, 0.0); glVertex3f( x+px[2],  y+py[2],  depth);
-
+        glTexCoord2f(1.0, 0.0); glVertex3f(x+px[3],  y+py[3],  depth);
 	glEnd()
 
 

@@ -35,7 +35,7 @@ action_space=[]
 
 
 action_space.append((to,to,to))
-#action_space.append((away,to,to,to,to))
+action_space.append((away,to,to,to,to))
 
 action_space.append((right,to,to,to,left))
 action_space.append((right,to,left,to,to))

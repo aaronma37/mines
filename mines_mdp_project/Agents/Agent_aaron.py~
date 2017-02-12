@@ -86,7 +86,7 @@ class Agent:
 		self.measurement_space=[]
 
 		self.reset(s)
-		self.top_level=2
+		self.top_level=3
 		self.h_tasks=[]
 		for i in range(self.top_level+1):
 			self.h_tasks.append(None)

@@ -64,19 +64,24 @@ def clear():
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) # clear the screen
 
+	#glViewport(0, 0, 2, 2)
+
+
+
 
 def draw(x, y, width, height, graphics_index, alpha, orientation, depth, canvas_size):     
 	setupTexture(graphics_index)
 
-	set_size(canvas_size)
+	gluPerspective(90,1,0,3)
+	gluLookAt(0, 0, 1.01,  0, 0, 0, 0, 1, 0)
+	#set_size(canvas_size)
 	glColor4f(1., 1., 1.,alpha)
-
 	orientation_=360./8.*(orientation+4.)*3.14/180.
 
-	width = width/canvas_size
-	height= height/canvas_size
-	x=x/canvas_size
-	y=y/canvas_size
+	#width = width/canvas_size
+	#height= height/canvas_size
+	#x=x#/canvas_size
+	#y=y#/canvas_size
 
 	px=[1,1,1,1]
 	py=[1,1,1,1]
@@ -161,6 +166,8 @@ glutInit()                                             # initialize glut
 glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
 glutInitWindowSize(width, height)                      # set window size
 glutInitWindowPosition(10, 0)                           # set window position
+
+
 
 window = glutCreateWindow("noobtuts.com")              # create window with title
 #glutDisplayFunc(draw)                                  # set draw function callback

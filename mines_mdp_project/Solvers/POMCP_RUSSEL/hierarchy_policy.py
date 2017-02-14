@@ -96,9 +96,9 @@ def abf(direction,x_,y_,s,level):
 	#abstraction is a function of %known atm
 	score=0.0
 	#2*
-	w=int(2*math.pow(3,level-1)+1)
+	w=int(2*math.pow(3,level)+1)
 	#l=int(math.pow(3,level+1))
-	l=int(math.pow(3,level)+1)
+	l=int(math.pow(3,level+1)+1)
 
 	size=w*l
 
@@ -203,23 +203,27 @@ class Solver:
 		self.Q={}#{level_of_hierarchy:{ab():Expected Reward}}
 		self.counter=0
 		self.environment_data=E(e_args)
-
+		self.last_reward=0
+		self.action_counter=0
 		self.s_ = np.ndarray(shape=(1000,3), dtype=object)
 		for i in range(1000):
 			for j in range(3):
 				self.s_[i][j] = E(e_args)
+		self.actual_Q={}
+		self.actual_N={}
+		self.last_abstraction=None
 
 
 
 	def GetGreedyPrimitive(self,x,y,direction,s,lvl):
-		self.print_n()
-		(a,m) = self.arg_max(x,y,direction,s,lvl+1)
+		#self.print_n()
+		(a,m) = self.arg_max(x,y,direction,s,lvl)
 		t = task(a,direction,lvl,(x,y))
 		return t
 
 	def get_new_macro(self,x,y,s,level):
 		max=-1
-
+		
 		for i in top_level_choices:
 			self.append_dict(self.Q,level,abf(i,x,y,s,level),0)
 			#if abf(i,x,y,s,level)>max:#self.Q[level][abf(i,x,y,s,level)] > max:
@@ -227,7 +231,22 @@ class Solver:
 				a = i
 				max= self.Q[level][abf(i,x,y,s,level)]
 				#max= abf(i,x,y,s,level)#self.Q[level][abf(i,x,y,s,level)]
-		t = task([a],to,level,(x,y))
+		t = self.GetGreedyPrimitive(x,y,a,s,level)
+
+		r=s.get_reward()-self.last_reward
+		self.append_dict(self.actual_Q,level,self.last_abstraction,0.)
+		self.append_dict(self.actual_N,level,self.last_abstraction,0.)
+		print "Expected gain: ", self.actual_Q.get(level).get(self.last_abstraction), ", State: ", self.last_abstraction, ", Number of visits: ", self.actual_N.get(level).get(self.last_abstraction)
+		print "actual gain: ", s.get_reward()-self.last_reward
+		self.last_reward=s.get_reward()	
+
+		if self.last_abstraction is not None:
+			self.append_dict(self.actual_Q,level,self.last_abstraction,0.)
+			self.append_dict(self.actual_N,level,self.last_abstraction,1.)
+			self.append_dict(self.actual_Q,level,self.last_abstraction,(r-self.actual_Q.get(level).get(self.last_abstraction))/self.actual_N.get(level).get(self.last_abstraction))
+
+		self.last_abstraction= abf(t.direction,x,y,s,level)
+		
 		return t
 	
 	def OnlinePlanning(self,agent_,environment_data_,a_,time_to_work, top):
@@ -244,6 +263,7 @@ class Solver:
 			environment_data_.imprint(self.environment_data)
 			self.counter=0
 			#rint "start"
+			self.action_counter=0
 			self.search(a_,random.choice(top_level_choices),level,self.environment_data)
 			end = time.time()
 
@@ -263,7 +283,7 @@ class Solver:
 			(s,r) = a_.simulate(direction,s)
 			#self.sTemp.imprint(self.s_[iteration_index][1])	
 			#print "tiny r", r
-				
+			self.action_counter+=1
 			return (r,s)
 		else:
 			abstraction =abf(direction,a_.get_x(),a_.get_y(),s,level)
@@ -283,12 +303,15 @@ class Solver:
 			self.append_dict(self.N,level,abstraction,1)
 			#calculate R
 			r= r1_total
-
+			#print "LEVEL", level, r
 			#update Q
 			self.append_dict(self.Q,level,abstraction,0)
 			self.append_dict(self.Q,level,abstraction,(r-self.Q.get(level).get(abstraction))/self.N.get(level).get(abstraction))
 
-			#return 					
+			#return 
+
+			#if level == 1:
+				#print "action counter sim: ", self.action_counter					
 			return (r,s)
 
 

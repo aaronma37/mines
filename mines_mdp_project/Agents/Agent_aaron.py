@@ -92,6 +92,7 @@ class Agent:
 			self.h_tasks.append(None)
 		self.arrows=[]
 		self.request_from_level=self.top_level+1
+		self.current_counter=0
 
 	def make_arrows(self):
 		self.arrows=[]
@@ -101,10 +102,10 @@ class Agent:
 
 		for t in self.h_tasks:
 			#bloc=t.starting_loc
-			for a_ in t.a:
-
-				#loc = ((aloc[0]+bloc[0])/2, (aloc[1]+bloc[1])/2)
-				self.arrows.append((loc,get_dir(t.direction,a_),math.pow(3,t.level)))
+			for a_ in t.a[1:]:
+				bloc = get_next(loc[0],loc[1],get_dir(t.direction,a_),t.level)
+				bloc = ((loc[0]+bloc[0])/2, (loc[1]+bloc[1])/2)
+				self.arrows.append((bloc,get_dir(t.direction,a_),math.pow(3,t.level)))
 				loc= get_next(loc[0],loc[1],get_dir(t.direction,a_),t.level)
 
 		immediate_direction = get_dir(self.h_tasks[0].direction,self.h_tasks[0].a[0])
@@ -147,6 +148,7 @@ class Agent:
 		#self.x=randint(0,self.map_size-1)
 		#self.y=randint(0,self.map_size-1)
 		s.update_agent_location((self.x,self.y))
+		self.solver.last_abstraction = None
 
 
 		#self.search_tree.clear()
@@ -177,10 +179,15 @@ class Agent:
 		#  while level requested > 0
 			#calculate lower level
 			# append to h.
-
-		
+	
+		if self.current_counter > math.pow(3,self.top_level+1):
+			self.request_from_level=self.top_level+1
+			self.current_counter=0
 		if self.request_from_level > self.top_level:
+
 			self.h_tasks[self.top_level] = self.solver.get_new_macro(self.x,self.y,environment_data_,self.top_level)
+			#direction = get_dir(self.h_tasks[self.top_level].direction,self.h_tasks[self.top_level].a[0])
+			#self.h_tasks[self.top_level]=self.solver.GetGreedyPrimitive(self.x,self.y,direction,environment_data_,self.top_level)
 			self.request_from_level = self.top_level
 
 		self.solver.OnlinePlanning(self, environment_data_,a_,time_to_work,self.top_level)
@@ -191,7 +198,9 @@ class Agent:
 			self.h_tasks[self.request_from_level]=self.solver.GetGreedyPrimitive(self.x,self.y,direction,environment_data_,self.request_from_level)
 		  	
 		#for t in self.h_tasks:
-		#self.h_tasks[-1].print_data()
+		#	t.print_data()
+		self.current_counter+=1
+
 
 
 		direction = self.make_arrows()

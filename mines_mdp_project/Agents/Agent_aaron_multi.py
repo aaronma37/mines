@@ -3,7 +3,7 @@
 from Environment.Mines import Location
 from Environment.Mines import Mine_Data
 from random import randint
-from Solvers.POMCP_RUSSEL import hierarchy_policy
+from Solvers.POMCP_RUSSEL import hierarchy_policy_multi
 import xxhash
 import time
 import math
@@ -75,7 +75,7 @@ class Agent:
 		self.init_x=x_
 		self.init_y=y_
 
-		self.solver = hierarchy_policy.Solver(Mine_Data,map_size_)
+		self.solver = hierarchy_policy_multi.Solver(Mine_Data,map_size_)
 
 		self.location = np.ndarray(shape=(1,2), dtype=float)
 
@@ -84,9 +84,10 @@ class Agent:
 		self.map_size=map_size_
 
 		self.measurement_space=[]
+		self.alpha=[1,0]
 
 		self.reset(s)
-		self.top_level=2
+		self.top_level=1
 		self.h_tasks=[]
 		for i in range(self.top_level+1):
 			self.h_tasks.append(None)
@@ -184,10 +185,7 @@ class Agent:
 			self.request_from_level=self.top_level+1
 			self.current_counter=0
 		if self.request_from_level > self.top_level:
-
-			self.h_tasks[self.top_level] = self.solver.get_new_macro(self.x,self.y,environment_data_,self.top_level)
-			#direction = get_dir(self.h_tasks[self.top_level].direction,self.h_tasks[self.top_level].a[0])
-			#self.h_tasks[self.top_level]=self.solver.GetGreedyPrimitive(self.x,self.y,direction,environment_data_,self.top_level)
+			self.h_tasks[self.top_level] = self.solver.get_new_macro(self.x,self.y,environment_data_,self.top_level,self.alpha)
 			self.request_from_level = self.top_level
 
 		self.solver.OnlinePlanning(self, environment_data_,a_,time_to_work,self.top_level)
@@ -195,7 +193,7 @@ class Agent:
 		while self.request_from_level > 0:
 			direction = get_dir(self.h_tasks[self.request_from_level].direction,self.h_tasks[self.request_from_level].a[0])
 			self.request_from_level-=1
-			self.h_tasks[self.request_from_level]=self.solver.GetGreedyPrimitive(self.x,self.y,direction,environment_data_,self.request_from_level)
+			self.h_tasks[self.request_from_level]=self.solver.GetGreedyPrimitive(self.x,self.y,direction,environment_data_,self.request_from_level,self.alpha)
 		  	
 		#for t in self.h_tasks:
 		#	t.print_data()
@@ -223,7 +221,7 @@ class Agent:
 
 	def simulate(self,action_,s):
 		base_reward= s.get_reward()
-
+		base_reward2= s.get_reward2()
 		(x,y) = self.get_transition(action_,self.x,self.y)
 		
 		if s.check_boundaries(Location(x,y)) is True:
@@ -234,7 +232,7 @@ class Agent:
 		self.measure(s,True)
 
 
-		return (s,s.get_reward()-base_reward)
+		return (s,s.get_reward()-base_reward, -s.get_reward2()+base_reward2)
 
 
 	def recalculate_measurement_space(self):

@@ -6,6 +6,7 @@ from random import randint
 import xxhash
 import random
 import numpy as np
+import math
 
 
 class Mine_Data: 
@@ -109,6 +110,9 @@ class Mine_Data:
 		if self.complete is True:
 			return self.max_reward
 		return self.max_reward-self.pre_num_unknown_locations
+
+	def get_reward2(self):
+		return math.sqrt(math.fabs(self.agent_loc[0]-50)*math.fabs(self.agent_loc[0]-50)+math.fabs(self.agent_loc[1]-50)*math.fabs(self.agent_loc[1]-50))
 
 
 

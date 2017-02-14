@@ -108,6 +108,7 @@ def abf(direction,x_,y_,s,level):
 				if s.check_boundaries(Location(x,y)) == True:
 					if bool(s.seen[x][y]) == False:
 						score+=1.
+		dist = math.sqrt(math.fabs(l*direction[0]/2+x_-50)*math.fabs(l*direction[0]/2+x_-50)+math.fabs(y_-50)*math.fabs(y_-50))
 	elif direction == (-1,0):
 
 		#print x_,y_, "START"
@@ -118,13 +119,17 @@ def abf(direction,x_,y_,s,level):
 					if bool(s.seen[x][y]) == False:
 						score+=1.
 		#print_seen(s)
+		dist = math.sqrt(math.fabs(l*direction[0]/2+x_-50)*math.fabs(l*direction[0]/2+x_-50)+math.fabs(y_-50)*math.fabs(y_-50))
 
 	elif direction == (0,1):
 		for y in range(y_,y_+l+1):
 			for x in range(x_-w/2,x_+w/2+1):
 				if s.check_boundaries(Location(x,y)) == True:
 					if bool(s.seen[x][y]) == False:
-						score+=1.
+						score+=1.	
+
+		dist = math.sqrt(math.fabs(l*direction[0]/2+y_-50)*math.fabs(l*direction[0]/2+y_-50)+math.fabs(x_-50)*math.fabs(x_-50))
+
 	elif direction == (0,-1):
 		#print direction
 		for y in range(y_,y_-l-1,-1):
@@ -134,10 +139,10 @@ def abf(direction,x_,y_,s,level):
 					if bool(s.seen[x][y]) == False:
 						score+=1.
 
-		#print score
+		dist = math.sqrt(math.fabs(l*direction[0]/2+y_-50)*math.fabs(l*direction[0]/2+y_-50)+math.fabs(x_-50)*math.fabs(x_-50))
 
-
-	return int(score/float(size)*10)	
+		
+	return str(int(score/float(size)*10))+":"+str(int(dist)/10)	
 
 def hash_(string):
 	return xxhash.xxh64(string).hexdigest()
@@ -220,36 +225,47 @@ class Solver:
 
 
 
-	def GetGreedyPrimitive(self,x,y,direction,s,lvl):
-		#self.print_n()
-		(a,m) = self.arg_max(x,y,direction,s,lvl)
+	def GetGreedyPrimitive(self,x,y,direction,s,lvl,alpha):
+		(a,m) = self.arg_max(x,y,direction,s,lvl, alpha)
 		t = task(a,direction,lvl,(x,y))
 		return t
 
-	def get_new_macro(self,x,y,s,level):
-		max=-1
+
+
+
+
+
+	def get_new_macro(self,x,y,s,level,alpha):
+		max=-1000
 		
 		for i in top_level_choices:
-			self.append_dict(self.Q,level,abf(i,x,y,s,level),0)
+			self.append_dict(self.Q,level,abf(i,x,y,s,level),0.)
+			self.append_dict(self.Q2,level,abf(i,x,y,s,level),0.)
 			#if abf(i,x,y,s,level)>max:#self.Q[level][abf(i,x,y,s,level)] > max:
-			if self.Q[level][abf(i,x,y,s,level)] > max:
+			if self.Q[level][abf(i,x,y,s,level)]*alpha[0] + self.Q2[level][abf(i,x,y,s,level)]*alpha[1] > max:
 				a = i
-				max= self.Q[level][abf(i,x,y,s,level)]
+				max= self.Q[level][abf(i,x,y,s,level)]*alpha[0] + self.Q2[level][abf(i,x,y,s,level)]*alpha[1]
 				#max= abf(i,x,y,s,level)#self.Q[level][abf(i,x,y,s,level)]
-		t = self.GetGreedyPrimitive(x,y,a,s,level)
+		t = self.GetGreedyPrimitive(x,y,a,s,level,alpha)
 
 		r=s.get_reward()-self.last_reward
-		r2=s.get_reward2()-self.last_reward2
+		r2=-s.get_reward2()
 		self.append_dict(self.actual_Q,level,self.last_abstraction,0.)
+		self.append_dict(self.actual_Q2,level,self.last_abstraction,0.)
 		self.append_dict(self.actual_N,level,self.last_abstraction,0.)
-		print "Expected gain: ", self.actual_Q.get(level).get(self.last_abstraction), ", State: ", self.last_abstraction, ", Number of visits: ", self.actual_N.get(level).get(self.last_abstraction)
-		print "actual gain: ", s.get_reward()-self.last_reward
+		print "Expected gain: ", self.actual_Q.get(level).get(self.last_abstraction),self.actual_Q2.get(level).get(self.last_abstraction), ", State: ", self.last_abstraction, ", Number of visits: ", self.actual_N.get(level).get(self.last_abstraction)
+		print "actual gain: ", r
+		print "actual gain: ", r2
+
+
 		self.last_reward=s.get_reward()	
 
 		if self.last_abstraction is not None:
 			self.append_dict(self.actual_Q,level,self.last_abstraction,0.)
+			self.append_dict(self.actual_Q2,level,self.last_abstraction,0.)
 			self.append_dict(self.actual_N,level,self.last_abstraction,1.)
 			self.append_dict(self.actual_Q,level,self.last_abstraction,(r-self.actual_Q.get(level).get(self.last_abstraction))/self.actual_N.get(level).get(self.last_abstraction))
+			self.append_dict(self.actual_Q2,level,self.last_abstraction,(r-self.actual_Q2.get(level).get(self.last_abstraction))/self.actual_N.get(level).get(self.last_abstraction))
 
 		self.last_abstraction= abf(t.direction,x,y,s,level)
 		
@@ -260,7 +276,7 @@ class Solver:
 		start = time.time()
 		end = start
 		agent_.imprint(a_)
-		#self.print_n()
+		self.print_n()
 		x=agent_.x
 		y=agent_.y
 		environment_data_.imprint(self.environment_data)
@@ -286,39 +302,37 @@ class Solver:
 
 		if level==-1:
 
-			(s,r) = a_.simulate(direction,s)
+			(s,r1,r2) = a_.simulate(direction,s)
 			#self.sTemp.imprint(self.s_[iteration_index][1])	
 			#print "tiny r", r
 			self.action_counter+=1
-			return (r,s)
+			return (r1,r2,s)
 		else:
 			abstraction =abf(direction,a_.get_x(),a_.get_y(),s,level)
 			sub_task = self.arg_max_ucb(a_,direction,s,level)
 			#self.s_[iteration_index][0].imprint(self.s_[iteration_index][1])
 			r1_total=0.
+			r2_total=0.
 			counter2=0
 			for sub_sub_task in sub_task:
-				(r1,s)= self.search(a_,get_dir(direction,sub_sub_task),level-1,s)
+				(r1,r2,s)= self.search(a_,get_dir(direction,sub_sub_task),level-1,s)
 				#temp_dir=get_dir(temp_dir,sub_sub_task)
 				#self.sTemp.imprint(self.s_[iteration_index][1])
 				r1_total+=math.pow(.95,counter2)*r1
+				r2_total+=math.pow(.95,counter2)*r2
 				counter2+=1
 
 			#update N
 
 			self.append_dict(self.N,level,abstraction,1)
-			#calculate R
-			r= r1_total
-			#print "LEVEL", level, r
-			#update Q
+
 			self.append_dict(self.Q,level,abstraction,0)
-			self.append_dict(self.Q,level,abstraction,(r-self.Q.get(level).get(abstraction))/self.N.get(level).get(abstraction))
+			self.append_dict(self.Q,level,abstraction,(r1_total-self.Q.get(level).get(abstraction))/self.N.get(level).get(abstraction))
 
-			#return 
-
-			#if level == 1:
-				#print "action counter sim: ", self.action_counter					
-			return (r,s)
+			self.append_dict(self.Q2,level,abstraction,0)
+			self.append_dict(self.Q2,level,abstraction,(r2_total-self.Q2.get(level).get(abstraction))/self.N.get(level).get(abstraction))
+					
+			return (r1_total,r2_total,s)
 
 
 
@@ -332,32 +346,42 @@ class Solver:
 
 
 
-	def arg_max(self,x,y,direction,s,level):
-		max=-1
+	def arg_max(self,x,y,direction,s,level, alpha):
+		max=-1000
 
 
 		for task in action_space:
 
-			if self.get_score(task,direction,x,y,s,level) > max:
+			if self.get_score(task,direction,x,y,s,level,alpha,0) + self.get_score(task,direction,x,y,s,level,alpha,1) > max:
 				a = task
-				max=self.get_score(task,direction,x,y,s,level)
+				max=self.get_score(task,direction,x,y,s,level,alpha,0) + self.get_score(task,direction,x,y,s,level,alpha,1)
 										
 
 	
 		return a,max
 
-	def get_score(self,sub_task,direction,x,y,s,level):
+	def get_score(self,sub_task,direction,x,y,s,level, alpha, alpha_index):
 	
 
 		count=0.0
 		score=0.0
 
-		for task in sub_task:
-			self.append_dict(self.Q,level,abf(get_dir(direction,task),x,y,s,level),0)
-			score+=math.pow(.95,count)*self.Q[level][abf(get_dir(direction,task),x,y,s,level)]#abf(get_dir(direction,task),x,y,s,level)#
-			(x,y)=get_next(x,y,get_dir(direction,task),level)
-			count+=1.
-		return score/count
+		if alpha_index==0:
+	
+			for task in sub_task:
+				self.append_dict(self.Q,level,abf(get_dir(direction,task),x,y,s,level),0)
+				score+=math.pow(.95,count)*self.Q[level][abf(get_dir(direction,task),x,y,s,level)]#abf(get_dir(direction,task),x,y,s,level)#
+				(x,y)=get_next(x,y,get_dir(direction,task),level)
+				count+=1.
+
+		else:
+			for task in sub_task:
+				self.append_dict(self.Q2,level,abf(get_dir(direction,task),x,y,s,level),0)
+				score+=math.pow(.95,count)*self.Q2[level][abf(get_dir(direction,task),x,y,s,level)]#abf(get_dir(direction,task),x,y,s,level)#
+				(x,y)=get_next(x,y,get_dir(direction,task),level)
+				count+=1.
+			
+		return score/count*alpha[alpha_index]
 
 
 
@@ -382,85 +406,14 @@ class Solver:
 
 
 
-#	def in_dict(self,N,k):
-#		if len(k) > 1:
-#			if N.get(k[0]) is None:
-#				return False
-#			return self.in_dict(N[k[0]],k[1:])
-#		else:
-#			if N.get(k[0]) is None:
-#				return False
-#			else:
-#				return True	
-			
-
-
-
-
-
-			
-
-
-
-
-#	def append_dict(self, N, k,r):
-#		if len(k) > 1:
-#			if N.get(k[0]) is None:
-#				N[k[0]] = {}
-#			self.append_dict(N[k[0]],k[1:],r)
-#		else:
-#			if N.get(k[0]) is None:
-#				N[k[0]]=r
-#			else:
-#				N[k[0]]+=r
-#
-#	def append_dict_Q(self, N, Na, k,r):
-#		if len(k) > 1:
-#			if N.get(k[0]) is None:
-#				N[k[0]] = {}
-#			self.append_dict_Q(N[k[0]],Na[k[0]],k[1:],r)
-#		else:
-#			if N.get(k[0]) is None:
-#				N[k[0]]=r
-#			else:
-#				N[k[0]]+=(r-N[k[0]])/(Na[k[0]])
-			
-
-
 	def print_n(self):
 		for ele in self.N:
 
 			for ele2 in self.N[ele]:
 				print ele,ele2,self.N[ele][ele2]
 				print ele,ele2,self.Q[ele][ele2]
+				print ele,ele2,self.Q2[ele][ele2]
 
-#	def rollout(self, a_, t, s, h, d, abf,sb):
-#
-#		s0 = self.E(self.e_args)
-#		s1 = self.E(self.e_args)
-#		s2 = self.E(self.e_args)
-#
-#		s.imprint(s0)
-#
-#		if d>= self.H or t[1] is abf(s0):
-#			return (0,0,h,s0)
-#		else:
-#			a = self.GetPrimitive(t,h,s,sb)
-#			(self.sTemp,r1) = a_.simulate(a,s0)
-#			self.sTemp.imprint(s1)
-#			x = abf(s1)
-#			(r2,n,h2,self.sTemp) = self.rollout(a_,t,s1,self.h_it(h+self.h_it(t[0]+t[1])+x),d+1,abf,sb)
-#			self.sTemp.imprint(s2)
-#			r = r1 + self.Gamma * r2
-#			return (r,n+1,h2,s2)
-
-
-
-
-#		for i in range(0, num_steps):
-#			base_reward = environment_data_.get_reward()
-#			agent_.simulate(randint(0,agent_.get_action_size()),s)
-#			self.reward_list.append(environment_data_.get_reward()-base_reward)
-			
+	
 
 

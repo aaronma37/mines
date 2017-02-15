@@ -95,6 +95,7 @@ def print_seen(s):
 def abf(direction,x_,y_,s,level):
 	#abstraction is a function of %known atm
 	score=0.0
+	ms=0
 	#2*
 	w=int(2*math.pow(3,level)+1)
 	#l=int(math.pow(3,level+1))
@@ -108,7 +109,7 @@ def abf(direction,x_,y_,s,level):
 				if s.check_boundaries(Location(x,y)) == True:
 					if bool(s.seen[x][y]) == False:
 						score+=1.
-		dist = math.sqrt(math.fabs(l*direction[0]/2+x_-50)*math.fabs(l*direction[0]/2+x_-50)+math.fabs(y_-50)*math.fabs(y_-50))
+		dist = math.sqrt(math.fabs(l*direction[0]/2+x_-ms)*math.fabs(l*direction[0]/2+x_-ms)+math.fabs(y_-ms)*math.fabs(y_-ms))
 	elif direction == (-1,0):
 
 		#print x_,y_, "START"
@@ -119,7 +120,7 @@ def abf(direction,x_,y_,s,level):
 					if bool(s.seen[x][y]) == False:
 						score+=1.
 		#print_seen(s)
-		dist = math.sqrt(math.fabs(l*direction[0]/2+x_-50)*math.fabs(l*direction[0]/2+x_-50)+math.fabs(y_-50)*math.fabs(y_-50))
+		dist = math.sqrt(math.fabs(l*direction[0]/2+x_-ms)*math.fabs(l*direction[0]/2+x_-ms)+math.fabs(y_-ms)*math.fabs(y_-ms))
 
 	elif direction == (0,1):
 		for y in range(y_,y_+l+1):
@@ -128,7 +129,7 @@ def abf(direction,x_,y_,s,level):
 					if bool(s.seen[x][y]) == False:
 						score+=1.	
 
-		dist = math.sqrt(math.fabs(l*direction[0]/2+y_-50)*math.fabs(l*direction[0]/2+y_-50)+math.fabs(x_-50)*math.fabs(x_-50))
+		dist = math.sqrt(math.fabs(l*direction[1]/2+y_-ms)*math.fabs(l*direction[1]/2+y_-ms)+math.fabs(x_-ms)*math.fabs(x_-ms))
 
 	elif direction == (0,-1):
 		#print direction
@@ -139,7 +140,7 @@ def abf(direction,x_,y_,s,level):
 					if bool(s.seen[x][y]) == False:
 						score+=1.
 
-		dist = math.sqrt(math.fabs(l*direction[0]/2+y_-50)*math.fabs(l*direction[0]/2+y_-50)+math.fabs(x_-50)*math.fabs(x_-50))
+		dist = math.sqrt(math.fabs(l*direction[1]/2+y_-ms)*math.fabs(l*direction[1]/2+y_-ms)+math.fabs(x_-ms)*math.fabs(x_-ms))
 
 		
 	return str(int(score/float(size)*10))+":"+str(int(dist)/10)	
@@ -276,7 +277,7 @@ class Solver:
 		start = time.time()
 		end = start
 		agent_.imprint(a_)
-		self.print_n()
+		#self.print_n()
 		x=agent_.x
 		y=agent_.y
 		environment_data_.imprint(self.environment_data)

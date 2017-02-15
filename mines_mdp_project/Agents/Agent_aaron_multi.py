@@ -146,8 +146,8 @@ class Agent:
 	def reset(self,s):
 		self.x=self.init_x
 		self.y=self.init_y
-		#self.x=randint(0,self.map_size-1)
-		#self.y=randint(0,self.map_size-1)
+		self.x=randint(0,self.map_size-1)
+		self.y=randint(0,self.map_size-1)
 		s.update_agent_location((self.x,self.y))
 		self.solver.last_abstraction = None
 

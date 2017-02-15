@@ -21,12 +21,13 @@ class Mine_Data:
 		self.PFS = np.ndarray(shape=(map_size,map_size), dtype=float)
 		self.color = np.ndarray(shape=(map_size,map_size), dtype=float)
 		self.seen = np.ndarray(shape=(map_size,map_size), dtype=bool)
-
+		self.temp_seen = np.ndarray(shape=(map_size,map_size), dtype=bool)
 		self.map_size=map_size
 		self.mine_location = Location(randint(0,self.map_size-1),randint(0,self.map_size-1))
 		self.complete=True
 		self.max_reward=self.map_size*self.map_size
 		self.reset()
+
 
 	def get_map_size(self):
 		return self.map_size
@@ -62,8 +63,8 @@ class Mine_Data:
 		self.pre_num_unknown_locations=self.map_size*self.map_size
 
 
-	def update_probabilities(self):
-		self.PFS.fill(1./self.pre_num_unknown_locations)
+#	def update_probabilities(self):
+#		self.PFS.fill(1./self.pre_num_unknown_locations)
 
 	def get_hash(self):
 
@@ -88,14 +89,31 @@ class Mine_Data:
 	def set_pre_unknown(self, num):
 		self.pre_num_unknown_locations = num
 
+	def move(self):
+		#SHIFTS ALL DOWN
+		self.temp_seen=self.seen.copy()
+
+
+		self.seen[1:][:] = self.temp_seen[:-1][:]
+		#self.color[1:][:] = self.color[:-1][:]
+		#np.delete(self.seen,-1,1)
+		#for i in range(0,self.map_size-1,1):
+		#	for j in range(self.map_size):
+		#		self.seen[i][j]=bool(self.seen[i+1][j])
+		#for j in range(self.map_size):
+		#	self.seen[0][j]=False
+
+		#self.mine_location=Location(self.mine_location.get_x()+1,self.mine_location.get_y())
+		
+
 	def imprint(self, a):
 		a.set_complete(self.complete)
-		a.mine_location.set_x(self.mine_location.get_x())
-		a.mine_location.set_y(self.mine_location.get_y())
+		#a.mine_location.set_x(self.mine_location.get_x())
+		#a.mine_location.set_y(self.mine_location.get_y())
 		a.max_reward = self.max_reward
-		a.PFS=self.PFS.copy()
+		#a.PFS=self.PFS.copy()
 		a.seen=self.seen.copy()
-		a.update_agent_location(self.agent_loc)
+		#a.update_agent_location(self.agent_loc)
 
 
 		#for i in range(0, self.map_size):	
@@ -148,7 +166,7 @@ class Mine_Data:
 				self.PFS[loc.get_x()][loc.get_y()]=0.0
 				self.color[loc.get_x()][loc.get_y()]=0.0
 				self.pre_num_unknown_locations-= 1
-				self.update_probabilities()
+				#self.update_probabilities()
 
 		else:
 			if self.complete is True:
@@ -168,7 +186,7 @@ class Mine_Data:
         			self.PFS[loc.get_x()][loc.get_y()]=0.0
     				self.color[loc.get_x()][loc.get_y()]=0.0
 				self.pre_num_unknown_locations-=1
-        			self.update_probabilities()
+        			#self.update_probabilities()
 
 	def check_boundaries(self, loc):
 		if loc.get_x()<0 or loc.get_x() >= self.map_size:

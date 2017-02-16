@@ -13,7 +13,7 @@ import time
 sample_size=100
 max_num_steps=5
 num_workers=multiprocessing.cpu_count()-1
-time_to_work=1
+time_to_work=.5
 num_steps=5
 num_agents=1
 

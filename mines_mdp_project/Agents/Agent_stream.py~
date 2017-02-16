@@ -268,7 +268,7 @@ class Agent:
 			self.measure(s,True)
 			
 			if (self.x,self.y) == s.middle:
-				self.battery+=1
+				self.battery+=5
 				if self.battery >100:
 					self.battery=100
 

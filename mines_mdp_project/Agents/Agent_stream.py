@@ -7,8 +7,122 @@ from Solvers.POMCP_RUSSEL import streams
 import xxhash
 import time
 import math
-
+from sets import Set
 import numpy as np
+
+class policy:
+	def __init__(self,index,name):
+		self.index=index
+		self.name=name
+
+		self.action_string=[(0,0)]
+	
+		self.num_steps=5
+
+				
+
+		if self.index==2:
+			for i in range(5):
+				self.action_string.append((1,0))
+			self.num_steps=5
+
+		elif self.index==3:
+			for i in range(5):
+				self.action_string.append((-1,0))
+			self.num_steps=5
+		elif self.index==4:
+			for i in range(5):
+				self.action_string.append((0,1))
+			self.num_steps=5
+		elif self.index==5:
+			for i in range(5):
+				self.action_string.append((0,-1))
+			self.num_steps=5
+		elif self.index==6:
+			for i in range(5):
+				self.action_string.append((-1,-1))
+			self.num_steps=5
+		elif self.index==7:
+			for i in range(5):
+				self.action_string.append((1,-1))
+			self.num_steps=5
+		elif self.index==8:
+			for i in range(5):
+				self.action_string.append((-1,1))
+			self.num_steps=5
+		elif self.index==9:
+			for i in range(5):
+				self.action_string.append((1,1))
+			self.num_steps=5
+
+
+		self.macro_set=self.build_macro_set(self.action_string)
+
+
+		self.counter=0
+
+	def build_macro_set(self,action_string):
+
+		x=0
+		y=0
+		macro_set=Set()
+		for i in action_string:
+			x+=i[0]
+			y+=i[1]
+			for j in range(-1+x,2+x):
+				for k in range(-1+y,2+y):
+					macro_set.add((j,k))
+
+
+		return macro_set
+	
+	def reset(self):
+		self.counter=0
+			
+
+	def get_next_action(self,x,y,s):
+		next_x=0
+		next_y=0
+		self.counter+=1
+		if self.index==0:
+			##RETURN TO SHIP	
+			if x < s.middle[0]:
+				next_x = 1
+			elif x > s.middle[0]:
+				next_x = -1
+
+			if y < s.middle[1]:
+				next_y= 1
+			elif y > s.middle[1]:
+				next_y=-1
+
+			if x is s.middle[0] and y is s.middle[1]:
+				self.reset()
+				return ((0,0),True)
+
+		elif self.index==1:
+			#wait
+			self.reset()
+			return ((0,0),True)
+
+		elif self.index>1 and self.index <10:
+			#explore right
+
+			if self.counter < 4:
+				return (self.action_string[self.counter],False)
+			else:
+				self.reset()
+				return (self.action_string[4],True)
+				
+
+		print self.counter
+
+			
+
+		if self.counter < self.num_steps:
+			return ((next_x,next_y),False)	
+		else:
+			return ((next_x,next_y),True)	
 
 
 
@@ -29,18 +143,18 @@ class Agent:
 		self.map_size=map_size_
 
 		self.measurement_space=[]
-		self.alpha=[.7,.3,0]
+		self.alpha=[.9,.1,0]
 
 		self.reset(s)
-		self.top_level=1
-		self.h_tasks=[]
-		for i in range(self.top_level+1):
-			self.h_tasks.append(None)
-		self.arrows=[]
-		self.request_from_level=self.top_level+1
+		self.battery=randint(50,100)
 		self.counter=6
-		self.action=streams.action(1)
 		self.others=[]
+		self.current_action=policy(1,"none")
+		
+		self.policy_set=[]
+		for i in range(10):
+			self.policy_set.append(policy(i,"none"))
+		
 
 
 
@@ -60,11 +174,11 @@ class Agent:
 		u.set_x(self.get_x())
 		u.set_y(self.get_y())
 
-	def update_other_agent_loc(self,others,myself):
-		self.others=[]
-		for i in range(len(others)):
-			if i is not myself:
-				self.others.append(others[i])
+	#def update_other_agent_loc(self,others,myself):
+	#	self.others=[]
+	#	for i in range(len(others)):
+	#		if i is not myself:
+	#			self.others.append(others[i])
 			
 
 	def set_x(self,x_):
@@ -83,12 +197,20 @@ class Agent:
 	def step(self,environment_data_,num_steps_,a_,time_to_work):
 		environment_data_.update_agent_location((self.x,self.y))
 	
-		self.counter+=1
-		if self.counter > 4:
-			self.action=self.solver.get_new_macro((self.x,self.y),environment_data_,self.alpha,self.others)
-			self.counter=0
+		#self.counter+=1
+		#if self.counter > 4:
+		#	self.action=self.solver.get_new_macro((self.x,self.y),environment_data_,self.alpha,self.others)
+		#	self.counter=0
 
-		self.execute(self.action.action_string[self.counter],environment_data_)
+		action = self.current_action.get_next_action(self.x,self.y,environment_data_)
+		print action, "action", self.current_action.index
+		if action[1] is True:
+			self.current_action = self.solver.get_new_macro((self.x,self.y),environment_data_,self.alpha,self.battery,self.policy_set)
+			self.current_action.reset()
+			print "new action",self.current_action.index
+			print "battery", self.battery
+
+		self.execute(action[0],environment_data_)
 
 
 	def execute(self,action_,environment_data_):
@@ -99,6 +221,12 @@ class Agent:
 
 		self.recalculate_measurement_space()
 		self.measure(environment_data_,False)
+		if (self.x,self.y) == environment_data_.middle:
+			print "charging"
+			self.battery+=5
+			if self.battery >100:
+				self.battery=100
+	
 		#self.history = self.abstractions.abf(environment_data_)
 
 		environment_data_.update_agent_location((self.x,self.y))
@@ -120,6 +248,22 @@ class Agent:
 
 		return (s,s.get_reward()-base_reward, -s.get_reward2()+base_reward2)
 
+	def simulate_full(self,policy,s):
+		base_reward= s.get_reward()
+		base_reward2= s.get_reward2()
+
+		for i in range(policy.num_steps):
+			(x,y) = self.get_transition(policy.get_next_action(self.x,self.y,s),self.x,self.y)
+			if s.check_boundaries(Location(x,y)) is True:
+				(self.x,self.y) = (x,y)
+
+		self.recalculate_measurement_space()
+		self.measure(s,True)
+
+
+		return (s,s.get_reward()-base_reward, -s.get_reward2()+base_reward2)
+
+
 
 	def recalculate_measurement_space(self):
 		self.measurement_space=[]
@@ -132,6 +276,10 @@ class Agent:
 			mine_data_.measure_loc(loc,imaginary)
 
 	def get_transition(self,action,x,y):
+		self.battery-=1
+		if self.battery < 0:
+			self.battery=0
+			return (x,y)
 		return (x+action[0],y+action[1])
 
 

@@ -23,6 +23,7 @@ class Mine_Data:
 		self.seen = np.ndarray(shape=(map_size,map_size), dtype=bool)
 		self.temp_seen = np.ndarray(shape=(map_size,map_size), dtype=bool)
 		self.map_size=map_size
+		self.middle=(self.map_size/2,self.map_size/2)
 		self.mine_location = Location(randint(0,self.map_size-1),randint(0,self.map_size-1))
 		self.complete=True
 		self.max_reward=self.map_size*self.map_size
@@ -145,8 +146,8 @@ class Mine_Data:
 
 
 		self.seen[loc.get_x()][loc.get_y()]=True
-
-
+		self.pre_num_unknown_locations-= 1
+		'''
 		if imaginary is False:
 			if self.complete is True:
 				return
@@ -165,7 +166,7 @@ class Mine_Data:
 			else:	
 				self.PFS[loc.get_x()][loc.get_y()]=0.0
 				self.color[loc.get_x()][loc.get_y()]=0.0
-				self.pre_num_unknown_locations-= 1
+
 				#self.update_probabilities()
 
 		else:
@@ -187,6 +188,7 @@ class Mine_Data:
     				self.color[loc.get_x()][loc.get_y()]=0.0
 				self.pre_num_unknown_locations-=1
         			#self.update_probabilities()
+		'''
 
 	def check_boundaries(self, loc):
 		if loc.get_x()<0 or loc.get_x() >= self.map_size:
@@ -197,16 +199,6 @@ class Mine_Data:
 
 		return True
         	
-    	
-
-	def print_mine_location(self):
-		print self.mine_location.get_x()
-		print self.mine_location.get_y()
-		print(self.PFS)
-
-	def get_color(self,x_,y_):
-		return self.PFS[x_][y_]
-
 
 
 	

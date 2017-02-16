@@ -15,7 +15,7 @@ max_num_steps=5
 num_workers=multiprocessing.cpu_count()-1
 time_to_work=.05
 num_steps=5
-num_agents=4
+num_agents=7
 
 #CHOOSE ENVIRONMENT PARAMETERS
 map_size=100
@@ -26,14 +26,6 @@ Gamma=.9
 upper_confidence_c=1000
 action_space_num=9#GET THIS FROM ACTUAL MODEL
 moving=True
-
-target = open('test_alt.txt', 'w')	
-target.truncate()
-
-target.write("Settings: \n")
-target.write("time per move: " + str(time_to_work) +"\n")
-target.write("map size: " +  str(map_size)+ "\n")
-
 
 
 class Simulation:
@@ -48,21 +40,6 @@ class Simulation:
 			self.a.append(Agent_stream.Agent(map_size/2,map_size/2,map_size,self.e.mine_data))
 			self.a_imaginary.append(Agent_stream.Agent(map_size/2,map_size/2,map_size,self.e.mine_data))
 
-		self.i_a=[]
-		self.i_a_=[]
-		self.e_=[]
-
-		for i in range(num_workers):
-			self.i_a.append(Agent_stream.Agent(map_size/2,map_size/2,map_size,self.e.mine_data))
-			self.i_a_.append(Agent_stream.Agent(map_size/2,map_size/2,map_size,self.e.mine_data))
-			self.e_.append(Mine_Environment.Environment(map_size))
-
-
-
-	
-		#for o in self.a.root_task.get_sub_tasks():
-		#	o.available(self.a.abstractions.abf(self.e.mine_data))
-		#self.solver=POMCP_R.Solver(max_depth,depth,Gamma,upper_confidence_c,action_space_num,self.e.mine_data,map_size)
 		self.count=0
 		self.moving_total=[]
 		self.total=0

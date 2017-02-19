@@ -9,6 +9,13 @@ from geometry_msgs.msg import PoseStamped
 import numpy as np
 
 zone = (((0,5),(-1,2)),((-4,1),(-1,2)),((-1,2),(-4,1)),((-1,2),(0,5)) )
+region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
+
+region_size=20
+
+greedy_regions = [(1,1),(-1,1),(-1,-1),(1,-1), (0,1), (1,0), (0,-1), (-1,0)]
+
+policy_set_size=37
 H=50
 gamma=.95
 
@@ -31,9 +38,32 @@ def abf(x,y,battery,s):
 	else:
 		h=h+"0:"
 
+	if max(math.fabs(x-s.middle[0]),math.fabs(y-s.middle[1])) > 30:
+		h=h+"4:"
+	elif max(math.fabs(x-s.middle[0]),math.fabs(y-s.middle[1])) > 20:
+		h=h+"3:"
+	elif max(math.fabs(x-s.middle[0]),math.fabs(y-s.middle[1])) > 10:
+		h=h+"2:"
+	elif max(math.fabs(x-s.middle[0]),math.fabs(y-s.middle[1])) > 0:
+		h=h+"1:"
+	else:
+		h=h+"0:"
+
+	for i in region:
+		print s.get_region_score((i[0]-region_size/2,i[0]+region_size/2),(i[1]-region_size/2,i[1]+region_size/2))
+		h=h+str(s.get_region_score((i[0]-region_size/2,i[0]+region_size/2),(i[1]-region_size/2,i[1]+region_size/2)))+":"
+
+	h=h+str(get_region(x,y))+":"
+
+
 
 	return h
 
+def get_region(x,y):
+	for i in range(len(region)):
+		if x > region[i][0]-region_size/2-1 and x < region[i][0] + region_size/2 + 1:
+			if y > region[i][1]-region_size/2-1 and y < region[i][1] + region_size/2 + 1:
+				return i
 
 def get_next(x,y,action):
 	for a in action:
@@ -86,12 +116,24 @@ class policy:
 			for i in range(5):
 				self.action_string.append((1,1))
 			self.num_steps=5
+	
+			
 
 
 		self.macro_set=self.build_macro_set(self.action_string)
 
 
 		self.counter=0
+
+	def expected_completion_time(self,x,y,s):
+		if self.index > 1 and self.index < 10:
+			return 5
+		if self.index == 0:
+			return max(math.fabs(x-s.middle[0],y-s.middle[1]))
+		if self.index >9 and self.index < 35:
+			return max(math.fabs(x-region[self.index-10],y-region[self.index-10]))
+		else:
+			return 1
 
 	def build_macro_set(self,action_string):
 
@@ -112,7 +154,7 @@ class policy:
 		self.counter=0
 			
 
-	def get_next_action(self,x,y,s):
+	def get_next_action(self,a_,x,y,s):
 		next_x=0
 		next_y=0
 		self.counter+=1
@@ -151,7 +193,57 @@ class policy:
 			else:
 				self.reset()
 				return (self.action_string[4],True)
-				
+		elif self.index>9 and self.index < 35:
+						##RETURN TO SHIP	
+			if x < region[self.index-10][0]:
+				next_x = 1
+			elif x > region[self.index-10][0]:
+				next_x = -1
+
+			if y < region[self.index-10][1]:
+				next_y= 1
+			elif y > region[self.index-10][1]:
+				next_y=-1
+
+			if x is region[self.index-10][0] and y is region[self.index-10][1]:
+				self.reset()
+				return ((0,0),True)
+			else:	
+				return ((next_x,next_y),False)
+
+		elif self.index==35:				
+			##RETURN TO SHIP AND CHARGE
+			if x < s.middle[0]:
+				next_x = 1
+			elif x > s.middle[0]:
+				next_x = -1
+
+			if y < s.middle[1]:
+				next_y= 1
+			elif y > s.middle[1]:
+				next_y=-1
+
+			if x is s.middle[0] and y is s.middle[1]:
+				if a_.battery > 75:
+					self.reset()
+					return ((0,0),True)
+				else:
+					return ((next_x,next_y),False)
+			else:	
+				return ((next_x,next_y),False)
+
+		elif self.index==36:
+			#Spiral!
+
+
+			direction = (0,0)
+			for i in greedy_regions:
+				if s.check_boundaries((x+2*i[0],y+2*i[1])) is True:
+					if s.seen[x+2*i[0]][y+2*i[1]] == 0:
+						direction=i
+						break
+			return ((direction),True)
+
 
 
 
@@ -166,16 +258,13 @@ class Solver:
 		self.environment_data=E(e_args)
 
 	def OnlinePlanning(self,agent_,s,a_,time_to_work):
-			
-		#self.print_n()
+		
 		start = time.time()
 		end = start
 		agent_.imprint(a_)
-		#self.print_n()
 		x=agent_.x
 		y=agent_.y
 		s.imprint(self.environment_data)
-		#print a_.battery
 		while end - start < time_to_work:
 			agent_.imprint(a_)
 			s.imprint(self.environment_data)
@@ -184,17 +273,18 @@ class Solver:
 			end = time.time()
 
 	def rollout(self,a_,depth,s):
-
 		r1=0.
 		r2=0.
-		while depth<H and a_.battery >0:
-			policy = a_.policy_set[0]
+		while depth<H and a_.battery > 1:
+			policy = a_.policy_set[1]
+			if a_.battery < 1:
+				policy = a_.policy_set[1]
 
 			(s,r1_,r2_,n) = a_.simulate_full(policy,s)
 			r1+=gamma*r1_
 			r2+=gamma*r2_
 			
-			depth+=n	
+			depth+=n
 
 		return (r1,r2)
 	
@@ -213,6 +303,7 @@ class Solver:
 				return self.rollout(a_,depth,s)
 			else:
 				policy = a_.policy_set[self.arg_max_ucb(abstraction)]
+
 				(s,r1,r2,n) = a_.simulate_full(policy,s)
 				r1_,r2_ = self.search(a_,depth+n,s)
 				r1+=gamma*r1_
@@ -226,7 +317,7 @@ class Solver:
 			self.append_dict2(self.Na,abstraction,policy.index,1)
 
 			self.append_dict2(self.Q,abstraction,policy.index,0.)
-			self.append_dict2(self.Q,abstraction,policy.index,(r1-self.Q[abstraction][policy.index])/self.Na[abstraction][policy.index])
+			self.append_dict2(self.Q,abstraction,policy.index,(r1/n-(self.Q[abstraction][policy.index]))/self.Na[abstraction][policy.index])
 
 					
 			return (r1,r2)
@@ -266,13 +357,11 @@ class Solver:
 		policy_index = None
 
 		if self.Q.get(abstraction) is not None:
-			k = range(10)
+			k = range(policy_set_size)
 
 
 			for kz in k:
 				if self.Q[abstraction].get(kz) is None:
-					return kz
-				if self.Q[abstraction][kz] == 0.: 
 					return kz
 				if self.ucb(self.N[abstraction],self.Q[abstraction][kz],self.Na[abstraction][kz]) > max:
 					max=self.ucb(self.N[abstraction],self.Q[abstraction][kz],self.Na[abstraction][kz])
@@ -307,15 +396,15 @@ class Agent:
 		self.x=0
 		self.y=0
 		self.map_size=map_size_
-
+		self.ON=0
 		self.measurement_space=[]
 		self.alpha=[.9,.1,0]
 		self.reset()
-		self.battery=75
+		self.battery=50
 		self.current_action=policy(1)
 		
 		self.policy_set=[]
-		for i in range(10):
+		for i in range(policy_set_size):
 			self.policy_set.append(policy(i))
 		
 
@@ -343,7 +432,7 @@ class Agent:
 		self.solver.OnlinePlanning(self,s,a_,time_to_work)
 
 	def decide(self,s,a_):	
-		action = self.current_action.get_next_action(self.x,self.y,s)
+		action = self.current_action.get_next_action(self,self.x,self.y,s)
 		if action[1] is True:
 			self.current_action = policy(self.solver.arg_max(abf(self.x,self.y,self.battery,s)))
 			self.current_action.reset()
@@ -360,6 +449,7 @@ class Agent:
 		self.measure(environment_data_,False)
 
 		if self.battery < 1:
+			print time.time(), "Dead"
 			self.death()
 
 	
@@ -368,10 +458,11 @@ class Agent:
 		base_reward= s.get_reward()
 		r1=0
 		complete=False
-		count=0
+		count=0.
+
 		while complete is False and self.battery >0:
-			count+=1
-			action = policy.get_next_action(self.x,self.y,s)
+			count+=1.
+			action = policy.get_next_action(self,self.x,self.y,s)
 			complete=action[1]
 			(x,y) = self.get_transition(action[0],self.x,self.y,s.middle)
 
@@ -380,10 +471,10 @@ class Agent:
 			base_reward= s.get_reward()
 			self.measure(s,True)
 
-			r1+=s.get_reward()-base_reward
+			r1+=math.pow(gamma,count-1)*(s.get_reward()-base_reward)
 			base_reward=s.get_reward()
 
-		if self.battery < 15:
+		if self.battery < 25:
 			return (s,0,0,count)
 		else:
 			return (s,r1,0,count)
@@ -395,7 +486,7 @@ class Agent:
 
 	def get_transition(self,action,x,y,middle):
 		if action != (0,0):
-			self.add_battery(-1)
+			self.add_battery(-.25)
 			if self.battery <1:
 				return (x,y)
 		else:

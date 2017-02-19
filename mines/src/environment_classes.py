@@ -28,6 +28,18 @@ class Mine_Data:
 		self.max_reward=self.map_size*self.map_size
 		self.reset()
 
+	def get_region_score(self,x_l,y_l):
+		#x_l is of xmin xmax
+		score =0.
+		size=0.
+		for i in range(x_l[0],x_l[1]):
+			for j in range(y_l[0],y_l[1]):	
+				size+=1.
+				if self.seen[i][j] == 0:		
+					score+=1.
+
+		return int(2.*score/size)
+
 	def reset(self):
 		self.seen.fill(0)
 		self.pre_num_unknown_locations=self.map_size*self.map_size
@@ -52,7 +64,7 @@ class Mine_Data:
 		if self.check_boundaries(loc) is False:
 			return
 
-		if self.seen[loc[0]][loc[1]] is 1:
+		if self.seen[loc[0]][loc[1]] == 1:
 			return
 
 		self.seen[loc[0]][loc[1]]=1

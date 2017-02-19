@@ -3,98 +3,13 @@
 <node pkg="mines" type="agent_standard.py" name="1" output="screen">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="2" output="screen">
+<node pkg="mines" type="agent_standard.py" name="2">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="3" output="screen">
+<node pkg="mines" type="agent_standard.py" name="3">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="4" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="5" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="6" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="7" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="8" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="11" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="12" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="13" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="14" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="15" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="16" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="17" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="18" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="111" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="112" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="113" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="114" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="115" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="116" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="117" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="118" output="screen">
-</node>
-
-
-<node pkg="mines" type="agent_standard.py" name="1111" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="1112" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="1113" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="1114" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="1115" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="1116" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="1117" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="1118" output="screen">
+<node pkg="mines" type="agent_standard.py" name="4">
 </node>
 
 

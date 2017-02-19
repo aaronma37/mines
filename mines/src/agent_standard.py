@@ -23,6 +23,8 @@ print "STARTING"
 
 map_size=100
 
+ON=1
+OFF=0
 
 a = Agent(Mine_Data,map_size)
 ai= Agent(Mine_Data,map_size)
@@ -44,16 +46,22 @@ def env_cb(grid):
 			s.seen[i][j]=grid.data[i*map_size+j]
 
 
+
 def run():
 	while not rospy.is_shutdown():
+		start=time.time()
 		s.imprint(si)
-		a.step(si,ai,.1)
+		a.step(si,ai,.5)
 		s.imprint(si)
-		time.sleep(.1)
+		to_wait = start-time.time() + .2
+		if to_wait >0:
+			time.sleep(to_wait)
 		a.decide(si,ai)
 		pose.pose.position.x=a.x
 		pose.pose.position.y=a.y
 		pose.pose.position.z=a.battery
+		pose.pose.orientation.x=a.current_action.index
+		pose.pose.orientation.y=ON
 		pose_pub.publish(pose)
 
 		

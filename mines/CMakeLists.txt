@@ -61,6 +61,10 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
     src/agent_standard.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
+  catkin_install_python(PROGRAMS
+    src/draw.py
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
 
 
 

@@ -15,6 +15,13 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import OccupancyGrid
 from agent_classes import Agent
+
+
+import pygame
+from pygame.locals import *
+
+
+
 window = 0                                             # glut window number
 width, height = 1600, 1200                               # window size
 AR=1600./1200.
@@ -25,10 +32,71 @@ import sys
 map_size=100
 s=Mine_Data(map_size)
 agent_dict={}
+RESET=0
+HIGHLIGHT=1
 
 
 
+class gui_data:
+	def __init__(self):
+		self.hl=None
 
+class abstract_button:
+	def __init__(self, action_index, graphics_index):
+		self.action_index=action_index
+		self.graphics_index=graphics_index
+
+	def check_click(self,xx,yy,x,y,h,w,k,gui_data):
+		if math.fabs(y-yy)<h and math.fabs(x-xx)<w:
+			action(self.action_index,k,gui_data)	
+
+
+class button:
+	def __init__(self, action_index, graphics_index,x,y,w,h):
+		self.action_index=action_index
+		self.graphics_index=graphics_index
+		self.x=x
+		self.y=y
+		self.w=w
+		self.h=h
+
+	def check_click(self,x,y,s,gui_data):
+		if math.fabs(y-self.y)<self.h and math.fabs(x-self.x)<self.w:
+			action(self.action_index,s,gui_data)
+
+
+def action(action_index,s,gd):
+	if action_index == RESET:
+		s.reset()
+	elif action_index==HIGHLIGHT:
+		gd.hl=s
+		print gd.hl, "hl"
+buttons  = []
+
+buttons.append(button(RESET,0,0,-1.1,.1,.1))
+
+a_buttons = []
+a_buttons.append(abstract_button(HIGHLIGHT,0))
+
+
+SCREEN_SIZE = (width, height)
+
+def loadImage(image):
+    textureSurface = pygame.image.load(image)
+ 
+    textureData = pygame.image.tostring(textureSurface, "RGBA", 1)
+ 
+    width = textureSurface.get_width()
+    height = textureSurface.get_height()
+ 
+    texture = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, texture)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+        GL_UNSIGNED_BYTE, textureData)
+ 
+    return texture#, width, height
 
 def TexFromPNG(filename):
 	img = Image.open(filename)
@@ -49,21 +117,35 @@ def TexFromPNG(filename):
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.size[0], img.size[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data)
 
 	#gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, width,height, GL_RGBA, GL_UNSIGNED_BYTE, img_data)
-	return texture
+
+
+	return texture 
 
 glutInit(sys.argv)                                             # initialize glut
-glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
-glutInitWindowSize(width, height)                      # set window size
-glutInitWindowPosition(10, 0)                           # set window position
+#glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
+#glutInitWindowSize(width, height)                      # set window size
+#glutInitWindowPosition(10, 0)                           # set window position
 
-window = glutCreateWindow("mine swarm")              # create window with title
+#window = glutCreateWindow("mine swarm")              # create window with title
 
+
+pygame.init()
+screen = pygame.display.set_mode(SCREEN_SIZE, HWSURFACE|OPENGL|DOUBLEBUF)
 images =  [TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/object.png")]
 images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/uuv.png"))
 images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/arrow.png"))
 images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/uuv1.png"))
 images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/reset.png"))
+#images =  [loadImage (os.path.dirname(os.path.abspath(__file__)) + "/object.png")]
+#images.append(loadImage (os.path.dirname(os.path.abspath(__file__)) + "/uuv.png"))
+#images.append(loadImage (os.path.dirname(os.path.abspath(__file__)) + "/arrow.png"))
+#images.append(loadImage (os.path.dirname(os.path.abspath(__file__)) + "/uuv1.png"))
+#images.append(loadImage (os.path.dirname(os.path.abspath(__file__)) + "/reset.png"))
 
+
+#clock = pygame.time.Clock()    
+
+#init()
 
 
 def setupTexture(graphics_index):
@@ -79,8 +161,7 @@ def setupTexture(graphics_index):
 	gluLookAt(.5, 0, 1.1,  .5, 0, 0, 0, 1, 0)
 
 
-
-	                               
+                           
 
 def clear():
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) # clear the screen
@@ -158,7 +239,18 @@ def draw(x, y, width, height, graphics_index, alpha, orientation, depth, canvas_
 
 	glEnd()
 
-def draw_text(x,y,msg):
+def draw_text(x,y,msg):	
+	#pygame.font.init() # you have to call this at the start, 
+
+	# initialize font; must be called after 'pygame.init()' to avoid 'Font not Initialized' error
+	#myfont = pygame.font.SysFont("monospace", 15)
+
+	# render text
+	#textsurface = myfont.render('Sometext', False, (0,0,0))
+
+	#screen.blit(textsurface, (100, 100))
+
+
 	glDisable(GL_TEXTURE_2D)
 
 	drawText( msg, int(800+x*800),int(600+y*570), width,height)
@@ -203,20 +295,31 @@ def end_draw():
 
 
 
-def draw_all(s,agent_dict,map_size):
-	start=time.time()
+def draw_all(s,agent_dict,map_size,gui_data):
+
 	clear()
 	begin_basic()	
+	
+	draw_basic(0,0,1,1,-.1)
+
+	glColor3f(0, 0, 0)
 	for i in range(map_size):
 		for j in range(map_size):
-			if s.seen[i][j] == 0:
+			if s.seen[i][j] == 1:
 				draw_basic(get_sqr_loc(i,map_size),get_sqr_loc(j,map_size),get_norm_size(map_size),get_norm_size(map_size),-.1)
+
 		
-	print time.time()-start
+	if gui_data.hl is not None:
+		glColor3f(.3, .3, 0)
+		draw_basic(get_sqr_loc(agent_dict[gui_data.hl].x,map_size),get_sqr_loc(agent_dict[gui_data.hl].y,map_size),get_norm_size(map_size)*2,get_norm_size(map_size)*2,-.1)
+
+
 	setupTexture(1)
 
 	for k,a in agent_dict.items():
 		draw(get_sqr_loc(a.x,map_size), get_sqr_loc(a.y,map_size), get_norm_size(map_size),get_norm_size(map_size),1, 1,0,-.1,map_size/10.)
+
+
 
 	## DRAW STATUS BLOCK
 	setupTexture(3)
@@ -224,11 +327,14 @@ def draw_all(s,agent_dict,map_size):
 	for k,a in agent_dict.items():
 		draw(1.2, .1+count/4., .1,.1,1, 1,3,-.1,map_size/10.)
 		count+=1
+	
 
 
 	setupTexture(4)
 
-	draw(-.1, -1.05, .1,.1,1, 1,0,-.1,map_size/10.)
+	for b in buttons:
+		draw(b.x, b.y, b.w,b.h,1, 1,0,-.1,map_size/10.)
+	
 
 	count=0
 	for k,a in agent_dict.items():
@@ -237,22 +343,84 @@ def draw_all(s,agent_dict,map_size):
 		draw_text(1.2,-.1+.2+count/4.,"Action: " + str(a.current_action.index))
 		count+=1
 
-	end_draw()
+	#end_draw()
+
+
+                    
+
+def render_once(s,agent_dict,map_size,gui_data):
+	    #glEnable(GL_DEPTH_TEST)
+	    
+	    #glShadeModel(GL_FLAT)
+	    #glClearColor(1.0, 1.0, 1.0, 0.0)
+
+	   # glEnable(GL_COLOR_MATERIAL)
+	    
+	    #glEnable(GL_LIGHTING)
+	    #glEnable(GL_LIGHT0)        
+	   # glLight(GL_LIGHT0, GL_POSITION,  (0, 1, 1, 0))    
+
+		for event in pygame.event.get():
+		    if event.type == QUIT:
+		        return
+		    if event.type == KEYUP and event.key == K_ESCAPE:
+		        return    
+
+		draw_all(s,agent_dict,map_size,gui_data)
+		pygame.display.flip()
+
+		pressed = pygame.mouse.get_pressed()
+		x,y = pygame.mouse.get_pos()
+		x = (x-550.)/500.
+		y =-(y-600.)/500.
+
+		if pressed[0]:
+			for b in buttons:
+				b.check_click(x,y,s,gui_data)
+			count=0
+			for k,a in agent_dict.items():
+				a_buttons[0].check_click(1.2,.1+count/4.,x,y,.1,.1,k,gui_data)
+				count+=1
+		#550, 600 is middle
+		# x pos is right y pos is down
+		# 50,1100 is (-1,-1)None
+
+
+		#(x-550)/500, -(y-600)/500
+    #clock = pygame.time.Clock()    
+    
+    #glMaterial(GL_FRONT, GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))    
+    #glMaterial(GL_FRONT, GL_DIFFUSE, (1.0, 1.0, 1.0, 1.0))
+
+    # This object renders the 'map'
+    #map = Map()        
+
+    # Camera transform matrix
+    #camera_matrix = Matrix44()
+    #camera_matrix.translate = (10.0, .6, 10.0)
+
+    # Initialize speeds and directions
+    #rotation_direction = Vector3()
+    #rotation_speed = radians(90.0)
+    #movement_direction = Vector3()
+    #movement_speed = 5.0    
+
+    #while True:
+        
 
 
 
-#def start():
-#	glutIdleFunc(draw_all)
-#	glutMainLoop() 
 
-#def init(s_,agent_dict_,map_size_):
-#	map_size=map_size_
-#	s=s_
-#	agent_dict=agent_dict_
 
-	#glutDisplayFunc(draw)                                  # set draw function callback
-#glutIdleFunc(draw)                                     # draw all the time
-#glutMainLoop() 
+
+
+
+
+
+
+
+
+
 
 
 

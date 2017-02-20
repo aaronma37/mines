@@ -18,6 +18,12 @@ from agent_classes import Agent
 
 import sys
 from pynput import mouse
+from multiprocessing import Process
+from draw import gui_data
+
+
+
+
 
 rospy.init_node('main', anonymous=True)
 env_pub =rospy.Publisher('/environment_matrix', OccupancyGrid, queue_size=100)#CHANGE TO MATRIX
@@ -27,7 +33,7 @@ env_pub =rospy.Publisher('/environment_matrix', OccupancyGrid, queue_size=100)#C
 
 
 
-
+gd=gui_data()
 
 map_size=100
 s=Mine_Data(map_size)
@@ -57,15 +63,18 @@ def pub():
 	for i in range(map_size):
 		for j in range(map_size):
 			o.data[i*map_size+j]=s.seen[i][j]
+	env_pub.publish(o)
 
 def run():
 	start = time.time()
 	s.reset()
 	while not rospy.is_shutdown():
-		draw.draw_all(s,agent_dict,map_size)
-		if time.time()-start > 100:
-			s.reset()
-			start = time.time()
+		
+		draw.render_once(s,agent_dict,map_size,gd)
+		#if time.time()-start > 100:
+			#s.reset()
+		#	start = time.time()
+		pub()
 
 ###MAIN
 def main(args):
@@ -75,8 +84,14 @@ def main(args):
 #	draw.start()
 
 	try:
+		
+		#p = Process(target=root.mainloop, args=())
+		#p.start()		
 		run()
 		rospy.spin()
+
+
+
 #
 	except KeyboardInterrupt:
 		print("Draw: Shutting down")

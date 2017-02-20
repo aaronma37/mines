@@ -50,7 +50,6 @@ def abf(x,y,battery,s):
 		h=h+"0:"
 
 	for i in region:
-		print s.get_region_score((i[0]-region_size/2,i[0]+region_size/2),(i[1]-region_size/2,i[1]+region_size/2))
 		h=h+str(s.get_region_score((i[0]-region_size/2,i[0]+region_size/2),(i[1]-region_size/2,i[1]+region_size/2)))+":"
 
 	h=h+str(get_region(x,y))+":"

@@ -41,9 +41,12 @@ pose_pub = rospy.Publisher('/pose',PoseStamped,queue_size=1)
 
 
 def env_cb(grid):
+	print "here"
 	for i in range(map_size):
 		for j in range(map_size):
 			s.seen[i][j]=grid.data[i*map_size+j]
+
+	print np.sum(s.seen)
 
 
 

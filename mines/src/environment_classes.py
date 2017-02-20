@@ -38,7 +38,7 @@ class Mine_Data:
 				if self.seen[i][j] == 0:		
 					score+=1.
 
-		return int(2.*score/size)
+		return int(1.*score/size)
 
 	def reset(self):
 		self.seen.fill(0)

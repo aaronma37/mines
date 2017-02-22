@@ -27,6 +27,10 @@ class Mine_Data:
 		self.middle=(self.map_size/2,self.map_size/2)
 		self.max_reward=self.map_size*self.map_size
 		self.reset()
+		self.occupied = []
+
+		for i in range(25):
+			self.occupied.append(0)
 
 	def get_region_score(self,x_l,y_l):
 		#x_l is of xmin xmax
@@ -39,6 +43,18 @@ class Mine_Data:
 					score+=1.
 
 		return int(1.*score/size)
+
+	def calculate_occupied(self,agent_dict,region,r_size):
+		self.occupied=[]
+		for i in range(25):
+			self.occupied.append(0)
+
+		for k,a in agent_dict.items():
+			for i in range(len(region)):
+				if a.x > region[i][0] -r_size and a.x <  region[i][0] +r_size+1:
+					if a.y >  region[i][1] -r_size and a.y <  region[i][1] +r_size+1:
+						self.occupied[i]=1
+						break
 
 	def reset(self):
 		self.seen.fill(0)
@@ -53,6 +69,7 @@ class Mine_Data:
 	def imprint(self, a):
 		a.seen=self.seen.copy()
 		a.pre_num_unknown_locations=self.pre_num_unknown_locations
+		a.occupied=self.occupied
 
 
 

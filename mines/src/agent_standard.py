@@ -18,7 +18,9 @@ import rospy
 
 print "STARTING"
 
+region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
 
+region_size=20
 
 
 map_size=100
@@ -41,12 +43,22 @@ pose_pub = rospy.Publisher('/pose',PoseStamped,queue_size=1)
 
 
 def env_cb(grid):
-	print "here"
-	for i in range(map_size):
-		for j in range(map_size):
-			s.seen[i][j]=grid.data[i*map_size+j]
+	if a.x > grid.info.origin.position.x -  grid.info.origin.position.z/2 and a.x <  grid.info.origin.position.x +  grid.info.origin.position.z/2+1:
+		if a.y >  grid.info.origin.position.y -  grid.info.origin.position.z/2 and a.y <  grid.info.origin.position.y +  grid.info.origin.position.z/2+1:
+			a.time_away_from_network=0
+			for i in range(map_size):
+				for j in range(map_size):
+					s.seen[i][j]=grid.data[i*map_size+j]
 
-	print np.sum(s.seen)
+
+
+def occ_cb(grid):
+	if a.x > map_size/2 - 10 and a.x < map_size/2 + 11:
+		if a.y > map_size/2 - 10 and a.y < map_size/2 + 11:
+			for i in range(len(region)):
+				s.occupied[i]=grid.data[i]
+
+
 
 
 
@@ -64,7 +76,7 @@ def run():
 		pose.pose.position.y=a.y
 		pose.pose.position.z=a.battery
 		pose.pose.orientation.x=a.current_action.index
-		pose.pose.orientation.y=ON
+		pose.pose.orientation.y=a.time_away_from_network
 		pose_pub.publish(pose)
 
 		
@@ -78,6 +90,7 @@ def main(args):
 
 
 	environment_sub =rospy.Subscriber('/environment_matrix', OccupancyGrid , env_cb)#CHANGE TO MATRIX
+	occ_sub =rospy.Subscriber('/environment_occupied', OccupancyGrid , occ_cb)#CHANGE TO MATRIX
 	time.sleep(random.random())
 
 	try:

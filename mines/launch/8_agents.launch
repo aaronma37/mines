@@ -12,6 +12,17 @@
 <node pkg="mines" type="agent_standard.py" name="4">
 </node>
 
+<node pkg="mines" type="agent_standard.py" name="5">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="6">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="7">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="8">
+</node>
 
 
 

@@ -1,0 +1,11 @@
+<launch>
+
+<node pkg="mines" type="mobile_buoy_standard.py" name="buoy1" output="screen">
+</node>
+
+<node pkg="mines" type="mobile_buoy_standard.py" name="buoy2">
+</node>
+
+
+
+</launch>

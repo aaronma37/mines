@@ -11,7 +11,7 @@ import numpy as np
 zone = (((0,5),(-1,2)),((-4,1),(-1,2)),((-1,2),(-4,1)),((-1,2),(0,5)) )
 region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
 
-region_size=20
+region_size=10
 
 greedy_regions = [(1,1),(-1,1),(-1,-1),(1,-1), (0,1), (1,0), (0,-1), (-1,0)]
 
@@ -21,38 +21,40 @@ gamma=.95
 
 
 
-def abf(x,y,battery,s):
+def abf(a,s):
 
 	h ="h"
-	h = h + str(int(battery/10.))+":"
+	h = h + str(int(a.battery/10.))+":"
 
 
-	if max(math.fabs(x-s.middle[0]),math.fabs(y-s.middle[1])) > 30:
+	if max(math.fabs(a.x-s.middle[0]),math.fabs(a.y-s.middle[1])) > 30:
 		h=h+"4:"
-	elif max(math.fabs(x-s.middle[0]),math.fabs(y-s.middle[1])) > 20:
+	elif max(math.fabs(a.x-s.middle[0]),math.fabs(a.y-s.middle[1])) > 20:
 		h=h+"3:"
-	elif max(math.fabs(x-s.middle[0]),math.fabs(y-s.middle[1])) > 10:
+	elif max(math.fabs(a.x-s.middle[0]),math.fabs(a.y-s.middle[1])) > 10:
 		h=h+"2:"
-	elif max(math.fabs(x-s.middle[0]),math.fabs(y-s.middle[1])) > 0:
+	elif max(math.fabs(a.x-s.middle[0]),math.fabs(a.y-s.middle[1])) > 0:
 		h=h+"1:"
 	else:
 		h=h+"0:"
 
-	if max(math.fabs(x-s.middle[0]),math.fabs(y-s.middle[1])) > 30:
-		h=h+"4:"
-	elif max(math.fabs(x-s.middle[0]),math.fabs(y-s.middle[1])) > 20:
-		h=h+"3:"
-	elif max(math.fabs(x-s.middle[0]),math.fabs(y-s.middle[1])) > 10:
-		h=h+"2:"
-	elif max(math.fabs(x-s.middle[0]),math.fabs(y-s.middle[1])) > 0:
-		h=h+"1:"
-	else:
-		h=h+"0:"
 
 	for i in region:
-		h=h+str(s.get_region_score((i[0]-region_size/2,i[0]+region_size/2),(i[1]-region_size/2,i[1]+region_size/2)))+":"
+		h=h+str(s.get_region_score((i[0]-region_size,i[0]+region_size),(i[1]-region_size,i[1]+region_size)))+":"
 
-	h=h+str(get_region(x,y))+":"
+	for i in range(len(region)):
+		h=h+str(s.occupied[i])+":"
+
+	if a.time_away_from_network < 5:
+		h=h+str(0)+":"
+	elif a.time_away_from_network < 20:
+		h=h+str(1)+":"
+	elif a.time_away_from_network < 50:
+		h=h+str(2)+":"
+	else:
+		h=h+str(3)+":"
+
+	h=h+str(get_region(a.x,a.y))+":"
 
 
 
@@ -60,8 +62,8 @@ def abf(x,y,battery,s):
 
 def get_region(x,y):
 	for i in range(len(region)):
-		if x > region[i][0]-region_size/2-1 and x < region[i][0] + region_size/2 + 1:
-			if y > region[i][1]-region_size/2-1 and y < region[i][1] + region_size/2 + 1:
+		if x > region[i][0]-region_size and x < region[i][0] + region_size:
+			if y > region[i][1]-region_size and y < region[i][1] + region_size:
 				return i
 
 def get_next(x,y,action):
@@ -295,7 +297,7 @@ class Solver:
 			return (0,0)
 		else:
 
-			abstraction =abf(a_.x,a_.y,a_.battery,s)#*
+			abstraction =abf(a_,s)#*
 			if abstraction not in self.T:
 				self.T.add(abstraction)
 				self.append_dict(self.N,abstraction,1)
@@ -401,10 +403,12 @@ class Agent:
 		self.reset()
 		self.battery=50
 		self.current_action=policy(1)
+
 		
 		self.policy_set=[]
 		for i in range(policy_set_size):
 			self.policy_set.append(policy(i))
+		self.time_away_from_network=0
 		
 
 
@@ -424,6 +428,7 @@ class Agent:
 		u.x=self.x
 		u.y=self.y
 		u.battery=self.battery
+		u.time_away_from_network=self.time_away_from_network
 
 
 
@@ -433,7 +438,7 @@ class Agent:
 	def decide(self,s,a_):	
 		action = self.current_action.get_next_action(self,self.x,self.y,s)
 		if action[1] is True:
-			self.current_action = policy(self.solver.arg_max(abf(self.x,self.y,self.battery,s)))
+			self.current_action = policy(self.solver.arg_max(abf(self,s)))
 			self.current_action.reset()
 
 		self.execute(action[0],s)
@@ -484,6 +489,13 @@ class Agent:
 				mine_data_.measure_loc((self.x+i,self.y+j),imaginary)
 
 	def get_transition(self,action,x,y,middle):
+		self.time_away_from_network+=1		
+		if self.x > self.map_size/2 - 10 and self.x < self.map_size/2 + 11:
+			if self.y > self.map_size/2 - 10 and self.y < self.map_size/2 + 11:
+				self.time_away_from_network=0
+		
+
+
 		if action != (0,0):
 			self.add_battery(-.25)
 			if self.battery <1:

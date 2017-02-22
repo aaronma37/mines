@@ -62,6 +62,10 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
   catkin_install_python(PROGRAMS
+    src/mobile_buoy_standard.py
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
+  catkin_install_python(PROGRAMS
     src/draw.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )

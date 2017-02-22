@@ -136,6 +136,7 @@ images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/uuv.png
 images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/arrow.png"))
 images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/uuv1.png"))
 images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/reset.png"))
+images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/green_box.png"))
 #images =  [loadImage (os.path.dirname(os.path.abspath(__file__)) + "/object.png")]
 #images.append(loadImage (os.path.dirname(os.path.abspath(__file__)) + "/uuv.png"))
 #images.append(loadImage (os.path.dirname(os.path.abspath(__file__)) + "/arrow.png"))
@@ -279,7 +280,7 @@ def drawText(value, x,y,  windowHeight, windowWidth, step = 18 ):
 		if character == '\n':
 			glRasterPos2i(x, y-(lines*18))
 		else:
-			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, ord(character));
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, ord(character));
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
 	# For some reason the GL_PROJECTION_MATRIX is overflowing with a single push!
@@ -295,7 +296,7 @@ def end_draw():
 
 
 
-def draw_all(s,agent_dict,map_size,gui_data):
+def draw_all(s,agent_dict,map_size,buoy_dict,gui_data):
 
 	clear()
 	begin_basic()	
@@ -313,6 +314,10 @@ def draw_all(s,agent_dict,map_size,gui_data):
 		glColor3f(.3, .3, 0)
 		draw_basic(get_sqr_loc(agent_dict[gui_data.hl].x,map_size),get_sqr_loc(agent_dict[gui_data.hl].y,map_size),get_norm_size(map_size)*2,get_norm_size(map_size)*2,-.1)
 
+	setupTexture(5)
+	draw(get_sqr_loc(map_size/2,map_size), get_sqr_loc(map_size/2,map_size), get_norm_size(map_size)*20,get_norm_size(map_size)*20,1, 1,0,-.1,map_size/10.)
+
+	## AGENTS
 
 	setupTexture(1)
 
@@ -321,13 +326,20 @@ def draw_all(s,agent_dict,map_size,gui_data):
 
 
 
-	## DRAW STATUS BLOCK
+	## AGENTS STATUS
 	setupTexture(3)
 	count=0
 	for k,a in agent_dict.items():
-		draw(1.2, .1+count/4., .1,.1,1, 1,3,-.1,map_size/10.)
+		draw(1.2, 1.-count/4., .1,.1,1, 1,3,-.1,map_size/10.)
 		count+=1
-	
+
+	count=0
+	for k,a in agent_dict.items():
+		draw_text(1.2, 1.1-count/4.,"Agent: " + str(k))
+		draw_text(1.2,-.025+ 1.1-count/4.,"Battery: " + str(a.battery))
+		draw_text(1.2,-.05+ 1.1-count/4.,"Action: " + str(a.current_action.index))
+		draw_text(1.2,-.075+ 1.1-count/4.,"Network state: " + str(a.time_away_from_network))
+		count+=1
 
 
 	setupTexture(4)
@@ -335,20 +347,37 @@ def draw_all(s,agent_dict,map_size,gui_data):
 	for b in buttons:
 		draw(b.x, b.y, b.w,b.h,1, 1,0,-.1,map_size/10.)
 	
-
-	count=0
-	for k,a in agent_dict.items():
-		draw_text(1.2,+.2+count/4.,"Agent: " + str(k))
-		draw_text(1.2,-.05+.2+count/4.,"Battery: " + str(a.battery))
-		draw_text(1.2,-.1+.2+count/4.,"Action: " + str(a.current_action.index))
-		count+=1
-
 	#end_draw()
 
+	## BUOYS
+
+	setupTexture(5)
+
+	for k,a in buoy_dict.items():
+		draw(get_sqr_loc(a.x,map_size), get_sqr_loc(a.y,map_size), get_norm_size(map_size)*20,get_norm_size(map_size)*20,1, 1,0,-.1,map_size/10.)
+
+	## BUOY STATUS
+	setupTexture(3)
+	count=0
+	for k,a in buoy_dict.items():
+		draw(1.7, 1.-count/4., .1,.1,1, 1,3,-.1,map_size/10.)
+		count+=1
+
+	count=0
+	for k,a in buoy_dict.items():
+		draw_text(1.7, 1.1-count/4.,"Agent: " + str(k))
+		draw_text(1.7,-.05+ 1.1-count/4.,"Action: " + str(a.current_action.index))
+		count+=1
+
+
+	setupTexture(4)
+
+	#for b in buttons:
+		#draw(b.x, b.y, b.w,b.h,1, 1,0,-.1,map_size/10.)
 
                     
 
-def render_once(s,agent_dict,map_size,gui_data):
+def render_once(s,agent_dict,map_size,buoy_dict,gui_data):
 	    #glEnable(GL_DEPTH_TEST)
 	    
 	    #glShadeModel(GL_FLAT)
@@ -366,7 +395,7 @@ def render_once(s,agent_dict,map_size,gui_data):
 		    if event.type == KEYUP and event.key == K_ESCAPE:
 		        return    
 
-		draw_all(s,agent_dict,map_size,gui_data)
+		draw_all(s,agent_dict,map_size,buoy_dict,gui_data)
 		pygame.display.flip()
 
 		pressed = pygame.mouse.get_pressed()
@@ -379,7 +408,7 @@ def render_once(s,agent_dict,map_size,gui_data):
 				b.check_click(x,y,s,gui_data)
 			count=0
 			for k,a in agent_dict.items():
-				a_buttons[0].check_click(1.2,.1+count/4.,x,y,.1,.1,k,gui_data)
+				a_buttons[0].check_click(1.2,1.-count/4.,x,y,.1,.1,k,gui_data)
 				count+=1
 		#550, 600 is middle
 		# x pos is right y pos is down

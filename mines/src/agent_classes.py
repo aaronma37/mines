@@ -238,11 +238,16 @@ class policy:
 
 
 			direction = (0,0)
-			for i in greedy_regions:
-				if s.check_boundaries((x+2*i[0],y+2*i[1])) is True:
-					if s.seen[x+2*i[0]][y+2*i[1]] == 0:
-						direction=i
-						break
+			count=0
+			while count > -1 and count < 10:
+				count+=1
+				for i in greedy_regions:
+					if s.check_boundaries((x+count*i[0],y+count*i[1])) is True:
+						if s.seen[x+count*i[0]][y+count*i[1]] == 0:
+							direction=i	
+							count =-1
+							break
+		
 			return ((direction),True)
 
 
@@ -442,6 +447,7 @@ class Agent:
 			self.current_action.reset()
 
 		self.execute(action[0],s)
+		return s
 
 
 	def execute(self,action_,environment_data_):

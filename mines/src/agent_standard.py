@@ -71,7 +71,7 @@ def run():
 		to_wait = start-time.time() + .2
 		if to_wait >0:
 			time.sleep(to_wait)
-		a.decide(si,ai)
+		a.decide(s,ai)
 		pose.pose.position.x=a.x
 		pose.pose.position.y=a.y
 		pose.pose.position.z=a.battery

@@ -31,7 +31,7 @@ rospy.init_node('main', anonymous=True)
 env_pub =rospy.Publisher('/environment_matrix', OccupancyGrid, queue_size=100)#CHANGE TO MATRIX
 agent_occ =rospy.Publisher('/environment_occupied', OccupancyGrid, queue_size=100)#CHANGE TO MATRIX
 score_pub =rospy.Publisher('/buoy_scores', Int32MultiArray, queue_size=100)#CHANGE TO MATRIX
-
+worker_pub =rospy.Publisher('/buoy_targets', Int32MultiArray, queue_size=100)#CHANGE TO MATRIX
 region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
 
 region_size=10
@@ -47,6 +47,8 @@ buoy_dict = {}
 o = OccupancyGrid()
 o2= OccupancyGrid()
 o3= Int32MultiArray()
+o4= Int32MultiArray()
+
 networks = OccupancyGrid()
 
 for i in range(map_size):
@@ -112,6 +114,12 @@ def pub_to_buoys():
 	for i in range(len(region)):
 		o3.data[i]=sb.score[i]
 	score_pub.publish(o3)
+	o4.data=[]
+	for k,b in buoy_dict.items():
+		o4.data.append(b.current_action.index)
+
+	worker_pub.publish(o4)
+	
 
 
 def run():

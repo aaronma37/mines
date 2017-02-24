@@ -27,13 +27,22 @@ def abf(a,s):
 	h="h"
 
 	for i in range(len(region)):
-		if s.score[i] > 100:
-			h=h+str(2)+":"
+		if s.score[i] > 50:
+			h=h+str(3)+":"
 		elif s.score[i] > 25:
+			h=h+str(2)+":"	
+		elif s.score[i] > 0:
 			h=h+str(1)+":"	
 		else:
 			h=h+str(0)+":"
 
+	for i in range(len(region)):
+		if a.worked[i] > 1:
+			h=h+str(2)+":"	
+		elif a.worked[i] > 0:
+			h=h+str(1)+":"	
+		else:
+			h=h+str(0)+":"	
 
 
 	h=h+str(get_region(a.x,a.y))+":"
@@ -246,14 +255,22 @@ class Agent_buoy:
 		self.reset()
 		self.counter=0
 		self.current_action=policy(24)
+		self.worked=[]
 
 		
 		self.policy_set=[]
 		for i in range(policy_set_size):
 			self.policy_set.append(policy(i))
+			self.worked.append(0)
 
-		
+	def update_worked(self,list_of_workers_tasks):
+		for i in range(len(region)):
+			self.worked[i]=0
 
+		for i in list_of_workers_tasks:
+			self.worked[i]+=1
+			
+		self.worked[self.current_action.index]-=1
 
 
 	def reset(self):
@@ -264,6 +281,7 @@ class Agent_buoy:
 	def imprint(self, u):
 		u.x=self.x
 		u.y=self.y
+		u.worked=self.worked
 
 
 

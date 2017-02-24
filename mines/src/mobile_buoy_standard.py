@@ -44,6 +44,9 @@ def score_cb(grid):
 	for i in range(len(region)):
 		s.score[i]=grid.data[i]
 
+def worked_cb(grid):
+	a.update_worked(grid.data)
+
 
 
 
@@ -73,6 +76,7 @@ def run():
 def main(args):
 
 	score_sub =rospy.Subscriber('/buoy_scores', Int32MultiArray , score_cb)#CHANGE TO MATRIX
+	work_sub =rospy.Subscriber('/buoy_targets', Int32MultiArray , worked_cb)#CHANGE TO MATRIX
 	time.sleep(random.random())
 
 	try:

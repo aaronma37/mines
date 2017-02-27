@@ -8,6 +8,10 @@ from sets import Set
 from geometry_msgs.msg import PoseStamped
 import numpy as np
 
+## To do.  Make reward based on Reward function that is learned heuristically
+## To do.  Make transition based on Transition function that is learned heuristically
+
+
 zone = (((0,5),(-1,2)),((-4,1),(-1,2)),((-1,2),(-4,1)),((-1,2),(0,5)) )
 region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
 
@@ -36,17 +40,16 @@ def abf(a,s):
 		else:
 			h=h+str(0)+":"
 
-	for i in range(len(region)):
-		if a.worked[i] > 1:
-			h=h+str(2)+":"	
-		elif a.worked[i] > 0:
-			h=h+str(1)+":"	
-		else:
-			h=h+str(0)+":"	
+	#for i in range(len(region)):
+	#	if a.worked[i] > 1:
+	#		h=h+str(2)+":"	
+	#	elif a.worked[i] > 0:
+	#		h=h+str(1)+":"	
+	#	else:
+	#		h=h+str(0)+":"	
 
 
 	h=h+str(get_region(a.x,a.y))+":"
-	print h
 	return h
 
 def get_region(x,y):
@@ -111,6 +114,13 @@ class Solver:
 		self.N={}#{state abstraction: num visited}
 		self.Na={}#{state abstraction: {policy: num visited}}
 		self.Q={}#{state abstraction:{policy:Expected Reward}}
+		self.Tr={}#{state abstraction:{policy:{state abstraction: probability}}
+		self.NTr={}#{state abstraction:{policy:{state abstraction: number of times}
+		self.R={}#{state abstraction:{policy:{Immediate 1 step Reward}}
+		self.NR={}#{state abstraction:{policy:Number of times}
+
+		# in order to calculate these, we need to save the last abstraction/policy
+
 		self.T=Set()
 		self.environment_data=E(e_args)
 
@@ -207,6 +217,46 @@ class Solver:
 			"ERROR"
 			return 0
 
+	def append_dict_tr(self,P,P2,ab2,ab1,policy_index):
+		if P.get(ab1) is None:
+			P[ab1]={}
+			P[ab1][policy_index]={}
+			P[ab1][policy_index][ab2]=1.
+			P2[ab1]={}
+			P2[ab1][policy_index]=1.
+		elif P.get(ab1).get(policy_index) is None:
+			P[ab1][policy_index]={}
+			P[ab1][policy_index][ab2]=1.
+			P2[ab1][policy_index]=1.
+		elif P.get(ab1).get(policy_index).get(ab2) is None:
+			P[ab1][policy_index][ab2]=1.
+			P2[ab1][policy_index]+=1.
+		else:
+			P2[ab1][policy_index]+=1.
+			P[ab1][policy_index][ab2]+=1.
+
+	def append_dict_R(self,P,P2,ab1,policy_index,r):
+		if P.get(ab1) is None:
+			P[ab1]={}
+			P[ab1][policy_index]=r
+			P2[ab1]={}
+			P2[ab1][policy_index]=1.
+		elif P.get(ab1).get(policy_index) is None:
+			P[ab1][policy_index]=1.
+			P2[ab1][policy_index]=r
+		else:
+			P2[ab1][policy_index]+=1.
+			P[ab1][policy_index]+=(r-P[ab1][policy_index])/(P2[ab1][policy_index])
+
+
+
+	def update_transition_and_reward_functions(self,s,a):
+		# add probabilities to Tr and R		
+		abstraction = abf(a,s)
+
+		self.append_dict_tr(self.Tr,self.NTr,abstraction,a.last_abstraction,a.current_action.index)
+		self.append_dict_R(self.R,self.NR,a.last_abstraction,a.current_action.index,a.last_reward)
+
 	def arg_max_ucb(self,abstraction):
 		max=-1000
 		policy_index = None
@@ -242,6 +292,23 @@ class Solver:
 				print ele,ele2,self.Na[ele][ele2]
 				print ele,ele2,self.Q[ele][ele2]
 
+	def print_pr(self):
+		
+		summ=0.
+		for ab in self.Tr:#ab,polic,ab2
+ 			for pol in self.Tr[ab]:
+				summ +=self.NTr[ab][pol]
+				for ab2 in self.Tr[ab][pol]:
+					print "starting",self.Tr[ab][pol][ab2],self.NTr[ab][pol],self.Tr[ab][pol][ab2]/self.NTr[ab][pol] 
+					print "expected R", self.R[ab][pol]
+					
+					if self.Q.get(ab) is not None:
+						if self.Q.get(ab).get(pol) is not None:					
+							print "Q",self.Q[ab][pol]
+
+		print summ
+
+
 class Agent_buoy: 
 
 
@@ -257,6 +324,9 @@ class Agent_buoy:
 		self.current_action=policy(24)
 		self.worked=[]
 
+
+		self.last_abstraction="h"
+		self.last_reward=0.
 		
 		self.policy_set=[]
 		for i in range(policy_set_size):
@@ -274,8 +344,8 @@ class Agent_buoy:
 
 
 	def reset(self):
-		self.x=randint(0,self.map_size-1)
-		self.y=randint(0,self.map_size-1)
+		self.x=self.map_size/2
+		self.y=self.map_size/2
 
 
 	def imprint(self, u):
@@ -299,7 +369,10 @@ class Agent_buoy:
 		self.execute(action[0],s)
 
 
+
 	def execute(self,action_,s):
+		self.last_abstraction=abf(self,s)
+		base_reward= s.get_reward()
 		(x,y) = self.get_transition(action_,self.x,self.y)
 		
 		if s.check_boundaries((x,y)) is True:
@@ -307,6 +380,11 @@ class Agent_buoy:
 
 		self.measure(s,False)
 
+		r= s.get_reward()-base_reward
+		self.last_reward=r
+
+		
+		self.solver.print_pr()
 
 	
 

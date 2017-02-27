@@ -419,8 +419,8 @@ class Agent:
 
 
 	def reset(self):
-		self.x=randint(0,self.map_size-1)
-		self.y=randint(0,self.map_size-1)
+		self.x=self.map_size/2
+		self.y=self.map_size/2
 
 
 	def death(self):

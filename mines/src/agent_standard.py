@@ -8,6 +8,7 @@ import time
 import math
 from sets import Set
 from geometry_msgs.msg import PoseStamped
+from std_msgs.msg import Bool
 from nav_msgs.msg import OccupancyGrid
 from agent_classes import Agent
 import numpy as np
@@ -58,7 +59,10 @@ def occ_cb(grid):
 			for i in range(len(region)):
 				s.occupied[i]=grid.data[i]
 
-
+def reset_cb(data):
+	if data.data is True:
+		a.reset()
+		s.reset()
 
 
 
@@ -91,6 +95,7 @@ def main(args):
 
 	environment_sub =rospy.Subscriber('/environment_matrix', OccupancyGrid , env_cb)#CHANGE TO MATRIX
 	occ_sub =rospy.Subscriber('/environment_occupied', OccupancyGrid , occ_cb)#CHANGE TO MATRIX
+	reset_sub =rospy.Subscriber('/reset', Bool , reset_cb)#CHANGE TO MATRIX
 	time.sleep(random.random())
 
 	try:

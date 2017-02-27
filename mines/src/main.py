@@ -15,6 +15,7 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import OccupancyGrid
 from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Bool
 from agent_classes import Agent
 
 import sys
@@ -32,6 +33,9 @@ env_pub =rospy.Publisher('/environment_matrix', OccupancyGrid, queue_size=100)#C
 agent_occ =rospy.Publisher('/environment_occupied', OccupancyGrid, queue_size=100)#CHANGE TO MATRIX
 score_pub =rospy.Publisher('/buoy_scores', Int32MultiArray, queue_size=100)#CHANGE TO MATRIX
 worker_pub =rospy.Publisher('/buoy_targets', Int32MultiArray, queue_size=100)#CHANGE TO MATRIX
+reset_publisher = rospy.Publisher('/reset', Bool, queue_size=100)#CHANGE TO MATRIX
+
+
 region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
 
 region_size=10
@@ -48,6 +52,8 @@ o = OccupancyGrid()
 o2= OccupancyGrid()
 o3= Int32MultiArray()
 o4= Int32MultiArray()
+reset_ = Bool()
+reset_.data = True
 
 networks = OccupancyGrid()
 
@@ -80,7 +86,6 @@ def buoy_cb(data):
 	buoy_dict[data.header.frame_id].y=int(data.pose.position.y)
 	buoy_dict[data.header.frame_id].current_action=buoy_dict[data.header.frame_id].policy_set[int(data.pose.orientation.x)]
 
-
 def pub():
 	
 	for i in range(map_size):
@@ -109,6 +114,9 @@ def pub2():
 			o2.data[i]=s.occupied[i]
 	agent_occ.publish(o2)
 
+def reset_pub():
+	reset_publisher.publish(reset_)
+
 def pub_to_buoys():
 	sb.calculate_region_score(agent_dict)
 	for i in range(len(region)):
@@ -127,7 +135,7 @@ def run():
 	s.reset()
 	while not rospy.is_shutdown():
 		
-		draw.render_once(s,agent_dict,map_size,buoy_dict,gd)
+		draw.render_once(s,agent_dict,map_size,buoy_dict,gd,reset_pub)
 		#if time.time()-start > 100:
 			#s.reset()
 		#	start = time.time()

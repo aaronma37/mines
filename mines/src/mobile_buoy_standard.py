@@ -9,6 +9,7 @@ import math
 from sets import Set
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Bool
 from mobile_buoy_classes import Agent_buoy
 import numpy as np
 import sys
@@ -47,19 +48,27 @@ def score_cb(grid):
 def worked_cb(grid):
 	a.update_worked(grid.data)
 
-
+def reset_cb(data):
+	print "r"
+	if data.data is True:
+		print "s"
+		a.reset()
+		s.reset()
 
 
 
 def run():
 	while not rospy.is_shutdown():
 		start=time.time()
+
 		s.imprint(si)
 		a.step(si,ai,.2)
 		s.imprint(si)
 		to_wait = start-time.time() + .2
 		if to_wait >0:
 			time.sleep(to_wait)
+
+		a.solver.update_transition_and_reward_functions(s,a)
 		a.decide(si,ai)
 		pose.pose.position.x=a.x
 		pose.pose.position.y=a.y
@@ -77,6 +86,7 @@ def main(args):
 
 	score_sub =rospy.Subscriber('/buoy_scores', Int32MultiArray , score_cb)#CHANGE TO MATRIX
 	work_sub =rospy.Subscriber('/buoy_targets', Int32MultiArray , worked_cb)#CHANGE TO MATRIX
+	reset_sub =rospy.Subscriber('/reset', Bool , reset_cb)#CHANGE TO MATRIX
 	time.sleep(random.random())
 
 	try:

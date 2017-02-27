@@ -46,9 +46,9 @@ class abstract_button:
 		self.action_index=action_index
 		self.graphics_index=graphics_index
 
-	def check_click(self,xx,yy,x,y,h,w,k,gui_data):
+	def check_click(self,xx,yy,x,y,h,w,k,gui_data,main):
 		if math.fabs(y-yy)<h and math.fabs(x-xx)<w:
-			action(self.action_index,k,gui_data)	
+			action(self.action_index,k,gui_data,main)	
 
 
 class button:
@@ -60,14 +60,15 @@ class button:
 		self.w=w
 		self.h=h
 
-	def check_click(self,x,y,s,gui_data):
+	def check_click(self,x,y,s,gui_data,main):
 		if math.fabs(y-self.y)<self.h and math.fabs(x-self.x)<self.w:
-			action(self.action_index,s,gui_data)
+			action(self.action_index,s,gui_data,main)
 
 
-def action(action_index,s,gd):
+def action(action_index,s,gd,main):
 	if action_index == RESET:
 		s.reset()
+		main()
 	elif action_index==HIGHLIGHT:
 		gd.hl=s
 		print gd.hl, "hl"
@@ -251,7 +252,6 @@ def draw_text(x,y,msg):
 
 	#screen.blit(textsurface, (100, 100))
 
-
 	glDisable(GL_TEXTURE_2D)
 
 	drawText( msg, int(800+x*800),int(600+y*570), width,height)
@@ -377,7 +377,7 @@ def draw_all(s,agent_dict,map_size,buoy_dict,gui_data):
 
                     
 
-def render_once(s,agent_dict,map_size,buoy_dict,gui_data):
+def render_once(s,agent_dict,map_size,buoy_dict,gui_data,main):
 	    #glEnable(GL_DEPTH_TEST)
 	    
 	    #glShadeModel(GL_FLAT)
@@ -405,10 +405,10 @@ def render_once(s,agent_dict,map_size,buoy_dict,gui_data):
 
 		if pressed[0]:
 			for b in buttons:
-				b.check_click(x,y,s,gui_data)
+				b.check_click(x,y,s,gui_data,main)
 			count=0
 			for k,a in agent_dict.items():
-				a_buttons[0].check_click(1.2,1.-count/4.,x,y,.1,.1,k,gui_data)
+				a_buttons[0].check_click(1.2,1.-count/4.,x,y,.1,.1,k,gui_data,main)
 				count+=1
 		#550, 600 is middle
 		# x pos is right y pos is down

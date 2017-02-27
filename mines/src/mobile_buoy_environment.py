@@ -35,9 +35,9 @@ class Mobile_Buoy_Environment:
 		return 0
 
 	def reset(self):
-		self.seen.fill(0)
-		self.pre_num_unknown_locations=self.map_size*self.map_size
-
+		self.score = []
+		for i in range(len(region)):
+			self.score.append(0)
 
 
 	def imprint(self, a):

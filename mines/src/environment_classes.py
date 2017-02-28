@@ -28,6 +28,8 @@ class Mine_Data:
 		self.max_reward=self.map_size*self.map_size
 		self.reset()
 		self.occupied = []
+		self.NOT_SEEN=0
+		self.SEEN=1
 
 		for i in range(25):
 			self.occupied.append(0)

@@ -337,7 +337,7 @@ def draw_all(s,agent_dict,map_size,buoy_dict,gui_data):
 	for k,a in agent_dict.items():
 		draw_text(1.2, 1.1-count/4.,"Agent: " + str(k))
 		draw_text(1.2,-.025+ 1.1-count/4.,"Battery: " + str(a.battery))
-		draw_text(1.2,-.05+ 1.1-count/4.,"Action: " + str(a.current_action.index))
+		draw_text(1.2,-.05+ 1.1-count/4.,"Action: " + str(a.work))
 		draw_text(1.2,-.075+ 1.1-count/4.,"Network state: " + str(a.time_away_from_network))
 		count+=1
 
@@ -366,7 +366,7 @@ def draw_all(s,agent_dict,map_size,buoy_dict,gui_data):
 	count=0
 	for k,a in buoy_dict.items():
 		draw_text(1.7, 1.1-count/4.,"Agent: " + str(k))
-		draw_text(1.7,-.05+ 1.1-count/4.,"Action: " + str(a.current_action.index))
+		draw_text(1.7,-.05+ 1.1-count/4.,"Action: " + str(a.current_action))
 		count+=1
 
 

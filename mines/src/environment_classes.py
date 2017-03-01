@@ -44,7 +44,7 @@ class Mine_Data:
 				if self.seen[i][j] == 0:		
 					score+=1.
 
-		return int(1.*score/size)
+		return int(5.*score/size)
 
 	def calculate_occupied(self,agent_dict,region,r_size):
 		self.occupied=[]

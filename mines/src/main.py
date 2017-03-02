@@ -126,6 +126,9 @@ class Simulator:
 		o.info.origin.position.y=map_size/2
 		o.info.origin.position.z=20
 
+		o.info.origin.orientation.x=self.s.pre_num_unknown_locations
+		o.info.origin.orientation.y=self.s_old.pre_num_unknown_locations
+
 		env_pub.publish(o)
 
 		for k,b in buoy_dict.items():
@@ -187,9 +190,13 @@ class Simulator:
 			#if time.time()-start > 100:
 				#s.reset()
 			#	start = time.time()
-			self.pub()
-			self.pub2()
-			self.pub_to_buoys()
+
+			if time.time()-start > 1:
+				self.pub()
+				self.pub2()
+				self.pub_to_buoys()
+				start = time.time()
+
 
 ###MAIN
 def main(args):

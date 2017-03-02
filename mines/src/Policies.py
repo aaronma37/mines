@@ -51,7 +51,6 @@ class policy_top_level:
 			return True
 
 		if A.battery.num>90 and self.index==0:
-			print "HERE"
 			return True
 
 		return False
@@ -85,7 +84,7 @@ class policy_low_level:
 		if A.battery.num>90 and self.index==0:
 			return True
 
-		if self.index > 0 and A.regions[self.index-1].score==0:
+		if self.index > 0 and A.regions[self.index-1].score<2: #bandaid
 			return True
 
 		return False

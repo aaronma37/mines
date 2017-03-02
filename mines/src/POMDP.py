@@ -10,7 +10,7 @@ from Heuristics import heuristic
 from sets import Set
 import time
 
-H=50
+H=250
 gamma=.95
 
 class Solver: 
@@ -42,6 +42,7 @@ class Solver:
 			self.action_counter=0
 
 			self.A.update_all(self.environment_data,a_)
+
 			self.search_top(a_,self.A,0)
 			end = time.time()
 
@@ -115,7 +116,10 @@ class Solver:
 
 			self.append_dict2(self.Q,"root",abstraction,a_.policy_set.TA.index,0.)
 
-			self.append_dict2(self.Q,"root",abstraction,a_.policy_set.TA.index,(r1/n-(self.Q["root"][abstraction][a_.policy_set.TA.index]))/self.Na["root"][abstraction][a_.policy_set.TA.index])
+
+			#if a_.policy_set.TA.index==0:
+				#print "CHARGE BIG: ", n, a_.policy_set.TA.trigger, a_.policy_set.TA.LA.trigger
+			self.append_dict2(self.Q,"root",abstraction,a_.policy_set.TA.index,(r1-(self.Q["root"][abstraction][a_.policy_set.TA.index]))/self.Na["root"][abstraction][a_.policy_set.TA.index])
 
 				
 			return r1,n+n2
@@ -145,7 +149,7 @@ class Solver:
 				#print "LOWER LEVEL CHOSEN: ", a_.policy_set.TA.LA.index
 
 
-
+			#print a_.policy_set.TA.LA.trigger,a_.policy_set.TA.LA.index, "low"
 			r = A.evolve_all(self.H,a_)
 			#print r
 			r1,n = self.search_bottom(a_,A,depth+1)
@@ -197,7 +201,7 @@ class Solver:
 			if self.Q[identification].get(abstraction) is not None:
 				v = list(self.Q[identification][abstraction].values())
 				k = list(self.Q[identification][abstraction].keys())
-
+				#print "chose: ", k[v.index(max(v))], " with : :", max(v)
      				return k[v.index(max(v))]
 			else:
 				"ERROR"
@@ -240,6 +244,6 @@ class Solver:
 		if self.Q.get("root") is not None:
 			for ele in self.Q["root"]:
 				for ele2,v in self.Q["root"][ele].items():
-					print ele,v,self.N["root"][ele]
+					print ele,ele2,v,self.N["root"][ele]
 
 

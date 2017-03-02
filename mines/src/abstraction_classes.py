@@ -62,7 +62,6 @@ class Region():
 	def update(self,s):
 		#get output hash
 		self.score=s.get_region_score((self.region_center[0]-self.region_size,self.region_center[0]+self.region_size),(self.region_center[1]-self.region_size,self.region_center[1]+self.region_size))
-
 		self.hash=self.score
 
 	def update_with_hash(self,h):
@@ -76,7 +75,10 @@ class Region():
 
 	def evolve(self,heuristics,workload):
 		#the input here will be number of workers
-		self.score=heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(workload))
+	
+		print heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(workload))
+		self.score=int(heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(workload)))#BANDAID
+		#print self.score, "SCORE"
 		self.hash=self.score
 
 		
@@ -195,7 +197,7 @@ class Abstractions():
 		self.location.update(Regions.get_region(a.x,a.y))
 
 	def evolve_all(self,heuristics,a):
-
+		#print self.get_lower_level_abf(a)
 		r= heuristics.pull_from_rewards(a.policy_set.TA.LA.identification,self.get_lower_level_abf(a),a.policy_set.TA.LA.index)
 		for i in range(25):
 			self.work_load[i].evolve(heuristics,self.regions[i])
@@ -209,18 +211,18 @@ class Abstractions():
 		return r
 
 	def get_lower_level_abf(self,a):
-		if a.policy_set.TA == 0:
+		if a.policy_set.TA.index == 0:
 			#charge
 			return self.get_charge_abf()
-		elif a.policy_set.TA == 1:
+		elif a.policy_set.TA.index == 1:
 			#Explore
 			return self.get_explore_abf()
 
 	def get_lower_level_trigger(self,a):
-		if a.policy_set.TA == 0:
+		if a.policy_set.TA.index == 0:
 			#charge
 			return self.get_charge_trigger()
-		elif a.policy_set.TA == 1:
+		elif a.policy_set.TA.index == 1:
 			#Explore
 			return self.get_explore_trigger(a.policy_set.TA.LA.index-1)
 
@@ -234,7 +236,7 @@ class Abstractions():
 	def get_explore_trigger(self,index):
 		h ="explore trigger:"
 
-		h=h+self.regions[index].hash+":"
+		h=h+str(self.regions[index].hash)+":"
 
 		return h
 
@@ -245,9 +247,9 @@ class Abstractions():
 			h=h+str(i.hash)+":"
 
 		for i in self.work_load:
-			h=h+i.hash+"i"
+			h=h+i.hash+":"
 
-		h=h+self.location.hash+":"
+		h=h+str(self.location.hash)+":"
 
 		return h
 

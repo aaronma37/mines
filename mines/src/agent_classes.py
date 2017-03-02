@@ -30,6 +30,7 @@ class Agent:
 		self.battery=50
 		self.work_load=[]
 		self.work=0
+		self.last_reward=0.
 		for i in range(len(Regions.region)):
 			self.work_load.append(0)
 
@@ -42,8 +43,12 @@ class Agent:
 	def update_heuristics(self,old_s,new_s):
 		self.old_A.update_all(old_s,self)
 		self.new_A.update_all(new_s,self)
-		print new_s.get_reward()-old_s.get_reward(), "reward"
-		update_H(self.solver.H,self.old_A,self.new_A,self,new_s.get_reward()-old_s.get_reward())#THIS R IS A BANDAID
+
+		print "cc: ", self.new_A.get_lower_level_abf(self)
+		#print new_s.get_reward()-old_s.get_reward(), "reward",new_s.get_reward(),old_s.get_reward()
+		update_H(self.solver.H,self.old_A,self.new_A,self,self.last_reward)#THIS R IS A BANDAID
+		print self.solver.H.R[self.policy_set.TA.LA.identification][self.old_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index], self.solver.H.N[self.policy_set.TA.LA.identification][self.old_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index]
+
 
 
 
@@ -53,12 +58,15 @@ class Agent:
 	def reset(self):
 		self.x=self.map_size/2
 		self.y=self.map_size/2
+		self.policy_set=policy_root()
+		self.battery=50
 
 
 	def death(self):
-		self.x=randint(0,self.map_size-1)
-		self.y=randint(0,self.map_size-1)
-		self.battery=75
+		print "dead"
+		#self.x=randint(0,self.map_size-1)
+		#self.y=randint(0,self.map_size-1)
+		#self.battery=75
 
 
 	def imprint(self, u):
@@ -75,16 +83,28 @@ class Agent:
 		self.solver.OnlinePlanning(self,s,a_,time_to_work)
 
 	def decide(self,s):	
-		if self.policy_set.TA.LA.check_trigger(self.new_A,self):
-			if self.policy_set.TA.check_trigger(self.new_A):
+		self.new_A.update_all(s,self)
+		if self.policy_set.TA.LA.check_trigger(self.new_A,self) is True:
+			if self.policy_set.TA.check_trigger(self.new_A) is True:
 				self.policy_set.TA=self.policy_set.policy_set[self.solver.arg_max("root",self.new_A.get_top_level_abf())]
 				self.policy_set.TA.set_trigger(self.new_A)	
 
 				self.policy_set.TA.LA=self.policy_set.TA.policy_set[self.solver.arg_max(self.policy_set.TA.index,self.new_A.get_lower_level_abf(self))-self.policy_set.TA.bottom]
 				self.policy_set.TA.LA.set_trigger(self.new_A,self)	
 
+
+				print "Chose high level: ", self.new_A.get_lower_level_abf(self)
+				if self.solver.H.R.get(self.policy_set.TA.identification) is not None:
+					if self.solver.H.R[self.policy_set.TA.identification].get(self.new_A.get_lower_level_abf(self)) is not None:
+						if self.solver.H.R[self.policy_set.TA.identification][self.new_A.get_lower_level_abf(self)].get(self.policy_set.TA.LA.index) is not None:
+							print self.solver.H.R[self.policy_set.TA.LA.identification][self.new_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index]
+				print ":"
+
+
+
+
 			else:
-				self.policy_set.TA.LA=self.policy_set.TA.policy_set[self.solver.arg_max(self.policy_set.TA.index,self.new_A.get_lower_level_abf(self))]
+				self.policy_set.TA.LA=self.policy_set.TA.policy_set[self.solver.arg_max(self.policy_set.TA.index,self.new_A.get_lower_level_abf(self))-self.policy_set.TA.bottom]
 				self.policy_set.TA.LA.set_trigger(self.new_A,self)				
 		
 		action = self.policy_set.TA.LA.get_next_action(self,s)
@@ -98,14 +118,17 @@ class Agent:
 	def execute(self,action_,environment_data_):
 		(x,y) = self.get_transition(action_,self.x,self.y,environment_data_.middle)
 		
+		base_r = environment_data_.get_reward()
+
 		if environment_data_.check_boundaries((x,y)) is True:
 			(self.x,self.y) = (x,y)
 
 		self.measure(environment_data_,False)
 
 		if self.battery < 1:
-			print time.time(), "Dead"
 			self.death()
+
+		self.last_reward= environment_data_.get_reward()- base_r
 
 	
 

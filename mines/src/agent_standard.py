@@ -58,12 +58,16 @@ class Simulator:
 			for j in range(map_size):
 				s.seen[i][j]=grid.data[i*map_size+j]
 
+		s.pre_num_unknown_locations = grid.info.origin.orientation.x
+
 
 		for i in range(map_size):
 			for j in range(map_size):
-				s_old.seen[i][j]=grid.data[i*map_size+j+map_size*map_size]
+				s_old.seen[i][j]=int(grid.data[i*map_size+j+map_size*map_size])
 
-		print s.get_reward()-s_old.get_reward()
+		s_old.pre_num_unknown_locations = grid.info.origin.orientation.y
+
+		#print s.get_reward()-s_old.get_reward(),s_old.get_reward(),sum(s_old.seen)
 
 		self.update_flag=True
 

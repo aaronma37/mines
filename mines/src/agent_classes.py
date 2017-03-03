@@ -13,7 +13,7 @@ from Heuristics import update_H
 import Regions
 from POMDP import Solver
 import time
-
+import Policies
 class Agent: 
 
 
@@ -37,17 +37,18 @@ class Agent:
 		self.old_A=Abstractions()
 		self.new_A=Abstractions()
 
+
 		self.policy_set=policy_root()
 		self.time_away_from_network=0
 		
 	def update_heuristics(self,old_s,new_s):
 		self.old_A.update_all(old_s,self)
 		self.new_A.update_all(new_s,self)
-
-		print "cc: ", self.new_A.get_lower_level_abf(self)
+#
+		#print "cc: ", self.new_A.get_lower_level_abf(self)
 		#print new_s.get_reward()-old_s.get_reward(), "reward",new_s.get_reward(),old_s.get_reward()
 		update_H(self.solver.H,self.old_A,self.new_A,self,self.last_reward)#THIS R IS A BANDAID
-		print self.solver.H.R[self.policy_set.TA.LA.identification][self.old_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index], self.solver.H.N[self.policy_set.TA.LA.identification][self.old_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index]
+		#print self.solver.H.R[self.policy_set.TA.identification][self.old_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index], self.solver.H.N[self.policy_set.TA.identification][self.old_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index]
 
 
 
@@ -89,23 +90,24 @@ class Agent:
 				self.policy_set.TA=self.policy_set.policy_set[self.solver.arg_max("root",self.new_A.get_top_level_abf())]
 				self.policy_set.TA.set_trigger(self.new_A)	
 
-				self.policy_set.TA.LA=self.policy_set.TA.policy_set[self.solver.arg_max(self.policy_set.TA.index,self.new_A.get_lower_level_abf(self))-self.policy_set.TA.bottom]
+				self.policy_set.TA.LA=Policies.policy_low_level(self.solver.arg_max(self.policy_set.TA.index,self.new_A.get_lower_level_abf(self)))
 				self.policy_set.TA.LA.set_trigger(self.new_A,self)	
 
 
-				print "Chose high level: ", self.new_A.get_lower_level_abf(self)
+				#print "Chose high level: ", self.new_A.get_lower_level_abf(self)
 				if self.solver.H.R.get(self.policy_set.TA.identification) is not None:
 					if self.solver.H.R[self.policy_set.TA.identification].get(self.new_A.get_lower_level_abf(self)) is not None:
 						if self.solver.H.R[self.policy_set.TA.identification][self.new_A.get_lower_level_abf(self)].get(self.policy_set.TA.LA.index) is not None:
-							print self.solver.H.R[self.policy_set.TA.LA.identification][self.new_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index]
+							print self.solver.H.R[self.policy_set.TA.identification][self.new_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index]
 				print ":"
 
 
 
 
 			else:
-				self.policy_set.TA.LA=self.policy_set.TA.policy_set[self.solver.arg_max(self.policy_set.TA.index,self.new_A.get_lower_level_abf(self))-self.policy_set.TA.bottom]
-				self.policy_set.TA.LA.set_trigger(self.new_A,self)				
+				self.policy_set.TA.LA=Policies.policy_low_level(self.solver.arg_max(self.policy_set.TA.index,self.new_A.get_lower_level_abf(self)))
+				self.policy_set.TA.LA.set_trigger(self.new_A,self)
+				
 		
 		action = self.policy_set.TA.LA.get_next_action(self,s)
 

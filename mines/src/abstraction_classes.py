@@ -38,7 +38,7 @@ def append_dict2(P,h1,h2,h3,h4,r):
 	
 class All_Regions():
 	def __init__(self):
-		self.identification="all_regions"
+		self.identification="AAR"
 
 		self.score=0
 		self.hash=self.score
@@ -53,7 +53,7 @@ class All_Regions():
 class Region():
 	def __init__(self,index):
 		self.index=index
-		self.identification="region_score: " + str(self.index)
+		self.identification="AR: " + str(self.index)
 		self.hash=0
 		self.score=0
 		self.region_center=Regions.region[self.index]
@@ -61,7 +61,7 @@ class Region():
 
 	def update(self,s):
 		#get output hash
-		self.score=s.get_region_score((self.region_center[0]-self.region_size,self.region_center[0]+self.region_size),(self.region_center[1]-self.region_size,self.region_center[1]+self.region_size))
+		self.score=int(s.get_region_score((self.region_center[0]-self.region_size,self.region_center[0]+self.region_size),(self.region_center[1]-self.region_size,self.region_center[1]+self.region_size)))
 		self.hash=self.score
 
 	def update_with_hash(self,h):
@@ -76,7 +76,7 @@ class Region():
 	def evolve(self,heuristics,workload):
 		#the input here will be number of workers
 	
-		print heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(workload))
+		#print heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(workload))
 		self.score=int(heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(workload)))#BANDAID
 		#print self.score, "SCORE"
 		self.hash=self.score
@@ -110,35 +110,33 @@ class Battery():
 class WorkLoad():
 	def __init__(self,index):
 		self.index=index
-		self.hash="None"
-		self.identification="workload"
+		self.hash="DEFAULT"
+		self.identification="AW"
 		self.workload=0.
 		self.workforce_number=0.
 
 	def update(self,num_int,workforce_num):
 		self.workload=num_int
-		self.hash=str(self.workload)
+		self.hash=self.workload
 		self.workforce_number=workforce_num
 
 	def update_with_hash(self,h):
 		self.hash=h
 
 	def get_input(self,reg):
-
-
 		if self.workforce_number == 0.:
-			return str(int(5.*(self.workload/1.)))+str(":")+str(reg.hash)
+			return str(int(5.*(self.workload/1.)))+":"+str(reg.hash)
 		else:
 			return str(int(5.*(self.workload/self.workforce_number)))+":"+str(reg.hash)
 
 	def evolve(self,heuristics,reg):
-		self.workload=heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(reg))
+		self.workload=int(heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(reg)))
 		self.hash=str(self.workload)
 
 class Location():
 	def __init__(self):
 		self.hash="None"
-		self.identification="location"
+		self.identification="AL"
 
 	def update(self,num_int):
 		self.hash=str(num_int)
@@ -198,7 +196,8 @@ class Abstractions():
 
 	def evolve_all(self,heuristics,a):
 		#print self.get_lower_level_abf(a)
-		r= heuristics.pull_from_rewards(a.policy_set.TA.LA.identification,self.get_lower_level_abf(a),a.policy_set.TA.LA.index)
+		r= heuristics.pull_from_rewards(a.policy_set.TA.identification,self.get_lower_level_abf(a),a.policy_set.TA.LA.index,self.regions[a.policy_set.TA.LA.index-1].hash)
+				
 		for i in range(25):
 			self.work_load[i].evolve(heuristics,self.regions[i])
 			self.regions[i].evolve(heuristics,self.work_load[i])
@@ -216,7 +215,7 @@ class Abstractions():
 			return self.get_charge_abf()
 		elif a.policy_set.TA.index == 1:
 			#Explore
-			return self.get_explore_abf()
+			return self.get_explore_abf()+str(a.policy_set.TA.LA.index)+":"+str(self.regions[a.policy_set.TA.LA.index-1].hash)+"end"
 
 	def get_lower_level_trigger(self,a):
 		if a.policy_set.TA.index == 0:
@@ -247,9 +246,11 @@ class Abstractions():
 			h=h+str(i.hash)+":"
 
 		for i in self.work_load:
-			h=h+i.hash+":"
+			h=h+str(i.hash)+":"
 
 		h=h+str(self.location.hash)+":"
+
+
 
 		return h
 

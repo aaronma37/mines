@@ -84,12 +84,13 @@ class Simulator:
 
 
 	def run(self):
+		a.new_A.update_all(s,a)
 		while not rospy.is_shutdown():
 			start=time.time()
 			s.imprint(si)
-			a.step(si,ai,.5)
+			a.step(si,ai,.1)
 			s.imprint(si)
-			to_wait = start-time.time() + .2
+			to_wait = start-time.time() + .1
 			
 
 			if to_wait >0:
@@ -108,7 +109,7 @@ class Simulator:
 			pose.pose.position.x=a.x
 			pose.pose.position.y=a.y
 			pose.pose.position.z=a.battery
-			pose.pose.orientation.x=a.policy_set.TA.LA.index-a.policy_set.TA.bottom
+			pose.pose.orientation.x=a.policy_set.TA.LA.index-1
 			pose.pose.orientation.y=a.time_away_from_network
 			pose_pub.publish(pose)
 

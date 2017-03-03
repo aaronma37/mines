@@ -13,16 +13,16 @@ region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10
 
 region_size=10
 
-region_set=[]
+region_list=[]
 
 def get_distance(x,y,x2,y2):
 	return max(math.fabs(x2-x),math.fabs(y2-y))
 
 for i in range(25):
-	region_set.append([])
+	region_list.append([])
 	for j in range(region[i][0]-region_size,region[i][0]+region_size):
 		for k in range(region[i][1]-region_size,region[i][1]+region_size):	
-			region_set[i].append((j,k))
+			region_list[i].append((j,k))
 
 
 greedy_regions = [(1,1),(-1,1),(-1,-1),(1,-1), (0,1), (1,0), (0,-1), (-1,0)]

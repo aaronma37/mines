@@ -44,28 +44,31 @@ class heuristic:
 
 			
 
-	def update(self,classifier, base, input_,output_,reward):
-		append_dict(self.N,classifier, base,input_,1.)
-		append_dict2(self.A,classifier, base,input_,output_,1.)
-
-		append_dict(self.R,classifier, base,input_,0.)
-		append_dict(self.R,classifier, base,input_,(reward-self.R[classifier][input_])/self.N[classifier][input_])
+	#def update(self,classifier, base, input_,output_,reward):
+	#	append_dict(self.N,classifier, base,input_,1.)
+	#	append_dict2(self.A,classifier, base,input_,output_,1.)
+#
+#		append_dict(self.R,classifier, base,input_,0.)
+#		append_dict(self.R,classifier, base,input_,(reward-self.R[classifier][input_])/self.N[classifier][input_])
 
 
 
 	def pull_new_abstraction(self,classifier, base,input_):
 
-		#Returns from particle
-		print classifier
+		if base is None:
+			print "error in abstraction pull"
+			return base
+
+
 		if self.N.get(classifier) is None:
 			append_dict(self.N,classifier, base,input_,1.)
-			append_dict2(self.A,classifier, base,input_,input_,1.)
+			append_dict2(self.A,classifier, base,input_,base,1.)
 		if self.N[classifier].get(base) is None:
 			append_dict(self.N,classifier, base,input_,1.)
-			append_dict2(self.A,classifier, base,input_,input_,1.)
+			append_dict2(self.A,classifier, base,input_,base,1.)
 		if self.N[classifier][base].get(input_) is None:
 			append_dict(self.N,classifier, base,input_,1.)
-			append_dict2(self.A,classifier, base,input_,input_,1.)
+			append_dict2(self.A,classifier, base,input_,base,1.)
 
 
 		c=0.
@@ -77,34 +80,40 @@ class heuristic:
 			return base
 
 		for k,v in self.A[classifier][base][input_].items():
-			print k
-			
-			print base
-			print input_
+			#print k,v,"b",N
 			#print "DIDNT MAKE IT HERE",c,v/N
 			if r < c+v/N:
 				return k
 			c+=v/N
 
-		#print "MADE IT TO NONE SHOUJLDNOT HAPPEN",c,N
+		print "MADE IT TO NONE SHOUJLDNOT HAPPEN",c,N
 		return None
 
-	def pull_from_rewards(self,classifier,base,input_):
+	def pull_from_rewards(self,classifier,base,input_,num):
 		
-		if self.R.get(classifier) is None:
+		#if classifier=="Explore" and num==0:
+			#return 0.
+			
 
+		if self.R.get(classifier) is None:
+			#if classifier=="Explore":
+			#	return self.get_inherent_reward(classifier,base,input_,num)
 			if input_ == 0:
 				append_dict(self.R,classifier, base,input_,1.)
 			else:
 				append_dict(self.R,classifier, base,input_,1.)
 
 		if self.R[classifier].get(base) is None:
+			#if classifier=="Explore":
+			#	return self.get_inherent_reward(classifier,base,input_,num)
 			if input_ == 0:
 				append_dict(self.R,classifier, base,input_,1.)
 			else:
 				append_dict(self.R,classifier, base,input_,1.)
 
 		if self.R[classifier][base].get(input_) is None:
+			#if classifier=="Explore":
+			#	return self.get_inherent_reward(classifier,base,input_,num)
 			if input_ == 0:
 				append_dict(self.R,classifier, base,input_,1.)
 			else:
@@ -116,14 +125,21 @@ class heuristic:
 		#print classifier,base,input_
 		return self.R[classifier][base][input_]		
 		
+	def get_inherent_reward(self,c,b,i,num):
+
+		#print "EXPLORE REWARD", b
+		#print num
+		return num
+		
+
 
 def update_H(H,A1,A2,a,R):
 	#STUFF HEURISTICS HERE
 	#REW	self.get_lower_level_abf(a)
-	append_dict(H.N,a.policy_set.TA.LA.identification,A1.get_lower_level_abf(a),a.policy_set.TA.LA.index,1.)
-	append_dict(H.R,a.policy_set.TA.LA.identification,A1.get_lower_level_abf(a),a.policy_set.TA.LA.index,0.)
+	append_dict(H.N,a.policy_set.TA.identification,A1.get_lower_level_abf(a),a.policy_set.TA.LA.index,1.)
+	append_dict(H.R,a.policy_set.TA.identification,A1.get_lower_level_abf(a),a.policy_set.TA.LA.index,0.)
 
-	append_dict(H.R,a.policy_set.TA.LA.identification,A1.get_lower_level_abf(a),a.policy_set.TA.LA.index,(R-H.R[a.policy_set.TA.LA.identification][A1.get_lower_level_abf(a)][a.policy_set.TA.LA.index])/H.N[a.policy_set.TA.LA.identification][A1.get_lower_level_abf(a)][a.policy_set.TA.LA.index])
+	append_dict(H.R,a.policy_set.TA.identification,A1.get_lower_level_abf(a),a.policy_set.TA.LA.index,(R-H.R[a.policy_set.TA.identification][A1.get_lower_level_abf(a)][a.policy_set.TA.LA.index])/H.N[a.policy_set.TA.identification][A1.get_lower_level_abf(a)][a.policy_set.TA.LA.index])
 
 	#A
 	for i in range(len(A1.regions)):
@@ -133,10 +149,9 @@ def update_H(H,A1,A2,a,R):
 		input_=A1.regions[i].get_input(A1.work_load[i])
 		
 		output=A2.regions[i].hash
-		print "output",ident
 		append_dict(H.N,indent,base,input_,1.)
 		append_dict2(H.A,indent,base,input_,output,1.)
-		print H.A[indent][base][input_][output]
+
 
 	for i in range(len(A1.work_load)):
 

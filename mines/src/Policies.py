@@ -7,7 +7,7 @@ import numpy as np
 import math
 import Regions
 
-
+from random import shuffle
 
 class policy_root:
 	def __init__(self):
@@ -28,19 +28,18 @@ class policy_top_level:
 		#index 1 is to go explore
 		self.trigger="Not set"
 		self.policy_set=[]
-
 		self.bottom=0
 		self.top=0
 		if self.index==0:
+			self.bottom=0
 			self.identification="Charge"
 			self.policy_set.append(policy_low_level(0))
-			self.bottom=0
 			self.top=1
-		elif self.index==1:
-			self.identification="Explore"
+		else:
 			self.bottom=1
+			self.identification="Explore"
 			self.top=26
-			for i in range(self.bottom,self.top):
+			for i in range(1,self.top):
 				self.policy_set.append(policy_low_level(i))
 
 		self.LA=(policy_low_level(0))
@@ -84,7 +83,7 @@ class policy_low_level:
 		if A.battery.num>90 and self.index==0:
 			return True
 
-		if self.index > 0 and A.regions[self.index-1].score<2: #bandaid
+		if self.index > 0 and A.regions[self.index-1].score<1: #bandaid
 			return True
 
 		return False
@@ -111,7 +110,9 @@ class policy_low_level:
 		elif self.index <26:
 			m=1000
 			loc=(0,0)
-			for i in Regions.region_set[self.index-1]:
+			l = Regions.region_list[self.index-1]
+			shuffle(l)
+			for i in l:
 				if s.seen[i[0]][i[1]]==s.NOT_SEEN:
 					if self.get_distance(a.x,a.y,i[0],i[1]) < m:
 						m=self.get_distance(a.x,a.y,i[0],i[1])

@@ -9,7 +9,8 @@ from abstraction_classes import Abstractions
 from Heuristics import heuristic
 from sets import Set
 import time
-
+import Policies
+from random import shuffle
 H=250
 gamma=.95
 
@@ -93,10 +94,11 @@ class Solver:
 				self.append_dict(self.N,"root",abstraction,1)
 #				return self.rollout(a_,depth,s)#MOD
 			
-			a_.policy_set.TA = a_.policy_set.policy_set[self.arg_max_ucb("root",abstraction,a_.policy_set)-a_.policy_set.bottom]
+			a_.policy_set.TA = a_.policy_set.policy_set[self.arg_max_ucb("root",abstraction,a_.policy_set)]
 			a_.policy_set.TA.set_trigger(A)
 
-			a_.policy_set.TA.LA = a_.policy_set.TA.policy_set[self.arg_max_ucb(a_.policy_set.TA.index,abstraction,a_.policy_set.TA)-a_.policy_set.TA.bottom]
+			a_.policy_set.TA.LA = a_.policy_set.TA.LA=Policies.policy_low_level(self.arg_max_ucb(a_.policy_set.TA.index,abstraction,a_.policy_set.TA))
+
 			a_.policy_set.TA.LA.set_trigger(A,a_)
 
 			#print "UPPER LEVEL CHOSEN: ", a_.policy_set.TA.index
@@ -144,7 +146,7 @@ class Solver:
 				if a_.policy_set.TA.check_trigger(A) is True:
 					return (0,1)
 			else:
-				a_.policy_set.TA.LA = a_.policy_set.TA.policy_set[self.arg_max_ucb(a_.policy_set.TA.index,abstraction,a_.policy_set.TA)-a_.policy_set.TA.bottom]
+				a_.policy_set.TA.LA = a_.policy_set.TA.LA=Policies.policy_low_level(self.arg_max_ucb(a_.policy_set.TA.index,abstraction,a_.policy_set.TA))
 				a_.policy_set.TA.LA.set_trigger(A,a_)
 				#print "LOWER LEVEL CHOSEN: ", a_.policy_set.TA.LA.index
 
@@ -167,7 +169,7 @@ class Solver:
 
 
 			self.append_dict2(self.Q,a_.policy_set.TA.index,abstraction,a_.policy_set.TA.LA.index,(r-(self.Q[a_.policy_set.TA.index][abstraction][a_.policy_set.TA.LA.index]))/self.Na[a_.policy_set.TA.index][abstraction][a_.policy_set.TA.LA.index])
-			#print self.Q[a_.policy_set.TA.index][abstraction][a_.policy_set.TA.LA.index],a_.policy_set.TA.LA.index
+			print a_.policy_set.TA.index,abstraction,a_.policy_set.TA.LA.index,self.Na[a_.policy_set.TA.index][abstraction][a_.policy_set.TA.LA.index]
 
 				
 			return r,n+1.
@@ -214,19 +216,29 @@ class Solver:
 		max=-1000
 		policy_index = None
 
+		
+
+
 		if self.Q.get(identification) is not None:
 			if self.Q[identification].get(abstraction) is not None:
 				k = range(P.bottom,P.top)
+				shuffle(k)
 				for kz in k:
 					if self.Q[identification][abstraction].get(kz) is None:
-
+						self.append_dict2(self.Q,identification,abstraction,kz,0.)
+						self.append_dict2(self.Na,identification,abstraction,kz,0.)
+						#print "DID NOT FIND", identification, abstraction, kz
 						return kz
-					if self.ucb(self.N[identification][abstraction],self.Q[identification][abstraction][kz],self.Na[identification][abstraction][kz]) > max:
-						max=self.ucb(self.N[identification][abstraction],self.Q[identification][abstraction][kz],self.Na[identification][abstraction][kz])
+					#else:
+						#print "FOUND: ", kz-P.bottom
+					if self.ucb(self.N[identification][abstraction],self.Q[identification][abstraction][kz],self.Na[identification][abstraction][kz]+1.) > max:
+						max=self.ucb(self.N[identification][abstraction],self.Q[identification][abstraction][kz],self.Na[identification][abstraction][kz]+1.)
 						policy_index = kz
 			else:
+				#print "RETURN DOUBLE EARLY"
 				return 0
 		else:
+			#print "RETURN EARLY"
 			return 0
 
 		return policy_index
@@ -241,9 +253,9 @@ class Solver:
 
 
 	def print_n(self):
-		if self.Q.get("root") is not None:
-			for ele in self.Q["root"]:
-				for ele2,v in self.Q["root"][ele].items():
-					print ele,ele2,v,self.N["root"][ele]
+		if self.Q.get(1) is not None:
+			for ele in self.Q[1]:
+				for ele2,v in self.Q[1][ele].items():
+					print ele,ele2,v,self.N[1][ele]
 
 

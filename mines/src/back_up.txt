@@ -1,0 +1,460 @@
+R,Explore,reward_abf_explore:4:1:2:search,empty,1.44343891403,221.0
+R,Explore,reward_abf_explore:2:3:2:travel,empty,1.0,37.0
+R,Explore,reward_abf_explore:4:1:2:travel,empty,0.0622710622711,273.0
+R,Explore,reward_abf_explore:1:3:0:search,empty,9.0,2.0
+R,Explore,reward_abf_explore:3:0:2:travel,empty,1.0,1.0
+R,Explore,reward_abf_explore:5:1:3:travel,empty,0.164133738602,329.0
+R,Explore,reward_abf_explore:1:3:2:search,empty,4.55223880597,67.0
+R,Explore,reward_abf_explore:1:1:2:travel,empty,1.2,5.0
+R,Explore,reward_abf_explore:3:0:0:travel,empty,0.0,1.0
+R,Explore,reward_abf_explore:1:3:1:search,empty,4.41258741259,143.0
+R,Explore,reward_abf_explore:3:3:1:travel,empty,0.750915750916,273.0
+R,Explore,reward_abf_explore:2:1:3:travel,empty,0.25,8.0
+R,Explore,reward_abf_explore:2:0:2:travel,empty,0.0,1.0
+R,Explore,reward_abf_explore:1:2:1:travel,empty,2.5,6.0
+R,Explore,reward_abf_explore:5:1:2:travel,empty,0.136222910217,969.0
+R,Explore,reward_abf_explore:2:2:1:travel,empty,0.425675675676,148.0
+R,Explore,reward_abf_explore:4:3:3:travel,empty,4.0,1.0
+R,Explore,reward_abf_explore:5:3:0:travel,empty,0.0,13.0
+R,Explore,reward_abf_explore:3:3:3:search,empty,2.38888888889,18.0
+R,Explore,reward_abf_explore:1:1:2:search,empty,1.15151515152,33.0
+R,Explore,reward_abf_explore:5:2:2:travel,empty,0.136456211813,491.0
+R,Explore,reward_abf_explore:1:1:1:travel,empty,0.766666666667,30.0
+R,Explore,reward_abf_explore:5:0:0:travel,empty,0.0,5.0
+R,Explore,reward_abf_explore:4:3:3:search,empty,2.5,2.0
+R,Explore,reward_abf_explore:3:1:0:travel,empty,0.0,2.0
+R,Explore,reward_abf_explore:2:1:4:travel,empty,0.0,2.0
+R,Explore,reward_abf_explore:5:2:1:travel,empty,0.210186976144,1551.0
+R,Explore,reward_abf_explore:3:3:0:travel,empty,0.0,2.0
+R,Explore,reward_abf_explore:5:3:3:search,empty,3.89130434783,46.0
+R,Explore,reward_abf_explore:5:3:2:travel,empty,0.281690140845,284.0
+R,Explore,reward_abf_explore:2:1:1:search,empty,1.73362445415,1145.0
+R,Explore,reward_abf_explore:4:2:1:search,empty,3.48860759494,790.0
+R,Explore,reward_abf_explore:4:1:4:search,empty,3.0,21.0
+R,Explore,reward_abf_explore:3:1:2:travel,empty,0.373417721519,158.0
+R,Explore,reward_abf_explore:5:2:4:search,empty,3.63636363636,11.0
+R,Explore,reward_abf_explore:3:1:3:search,empty,0.551724137931,58.0
+R,Explore,reward_abf_explore:3:3:3:travel,empty,0.0,10.0
+R,Explore,reward_abf_explore:4:1:1:travel,empty,0.290419161677,334.0
+R,Explore,reward_abf_explore:5:2:3:travel,empty,0.0909090909091,154.0
+R,Explore,reward_abf_explore:2:0:1:travel,empty,0.0,50.0
+R,Explore,reward_abf_explore:5:1:4:search,empty,1.18181818182,33.0
+R,Explore,reward_abf_explore:5:3:1:travel,empty,0.3125,1264.0
+R,Explore,reward_abf_explore:2:3:2:search,empty,4.71428571429,49.0
+R,Explore,reward_abf_explore:2:3:3:travel,empty,0.923076923077,13.0
+R,Explore,reward_abf_explore:4:1:1:search,empty,1.82864450128,391.0
+R,Explore,reward_abf_explore:4:2:3:search,empty,2.77777777778,18.0
+R,Explore,reward_abf_explore:3:1:1:search,empty,1.74711760184,1301.0
+R,Explore,reward_abf_explore:1:2:1:search,empty,4.5,34.0
+R,Explore,reward_abf_explore:2:2:1:search,empty,3.35,500.0
+R,Explore,reward_abf_explore:4:2:3:travel,empty,0.6,20.0
+R,Explore,reward_abf_explore:4:2:0:travel,empty,0.0,1.0
+R,Explore,reward_abf_explore:3:2:2:travel,empty,0.296296296296,81.0
+R,Explore,reward_abf_explore:2:1:2:search,empty,1.28461538462,260.0
+R,Explore,reward_abf_explore:2:3:1:travel,empty,0.813186813187,182.0
+R,Explore,reward_abf_explore:1:2:2:search,empty,2.0,1.0
+R,Explore,reward_abf_explore:3:1:1:travel,empty,0.332467532468,385.0
+R,Explore,reward_abf_explore:2:2:0:travel,empty,0.0,1.0
+R,Explore,reward_abf_explore:2:3:3:search,empty,3.8275862069,29.0
+R,Explore,reward_abf_explore:3:2:2:search,empty,2.7358490566,212.0
+R,Explore,reward_abf_explore:4:1:0:travel,empty,0.0,1.0
+R,Explore,reward_abf_explore:3:2:1:search,empty,3.0693481276,721.0
+R,Explore,reward_abf_explore:4:1:3:search,empty,1.40816326531,49.0
+R,Explore,reward_abf_explore:5:1:4:travel,empty,0.117647058824,34.0
+R,Explore,reward_abf_explore:4:0:2:travel,empty,0.0,1.0
+R,Explore,reward_abf_explore:5:1:2:search,empty,1.41301460823,753.0
+R,Explore,reward_abf_explore:5:1:1:travel,empty,0.204028589994,1539.0
+R,Explore,reward_abf_explore:4:3:1:travel,empty,0.301261829653,634.0
+R,Explore,reward_abf_explore:4:2:2:travel,empty,0.290909090909,165.0
+R,Explore,reward_abf_explore:5:3:3:travel,empty,0.27868852459,61.0
+R,Explore,reward_abf_explore:3:3:1:search,empty,4.20634920635,693.0
+R,Explore,reward_abf_explore:2:2:3:search,empty,3.42105263158,19.0
+R,Explore,reward_abf_explore:4:3:1:search,empty,4.43891402715,663.0
+R,Explore,reward_abf_explore:1:1:1:search,empty,1.87698412698,252.0
+R,Explore,reward_abf_explore:4:2:1:travel,empty,0.25667090216,787.0
+R,Explore,reward_abf_explore:4:0:1:travel,empty,0.0,52.0
+R,Explore,reward_abf_explore:5:2:2:search,empty,3.25950782998,447.0
+R,Explore,reward_abf_explore:5:2:3:search,empty,2.85714285714,70.0
+R,Explore,reward_abf_explore:4:1:5:search,empty,0.190476190476,21.0
+R,Explore,reward_abf_explore:2:2:3:travel,empty,0.857142857143,7.0
+R,Explore,reward_abf_explore:3:3:2:travel,empty,0.675675675676,37.0
+R,Explore,reward_abf_explore:1:1:4:search,empty,1.5,10.0
+R,Explore,reward_abf_explore:4:1:3:travel,empty,0.0597014925373,67.0
+R,Explore,reward_abf_explore:5:0:1:travel,empty,0.0,145.0
+R,Explore,reward_abf_explore:4:3:0:travel,empty,0.0,4.0
+R,Explore,reward_abf_explore:2:2:2:travel,empty,0.491525423729,59.0
+R,Explore,reward_abf_explore:3:2:3:search,empty,0.0,1.0
+R,Explore,reward_abf_explore:4:2:2:search,empty,3.58620689655,174.0
+R,Explore,reward_abf_explore:3:0:1:travel,empty,0.0,53.0
+R,Explore,reward_abf_explore:3:1:3:travel,empty,0.0,18.0
+R,Explore,reward_abf_explore:2:3:1:search,empty,4.47417840376,426.0
+R,Explore,reward_abf_explore:3:3:2:search,empty,4.66315789474,95.0
+R,Explore,reward_abf_explore:2:2:2:search,empty,2.8347107438,121.0
+R,Explore,reward_abf_explore:2:3:0:travel,empty,0.0,2.0
+R,Explore,reward_abf_explore:5:3:2:search,empty,4.26775956284,183.0
+R,Explore,reward_abf_explore:5:1:5:search,empty,0.32,25.0
+R,Explore,reward_abf_explore:5:2:1:search,empty,3.1836485662,1639.0
+R,Explore,reward_abf_explore:3:2:1:travel,empty,0.361010830325,277.0
+R,Explore,charging,empty,0.0166068222621,4456.0
+R,Explore,reward_abf_explore:5:2:0:travel,empty,0.0,2.0
+R,Explore,reward_abf_explore:4:3:2:search,empty,4.19469026549,113.0
+R,Explore,reward_abf_explore:5:2:4:travel,empty,0.0322580645161,31.0
+R,Explore,reward_abf_explore:4:1:4:travel,empty,0.151515151515,33.0
+R,Explore,reward_abf_explore:5:0:2:travel,empty,0.0,1.0
+R,Explore,reward_abf_explore:4:1:5:travel,empty,0.0,40.0
+R,Explore,reward_abf_explore:5:1:3:search,empty,1.3125,320.0
+R,Explore,reward_abf_explore:1:3:1:travel,empty,2.45454545455,11.0
+R,Explore,reward_abf_explore:5:1:1:search,empty,1.75687005123,2147.0
+R,Explore,reward_abf_explore:3:1:2:search,empty,1.22641509434,424.0
+R,Explore,reward_abf_explore:4:3:2:travel,empty,0.335294117647,170.0
+R,Explore,reward_abf_explore:1:0:1:search,empty,0.0,10.0
+R,Explore,reward_abf_explore:5:3:1:search,empty,4.38691883373,1269.0
+R,Explore,reward_abf_explore:2:1:3:search,empty,0.886363636364,44.0
+R,Explore,reward_abf_explore:2:1:2:travel,empty,0.226804123711,97.0
+R,Explore,reward_abf_explore:2:1:1:travel,empty,0.589743589744,351.0
+R,root,top:7:5,0,0.056,500.0
+R,root,top:7:5,1,0.259557344064,497.0
+R,root,top:7:4,0,0.0118845500849,589.0
+R,root,top:7:4,1,0.404074702886,589.0
+R,root,top:7:7,0,0.0,104.0
+R,root,top:7:7,1,2.51023391813,684.0
+R,root,top:7:6,0,0.0271903323263,331.0
+R,root,top:7:6,1,0.266666666667,315.0
+R,root,top:7:1,0,0.0,717.0
+R,root,top:7:1,1,0.433854907539,703.0
+R,root,top:7:0,0,0.0,504.0
+R,root,top:7:0,1,0.315895372233,497.0
+R,root,top:7:3,0,0.0,687.0
+R,root,top:7:3,1,0.571018651363,697.0
+R,root,top:7:2,0,0.0,798.0
+R,root,top:7:2,1,0.597323600973,822.0
+R,root,top:2:5,1,0.0,2.0
+R,root,top:2:6,0,0.0,12.0
+R,root,top:2:6,1,3.39393939394,33.0
+R,root,top:3:5,1,0.0,2.0
+R,root,top:3:7,0,0.0,1.0
+R,root,top:3:7,1,0.0,6.0
+R,root,top:3:6,0,0.0445544554455,202.0
+R,root,top:3:6,1,0.376884422111,199.0
+R,root,top:6:0,0,0.0,145.0
+R,root,top:6:0,1,0.0316455696203,158.0
+R,root,top:6:1,0,0.0,245.0
+R,root,top:6:1,1,0.00851063829787,235.0
+R,root,top:6:2,0,0.0,238.0
+R,root,top:6:2,1,0.0036231884058,276.0
+R,root,top:6:3,0,0.0,113.0
+R,root,top:6:3,1,0.00704225352113,142.0
+R,root,top:6:4,0,0.0,98.0
+R,root,top:6:4,1,0.114583333333,96.0
+R,root,top:6:5,0,0.0,49.0
+R,root,top:6:5,1,2.51282051282,39.0
+R,root,top:6:6,0,0.0322580645161,155.0
+R,root,top:6:6,1,1.41549295775,142.0
+R,root,top:6:7,0,0.0857142857143,245.0
+R,root,top:6:7,1,3.68846153846,260.0
+R,root,top:10:0,0,0.0,213.0
+R,root,top:10:0,1,0.0,41.0
+R,root,top:10:1,0,0.0,177.0
+R,root,top:10:1,1,0.0,68.0
+R,root,top:10:2,0,0.0,84.0
+R,root,top:10:2,1,0.0,46.0
+R,root,top:10:3,0,0.0,69.0
+R,root,top:10:3,1,0.219512195122,41.0
+R,root,top:10:4,0,0.0,56.0
+R,root,top:10:4,1,0.658536585366,41.0
+R,root,top:10:5,0,0.0,59.0
+R,root,top:10:5,1,0.204545454545,44.0
+R,root,top:10:6,0,0.0,49.0
+R,root,top:10:6,1,0.428571428571,21.0
+R,root,top:10:7,0,0.0,12.0
+R,root,top:10:7,1,0.0,3.0
+R,root,top:4:0,1,0.0,1.0
+R,root,top:4:6,0,0.0,114.0
+R,root,top:4:6,1,1.94915254237,118.0
+R,root,top:4:7,0,0.0,94.0
+R,root,top:4:7,1,4.30650154799,323.0
+R,root,top:4:5,0,0.0,1.0
+R,root,top:4:5,1,0.0,41.0
+R,root,top:5:7,0,0.0,45.0
+R,root,top:5:7,1,1.95454545455,660.0
+R,root,top:5:7,<Policies.policy_top_level instance at 0x7fb982c9a248>,0.0,1.0
+R,root,top:5:7,<Policies.policy_top_level instance at 0x7fb982ccb518>,0.0,1.0
+R,root,top:5:7,<Policies.policy_top_level instance at 0x7fb982cf1290>,0.0,1.0
+R,root,top:5:7,<Policies.policy_top_level instance at 0x7fb983def518>,0.0,1.0
+R,root,top:5:6,0,0.0,144.0
+R,root,top:5:6,1,1.47852760736,163.0
+R,root,top:5:5,0,0.0,24.0
+R,root,top:5:5,1,2.6875,32.0
+R,root,top:5:4,0,0.0,3.0
+R,root,top:5:4,1,0.0,13.0
+R,root,top:5:3,0,0.0,6.0
+R,root,top:5:3,1,0.0,21.0
+R,root,top:5:2,0,0.0,16.0
+R,root,top:5:2,1,0.0,30.0
+R,root,top:5:1,0,0.0,2.0
+R,root,top:5:1,1,0.0,7.0
+R,root,top:5:0,0,0.0,36.0
+R,root,top:5:0,1,0.0,16.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982ccbab8>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982d19878>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982cf1e60>,1.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb983de88c0>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982d450e0>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982cf1908>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982c79128>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982c9a170>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982cf1998>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982d451b8>,2.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982ccb9e0>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982cf1200>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982cf1248>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982c9aa70>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb983de3878>,4.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb983def2d8>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982ccbb00>,5.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982ccb878>,2.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb983de8b90>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982ccb3b0>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb983def3f8>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb983de3440>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb983de34d0>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982c9acf8>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982c9af80>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982c79b90>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982c795f0>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982d19e60>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982c9ae60>,5.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982cf1680>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982ccbea8>,3.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982ccba70>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982cb2ef0>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb983de8f80>,1.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982cf1fc8>,0.0,1.0
+R,root,top:5:0,<Policies.policy_top_level instance at 0x7fb982d45ea8>,0.0,1.0
+R,root,top:9:3,0,0.0,190.0
+R,root,top:9:3,1,1.08619133574,2216.0
+R,root,top:9:2,0,0.0,270.0
+R,root,top:9:2,1,0.898523106241,2099.0
+R,root,top:9:1,0,0.0,393.0
+R,root,top:9:1,1,0.934464148034,2594.0
+R,root,top:9:0,0,0.0,317.0
+R,root,top:9:0,1,0.513004980631,1807.0
+R,root,top:9:7,0,0.0,22.0
+R,root,top:9:7,1,1.20819112628,293.0
+R,root,top:9:6,0,0.191780821918,73.0
+R,root,top:9:6,1,1.71723368656,1793.0
+R,root,top:9:5,0,0.0,166.0
+R,root,top:9:5,1,1.59727443609,2128.0
+R,root,top:9:4,0,0.0,162.0
+R,root,top:9:4,1,1.20460704607,2214.0
+R,root,top:8:6,0,0.0215439856373,557.0
+R,root,top:8:6,1,3.92895586652,929.0
+R,root,top:8:7,0,0.0,51.0
+R,root,top:8:7,1,1.93333333333,90.0
+R,root,top:8:4,0,0.0,644.0
+R,root,top:8:4,1,2.48627726953,1421.0
+R,root,top:8:5,0,0.00980392156863,816.0
+R,root,top:8:5,1,3.1808809747,1067.0
+R,root,top:8:2,0,0.0,511.0
+R,root,top:8:2,1,2.1100795756,1508.0
+R,root,top:8:3,0,0.0,676.0
+R,root,top:8:3,1,2.40317250496,1513.0
+R,root,top:8:0,0,0.0,538.0
+R,root,top:8:0,1,1.86813186813,910.0
+R,root,top:8:1,0,0.0,829.0
+R,root,top:8:1,1,1.75462962963,1512.0
+R,root,top:1:6,0,0.0,1.0
+R,root,top:1:6,1,0.0,33.0
+R,root,top:1:5,1,0.0,3.0
+R,Charge,charging,empty,0.00859119592488,13153.0
+A,AR: 1,0,0,0,13097.0,13132.0
+A,AR: 1,0,0,2,1.0,13132.0
+A,AR: 1,0,0,3,34.0,13132.0
+A,AR: 1,0,1,0,116.0,117.0
+A,AR: 1,0,1,3,1.0,117.0
+A,AR: 1,0,2,0,1.0,1.0
+A,AR: 1,0,3,0,1.0,1.0
+A,AR: 1,1,0,1,7547.0,7554.0
+A,AR: 1,1,0,3,7.0,7554.0
+A,AR: 1,1,1,0,22.0,2417.0
+A,AR: 1,1,1,1,2391.0,2417.0
+A,AR: 1,1,1,3,4.0,2417.0
+A,AR: 1,1,2,0,9.0,273.0
+A,AR: 1,1,2,1,264.0,273.0
+A,AR: 1,1,3,1,36.0,36.0
+A,AR: 1,1,4,0,1.0,10.0
+A,AR: 1,1,4,1,9.0,10.0
+A,AR: 1,2,0,1,1.0,10652.0
+A,AR: 1,2,0,2,10649.0,10652.0
+A,AR: 1,2,0,3,2.0,10652.0
+A,AR: 1,2,1,1,31.0,1731.0
+A,AR: 1,2,1,2,1700.0,1731.0
+A,AR: 1,2,2,1,3.0,42.0
+A,AR: 1,2,2,2,39.0,42.0
+A,AR: 1,3,0,2,3.0,8157.0
+A,AR: 1,3,0,3,8155.0,8157.0
+A,AR: 1,3,1,2,19.0,1147.0
+A,AR: 1,3,1,3,1128.0,1147.0
+A,AR: 1,3,2,2,6.0,154.0
+A,AR: 1,3,2,3,148.0,154.0
+A,AR: 1,3,3,2,2.0,23.0
+A,AR: 1,3,3,3,21.0,23.0
+A,AR: 2,0,0,0,51839.0,51993.0
+A,AR: 2,0,0,1,1.0,51993.0
+A,AR: 2,0,0,2,2.0,51993.0
+A,AR: 2,0,0,3,151.0,51993.0
+A,AR: 2,0,1,0,478.0,481.0
+A,AR: 2,0,1,3,3.0,481.0
+A,AR: 2,0,2,0,5.0,5.0
+A,AR: 2,0,3,0,1.0,1.0
+A,AR: 2,1,0,1,28403.0,28425.0
+A,AR: 2,1,0,3,22.0,28425.0
+A,AR: 2,1,1,0,81.0,10317.0
+A,AR: 2,1,1,1,10233.0,10317.0
+A,AR: 2,1,1,3,3.0,10317.0
+A,AR: 2,1,2,0,44.0,1664.0
+A,AR: 2,1,2,1,1619.0,1664.0
+A,AR: 2,1,2,3,1.0,1664.0
+A,AR: 2,1,3,0,12.0,298.0
+A,AR: 2,1,3,1,286.0,298.0
+A,AR: 2,1,4,0,1.0,2.0
+A,AR: 2,1,4,1,1.0,2.0
+A,AR: 2,2,0,1,2.0,39246.0
+A,AR: 2,2,0,2,39240.0,39246.0
+A,AR: 2,2,0,3,4.0,39246.0
+A,AR: 2,2,1,1,118.0,7411.0
+A,AR: 2,2,1,2,7293.0,7411.0
+A,AR: 2,2,2,1,27.0,664.0
+A,AR: 2,2,2,2,637.0,664.0
+A,AR: 2,2,3,1,3.0,63.0
+A,AR: 2,2,3,2,59.0,63.0
+A,AR: 2,2,3,3,1.0,63.0
+A,AR: 2,3,0,2,8.0,33898.0
+A,AR: 2,3,0,3,33891.0,33898.0
+A,AR: 2,3,1,2,100.0,6754.0
+A,AR: 2,3,1,3,6654.0,6754.0
+A,AR: 2,3,2,2,17.0,483.0
+A,AR: 2,3,2,3,466.0,483.0
+A,AR: 2,3,3,2,4.0,83.0
+A,AR: 2,3,3,3,79.0,83.0
+A,AR: 3,0,0,0,48339.0,48499.0
+A,AR: 3,0,0,1,2.0,48499.0
+A,AR: 3,0,0,2,3.0,48499.0
+A,AR: 3,0,0,3,155.0,48499.0
+A,AR: 3,0,1,0,454.0,456.0
+A,AR: 3,0,1,3,2.0,456.0
+A,AR: 3,0,2,0,2.0,2.0
+A,AR: 3,1,0,0,1.0,31158.0
+A,AR: 3,1,0,1,31148.0,31158.0
+A,AR: 3,1,0,3,9.0,31158.0
+A,AR: 3,1,1,0,81.0,10912.0
+A,AR: 3,1,1,1,10824.0,10912.0
+A,AR: 3,1,1,3,7.0,10912.0
+A,AR: 3,1,2,0,50.0,2028.0
+A,AR: 3,1,2,1,1976.0,2028.0
+A,AR: 3,1,2,3,2.0,2028.0
+A,AR: 3,1,3,0,7.0,172.0
+A,AR: 3,1,3,1,165.0,172.0
+A,AR: 3,2,0,1,1.0,37530.0
+A,AR: 3,2,0,2,37528.0,37530.0
+A,AR: 3,2,0,3,1.0,37530.0
+A,AR: 3,2,1,1,106.0,7658.0
+A,AR: 3,2,1,2,7551.0,7658.0
+A,AR: 3,2,1,3,1.0,7658.0
+A,AR: 3,2,2,1,35.0,951.0
+A,AR: 3,2,2,2,916.0,951.0
+A,AR: 3,2,3,1,3.0,43.0
+A,AR: 3,2,3,2,40.0,43.0
+A,AR: 3,3,0,2,5.0,34955.0
+A,AR: 3,3,0,3,34951.0,34955.0
+A,AR: 3,3,1,2,96.0,6775.0
+A,AR: 3,3,1,3,6679.0,6775.0
+A,AR: 3,3,2,2,19.0,609.0
+A,AR: 3,3,2,3,590.0,609.0
+A,AR: 3,3,3,2,3.0,40.0
+A,AR: 3,3,3,3,37.0,40.0
+A,AR: 4,0,0,0,48953.0,49115.0
+A,AR: 4,0,0,1,1.0,49115.0
+A,AR: 4,0,0,2,1.0,49115.0
+A,AR: 4,0,0,3,160.0,49115.0
+A,AR: 4,0,1,0,466.0,468.0
+A,AR: 4,0,1,3,2.0,468.0
+A,AR: 4,0,2,0,3.0,3.0
+A,AR: 4,1,0,1,27590.0,27598.0
+A,AR: 4,1,0,3,8.0,27598.0
+A,AR: 4,1,1,0,78.0,12101.0
+A,AR: 4,1,1,1,12018.0,12101.0
+A,AR: 4,1,1,3,5.0,12101.0
+A,AR: 4,1,2,0,44.0,2430.0
+A,AR: 4,1,2,1,2383.0,2430.0
+A,AR: 4,1,2,3,3.0,2430.0
+A,AR: 4,1,3,0,15.0,489.0
+A,AR: 4,1,3,1,474.0,489.0
+A,AR: 4,1,4,0,3.0,94.0
+A,AR: 4,1,4,1,91.0,94.0
+A,AR: 4,1,5,0,2.0,61.0
+A,AR: 4,1,5,1,59.0,61.0
+A,AR: 4,2,0,1,3.0,33728.0
+A,AR: 4,2,0,2,33719.0,33728.0
+A,AR: 4,2,0,3,6.0,33728.0
+A,AR: 4,2,1,1,105.0,9794.0
+A,AR: 4,2,1,2,9687.0,9794.0
+A,AR: 4,2,1,3,2.0,9794.0
+A,AR: 4,2,2,1,36.0,1398.0
+A,AR: 4,2,2,2,1362.0,1398.0
+A,AR: 4,2,3,1,4.0,107.0
+A,AR: 4,2,3,2,103.0,107.0
+A,AR: 4,3,0,2,6.0,33853.0
+A,AR: 4,3,0,3,33848.0,33853.0
+A,AR: 4,3,1,2,95.0,9423.0
+A,AR: 4,3,1,3,9328.0,9423.0
+A,AR: 4,3,2,2,20.0,1122.0
+A,AR: 4,3,2,3,1102.0,1122.0
+A,AR: 4,3,3,2,1.0,4.0
+A,AR: 4,3,3,3,3.0,4.0
+A,AR: 5,0,0,0,145459.0,145910.0
+A,AR: 5,0,0,1,7.0,145910.0
+A,AR: 5,0,0,2,7.0,145910.0
+A,AR: 5,0,0,3,437.0,145910.0
+A,AR: 5,0,1,0,1196.0,1200.0
+A,AR: 5,0,1,3,4.0,1200.0
+A,AR: 5,0,2,0,12.0,12.0
+A,AR: 5,1,0,0,30.0,85535.0
+A,AR: 5,1,0,1,85454.0,85535.0
+A,AR: 5,1,0,2,1.0,85535.0
+A,AR: 5,1,0,3,50.0,85535.0
+A,AR: 5,1,1,0,196.0,31631.0
+A,AR: 5,1,1,1,31418.0,31631.0
+A,AR: 5,1,1,3,17.0,31631.0
+A,AR: 5,1,2,0,121.0,8163.0
+A,AR: 5,1,2,1,8034.0,8163.0
+A,AR: 5,1,2,3,8.0,8163.0
+A,AR: 5,1,3,0,47.0,1666.0
+A,AR: 5,1,3,1,1615.0,1666.0
+A,AR: 5,1,3,3,4.0,1666.0
+A,AR: 5,1,4,0,5.0,140.0
+A,AR: 5,1,4,1,134.0,140.0
+A,AR: 5,1,4,3,1.0,140.0
+A,AR: 5,1,5,0,1.0,25.0
+A,AR: 5,1,5,1,24.0,25.0
+A,AR: 5,2,0,1,35.0,112405.0
+A,AR: 5,2,0,2,112354.0,112405.0
+A,AR: 5,2,0,3,16.0,112405.0
+A,AR: 5,2,1,1,284.0,27172.0
+A,AR: 5,2,1,2,26884.0,27172.0
+A,AR: 5,2,1,3,4.0,27172.0
+A,AR: 5,2,2,1,101.0,3985.0
+A,AR: 5,2,2,2,3882.0,3985.0
+A,AR: 5,2,2,3,2.0,3985.0
+A,AR: 5,2,3,1,15.0,402.0
+A,AR: 5,2,3,2,387.0,402.0
+A,AR: 5,2,4,1,4.0,47.0
+A,AR: 5,2,4,2,43.0,47.0
+A,AR: 5,3,0,2,52.0,97990.0
+A,AR: 5,3,0,3,97939.0,97990.0
+A,AR: 5,3,1,2,267.0,26071.0
+A,AR: 5,3,1,3,25804.0,26071.0
+A,AR: 5,3,2,2,60.0,2752.0
+A,AR: 5,3,2,3,2692.0,2752.0
+A,AR: 5,3,3,2,7.0,258.0
+A,AR: 5,3,3,3,251.0,258.0

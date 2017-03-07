@@ -156,7 +156,7 @@ def update_H(H,A1,A2,a,R):
 	
 	append_dict(H.visits,a.policy_set.TA.identification,A1.get_lower_level_abf(a),a.policy_set.TA.LA.index,1.)
 
-	#print "adding", H.R[a.policy_set.TA.identification][A1.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"], a.policy_set.TA.identification,A1.get_reward_abf(a,a.policy_set.TA.LA.index),a.policy_set.TA.LA.index,H.N[a.policy_set.TA.identification][A1.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"]
+	print "adding", H.R[a.policy_set.TA.identification][A1.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"], a.policy_set.TA.identification,A1.get_reward_abf(a,a.policy_set.TA.LA.index),a.policy_set.TA.LA.index,H.N[a.policy_set.TA.identification][A1.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"]
 
 	#A
 	for i in range(len(A1.regions)):

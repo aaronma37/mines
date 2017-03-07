@@ -103,8 +103,8 @@ class Simulator:
 			if self.update_flag is True:
 				a.update_heuristics(s_old,s)
 				self.update_flag=False
-			#else:
-			#	a.predict_A()
+			else:
+				a.predict_A()
 				#predict si
 
 

@@ -98,7 +98,7 @@ class Agent:
 				self.policy_set.TA.set_trigger(self.new_A)	
 
 				self.policy_set.TA.LA=Policies.policy_low_level(self.solver.arg_max(self.policy_set.TA.identification,self.new_A.get_lower_level_abf(self)))
-				#print self.policy_set.TA.identification,self.new_A.get_lower_level_abf(self)
+				print self.policy_set.TA.identification,self.new_A.get_lower_level_abf(self)
 				self.policy_set.TA.LA.set_trigger(self.new_A,self)	
 
 

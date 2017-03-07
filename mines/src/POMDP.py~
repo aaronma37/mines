@@ -210,10 +210,10 @@ class Solver:
 				print "chose: ", k[v.index(max(v))], " with : :", max(v)
      				return k[v.index(max(v))]
 			else:
-				print "ERROR ABSTRACTION NOT FOUND CORRECTLY"
+				print "ERROR 2"
 				return 0
 		else:
-			print "ERROR IDENTITY NOT FOUND CORRECTLY"
+			print "ERROR 1"
 			return 0
 
 	def explore_ucb(self,identification,abstraction,P):

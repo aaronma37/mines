@@ -234,8 +234,8 @@ class Abstractions():
 			return self.get_charge_abf()
 		elif a.policy_set.TA.index == 1:
 			#Explore
-			#return self.get_explore_abf()+str(a.policy_set.TA.LA.index)+":"+str(self.regions[a.policy_set.TA.LA.index-1].hash)+"end"
-			return self.get_explore_abf()+"end"
+			return self.get_explore_abf()+str(a.policy_set.TA.LA.index)+":"+str(self.regions[a.policy_set.TA.LA.index-1].hash)+"end"
+			#return self.get_explore_abf()+"end"
 
 	def get_lower_level_trigger(self,a):
 		if a.policy_set.TA.index == 0:

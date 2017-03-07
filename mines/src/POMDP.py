@@ -212,6 +212,43 @@ class Solver:
 			"ERROR"
 			return 0
 
+	def explore_ucb(self,identification,abstraction,P):
+		max=-1000
+		policy_index = None
+		total=0.
+		
+
+
+		if self.H.visits.get(identification) is not None:
+			if self.H.visits[identification].get(abstraction) is not None:
+
+
+				for k,v in self.H.visits[identification][abstraction].items():
+					total+=v
+
+				k = range(P.bottom,P.top)
+				shuffle(k)
+				for kz in k:
+					if self.H.visits[identification][abstraction].get(kz) is None:
+						#self.append_dict2(self.Q,identification,abstraction,kz,0.)
+						#self.append_dict2(self.Na,identification,abstraction,kz,0.)
+						#print "DID NOT FIND", identification, abstraction, kz
+						print "ex: action", abstraction,kz
+						return kz
+					#else:
+						#print "FOUND: ", kz-P.bottom
+					if self.ucb(total,0,self.H.visits[identification][abstraction][kz]+1.) > max:
+						max=self.ucb(total,0,self.H.visits[identification][abstraction][kz]+1.)
+						policy_index = kz
+			else:
+				print "ex: abstraction", abstraction
+				return 0
+		else:
+			print "ex: Identification", identification
+			return 0
+
+		return policy_index
+
 	def arg_max_ucb(self,identification,abstraction,P):
 		max=-1000
 		policy_index = None

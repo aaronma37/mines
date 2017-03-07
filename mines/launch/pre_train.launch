@@ -1,0 +1,29 @@
+<launch>
+
+<node pkg="mines" type="agent_standard_pre_trainer.py" name="1" output="screen">
+</node>
+
+<node pkg="mines" type="agent_standard_pre_trainer.py" name="2">
+</node>
+
+<node pkg="mines" type="agent_standard_pre_trainer.py" name="3">
+</node>
+
+<node pkg="mines" type="agent_standard_pre_trainer.py" name="4">
+</node>
+
+<node pkg="mines" type="agent_standard_pre_trainer.py" name="5">
+</node>
+
+<node pkg="mines" type="agent_standard_pre_trainer.py" name="6">
+</node>
+
+<node pkg="mines" type="agent_standard_pre_trainer.py" name="7">
+</node>
+
+<node pkg="mines" type="agent_standard_pre_trainer.py" name="8">
+</node>
+
+
+
+</launch>

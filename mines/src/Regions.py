@@ -33,4 +33,16 @@ def get_region(x,y):
 			if y >= region[i][1]-region_size and y < region[i][1] + region_size:
 				return i
 
+def get_region_type(num):
+	if num==14:
+		return 1
+	elif num==13 or num==15 or num ==10 or num ==18:
+		return 2
+	elif num==17 or num==19 or num==9 or num==11:
+		return 3
+	elif num==2 or num == 22 or num == 16 or num == 6:
+		return 4
+	else:
+		return 5
+
 

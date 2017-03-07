@@ -20,13 +20,14 @@ class Agent:
 	def __init__(self,Mine_Data,map_size_):
 
 		self.solver = Solver(Mine_Data,map_size_) # get rid of
-		self.x=0
-		self.y=0
+
 		self.map_size=map_size_
+		self.x=self.map_size/2
+		self.y=self.map_size/2		
 		self.ON=0
 		self.measurement_space=[]
 		self.alpha=[.9,.1,0]
-		self.reset()
+		#self.reset()
 		self.battery=50
 		self.work_load=[]
 		self.work=0
@@ -43,7 +44,7 @@ class Agent:
 		
 	def update_heuristics(self,old_s,new_s):
 		self.old_A.update_all(old_s,self)
-		self.new_A.update_all(new_s,self)
+		self.new_A.update_all(new_s,self)	
 #
 		#print "cc: ", self.new_A.get_lower_level_abf(self)
 		#print new_s.get_reward()-old_s.get_reward(), "reward",new_s.get_reward(),old_s.get_reward()
@@ -56,11 +57,17 @@ class Agent:
 	def predict_A(self):
 		self.new_A.evolve_all(self.solver.H,self)
 
-	def reset(self):
+	def reset(self,s):
 		self.x=self.map_size/2
 		self.y=self.map_size/2
 		self.policy_set=policy_root()
+		self.old_A=Abstractions()
+		self.new_A=Abstractions()
 		self.battery=50
+		self.old_A.update_all(s,self)
+		self.new_A.update_all(s,self)
+
+
 
 
 	def death(self):
@@ -83,31 +90,29 @@ class Agent:
 	def step(self,s,a_,time_to_work):	
 		self.solver.OnlinePlanning(self,s,a_,time_to_work)
 
-	def check_triggers(self):
-
 
 	def check_trigger_high_level(self,s):
 		if self.policy_set.TA.LA.check_trigger(self.new_A,self) is True:
 			if self.policy_set.TA.check_trigger(self.new_A) is True:
-				self.policy_set.TA=self.policy_set.policy_set[self.solver.arg_max("root",self.new_A.get_top_level_abf())]
+				self.policy_set.TA=self.policy_set.policy_set[self.solver.explore_ucb("root",self.new_A.get_top_level_abf(),self.policy_set)]
 				self.policy_set.TA.set_trigger(self.new_A)	
 
-				self.policy_set.TA.LA=Policies.policy_low_level(self.solver.arg_max(self.policy_set.TA.index,self.new_A.get_lower_level_abf(self)))
+				self.policy_set.TA.LA=Policies.policy_low_level(self.solver.explore_ucb(self.policy_set.TA.identification,self.new_A.get_lower_level_abf(self),self.policy_set.TA))
 				self.policy_set.TA.LA.set_trigger(self.new_A,self)	
 
 
 				#print "Chose high level: ", self.new_A.get_lower_level_abf(self)
-				if self.solver.H.R.get(self.policy_set.TA.identification) is not None:
-					if self.solver.H.R[self.policy_set.TA.identification].get(self.new_A.get_lower_level_abf(self)) is not None:
-						if self.solver.H.R[self.policy_set.TA.identification][self.new_A.get_lower_level_abf(self)].get(self.policy_set.TA.LA.index) is not None:
-							print self.solver.H.R[self.policy_set.TA.identification][self.new_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index]
-				print ":"
+				#if self.solver.H.R.get(self.policy_set.TA.identification) is not None:
+					#if self.solver.H.R[self.policy_set.TA.identification].get(self.new_A.get_lower_level_abf(self)) is not None:
+						#if self.solver.H.R[self.policy_set.TA.identification][self.new_A.get_lower_level_abf(self)].get(self.policy_set.TA.LA.index) is not None:
+							#print self.solver.H.R[self.policy_set.TA.identification][self.new_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index]
+
 
 
 
 
 			else:
-				self.policy_set.TA.LA=Policies.policy_low_level(self.solver.arg_max(self.policy_set.TA.index,self.new_A.get_lower_level_abf(self)))
+				self.policy_set.TA.LA=Policies.policy_low_level(self.solver.explore_ucb(self.policy_set.TA.identification,self.new_A.get_lower_level_abf(self),self.policy_set.TA))
 				self.policy_set.TA.LA.set_trigger(self.new_A,self)
 
 

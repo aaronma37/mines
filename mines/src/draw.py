@@ -5,7 +5,7 @@ from OpenGL.GLU import *
 import time
 from PIL import Image
 import numpy as numpy
-from agent_classes import Agent
+#from agent_classes import Agent
 from environment_classes import get_sqr_loc
 from environment_classes import get_norm_size
 from environment_classes import Mine_Data
@@ -14,7 +14,7 @@ import math
 import rospy
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import OccupancyGrid
-from agent_classes import Agent
+#from agent_classes import Agent
 
 
 import pygame

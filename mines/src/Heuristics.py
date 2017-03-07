@@ -8,7 +8,7 @@ import math
 import Regions
 #Tool class
 import random
-
+import os
 
 
 def append_dict(P,h1,h2,h3,r):
@@ -39,6 +39,7 @@ class heuristic:
 	def __init__(self):
 		self.A={} #type,base,input,next abstraction -> number of occasions
 		self.N={} #type,base,input - > number of occasions
+		self.visits={}
 		self.R={} #type,base,input, -> accrued reward
 		#classifier,input,output
 
@@ -89,7 +90,7 @@ class heuristic:
 		print "MADE IT TO NONE SHOUJLDNOT HAPPEN",c,N
 		return None
 
-	def pull_from_rewards(self,classifier,base,input_,num):
+	def pull_from_rewards(self,classifier,base,input_):
 		
 		#if classifier=="Explore" and num==0:
 			#return 0.
@@ -136,10 +137,26 @@ class heuristic:
 def update_H(H,A1,A2,a,R):
 	#STUFF HEURISTICS HERE
 	#REW	self.get_lower_level_abf(a)
-	append_dict(H.N,a.policy_set.TA.identification,A1.get_lower_level_abf(a),a.policy_set.TA.LA.index,1.)
-	append_dict(H.R,a.policy_set.TA.identification,A1.get_lower_level_abf(a),a.policy_set.TA.LA.index,0.)
+	#append_dict(H.NN,a.policy_set.TA.identification,A1.get_lower_level_abf(a),1.) 
 
-	append_dict(H.R,a.policy_set.TA.identification,A1.get_lower_level_abf(a),a.policy_set.TA.LA.index,(R-H.R[a.policy_set.TA.identification][A1.get_lower_level_abf(a)][a.policy_set.TA.LA.index])/H.N[a.policy_set.TA.identification][A1.get_lower_level_abf(a)][a.policy_set.TA.LA.index])
+	#HIGHER LEVEL REWARD
+	append_dict(H.N,a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index,1.)
+
+	append_dict(H.R,a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index,0.)
+	append_dict(H.R,a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index,(R-H.R[a.policy_set.identification][A1.get_top_level_abf()][a.policy_set.TA.index])/H.N[a.policy_set.identification][A1.get_top_level_abf()][a.policy_set.TA.index])
+
+
+	append_dict(H.visits,a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index,1.)
+	#LOWER LEVEL REWARD
+	#print "adding", H.R[a.policy_set.identification][A1.get_top_level_abf()][a.policy_set.TA.index],a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index
+
+	append_dict(H.N,a.policy_set.TA.identification,A1.get_reward_abf(a,a.policy_set.TA.LA.index),"empty",1.)
+	append_dict(H.R,a.policy_set.TA.identification,A1.get_reward_abf(a,a.policy_set.TA.LA.index),"empty",0.)
+	append_dict(H.R,a.policy_set.TA.identification,A1.get_reward_abf(a,a.policy_set.TA.LA.index),"empty",(R-H.R[a.policy_set.TA.identification][A1.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"])/H.N[a.policy_set.TA.identification][A1.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"])
+	
+	append_dict(H.visits,a.policy_set.TA.identification,A1.get_lower_level_abf(a),a.policy_set.TA.LA.index,1.)
+
+	print "adding", H.R[a.policy_set.TA.identification][A1.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"], a.policy_set.TA.identification,A1.get_reward_abf(a,a.policy_set.TA.LA.index),a.policy_set.TA.LA.index,H.N[a.policy_set.TA.identification][A1.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"]
 
 	#A
 	for i in range(len(A1.regions)):
@@ -163,14 +180,61 @@ def update_H(H,A1,A2,a,R):
 		append_dict(H.N,indent,base,input_,1.)
 		append_dict2(H.A,indent,base,input_,output,1.)
 
+	#print_region_transitions(H,A1)
+
 	indent=A1.location.identification
 	base=A1.location.hash
 	input_=A1.location.get_input(a.policy_set.TA.LA.index)
 	output=A2.location.hash
 
+	#print_location_transitions(H,A1)
+
 	append_dict(H.N,indent,base,input_,1.)
 	append_dict2(H.A,indent,base,input_,output,1.)
 
+def print_region_transitions(H,A):
+	print "begin"
+	for i in range(1,6):
+		for k,v in H.A["AR: " + str(i)].items():
+			for k2,v2 in H.A["AR: " + str(i)][k].items():
+				for k3,v3 in H.A["AR: " + str(i)][k][k2].items():
+					print i,k,k2,k3,v3/H.N["AR: " + str(i)][k][k2]
+					
+def print_location_transitions(H,A):
+	print "begin"
+
+	if H.A.get("AL") is not None:
+		for k,v in H.A["AL"].items():
+			for k2,v2 in H.A["AL"][k].items():
+				for k3,v3 in H.A["AL"][k][k2].items():
+					print k,k2,k3,v3/H.N["AL"][k][k2]
+
+def load_file(H,filename):
+
+	f = open('filename','r')
+	print f.read() 
+
+def write_file(H,filename):
+	file = open('testfile.txt','w') 
+
+	 
+
+	for k,v in H.R.items():
+		for k2,v2 in H.R[k].items():
+			for k3,v3 in H.R[k][k2].items():
+				file.write("R"+","+str(k) + "," +  str(k2) + "," + str(k3) + "," + str(v3) + "," +  str(H.N[k][k2][k3]) + "\n")
+
+	for i in range(1,6):
+		for k,v in H.A["AR: " + str(i)].items():
+			for k2,v2 in H.A["AR: " + str(i)][k].items():
+				for k3,v3 in H.A["AR: " + str(i)][k][k2].items():
+					file.write("A" +","+"AR: " + str(i) + "," + str(k) + ","+   str(k2) + "," + str(k3) + "," + str(v3) + "," +  str(H.N["AR: " + str(i)][k][k2]) + "\n")
+
+
+	 
+	file.close()
+		
+				
 
 
 

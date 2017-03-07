@@ -70,6 +70,20 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
 
+  catkin_install_python(PROGRAMS
+    src/agent_standard_pre_trainer.py
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
+
+  catkin_install_python(PROGRAMS
+    src/main_pre_trainer.py
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
+
+
+
+
+
 
 
 

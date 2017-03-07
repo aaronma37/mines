@@ -53,7 +53,7 @@ class All_Regions():
 class Region():
 	def __init__(self,index):
 		self.index=index
-		self.identification="AR: " + str(self.index)
+		self.identification="AR: " + str(Regions.get_region_type(index))
 		self.hash=0
 		self.score=0
 		self.region_center=Regions.region[self.index]
@@ -130,16 +130,30 @@ class WorkLoad():
 			return str(int(5.*(self.workload/self.workforce_number)))+":"+str(reg.hash)
 
 	def evolve(self,heuristics,reg):
-		self.workload=int(heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(reg)))
-		self.hash=str(self.workload)
+		return #bandaid
+		#self.workload=int(heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(reg)))
+		#self.hash=str(self.workload)
 
 class Location():
 	def __init__(self):
 		self.hash="None"
 		self.identification="AL"
+		self.distance=0
+		self.inside_region = False
 
-	def update(self,num_int):
-		self.hash=str(num_int)
+	def update(self,a):
+		if a.policy_set.TA.LA.index > 0:
+			self.distance=Regions.get_distance(a.x,a.y,Regions.region[a.policy_set.TA.LA.index-1][0],Regions.region[a.policy_set.TA.LA.index-1][1])#regions get distance between goal and 
+		else:
+			self.distance=Regions.get_distance(a.x,a.y,Regions.region[14][0],Regions.region[14][1])
+		self.check_inside()
+		self.hash=str(self.distance)
+
+	def check_inside(self):
+		if self.distance < 10: 
+			self.inside_region =True
+		else:
+			self.inside_region =False
 		
 
 	def update_with_hash(self,h):
@@ -149,7 +163,9 @@ class Location():
 		return str(goal)
 
 	def evolve(self,heuristics,goal):
-		self.hash = heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(goal))
+		self.distance-=1
+		self.check_inside()
+		#self.hash = heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(goal))
 
 class Abstractions():
 	def __init__(self):
@@ -192,7 +208,8 @@ class Abstractions():
 
 		self.all_regions.update(self.regions)
 		self.battery.update(a.battery)
-		self.location.update(Regions.get_region(a.x,a.y))
+		self.location.update(a)
+		#print self.location.hash, "loc"
 
 	def evolve_all(self,heuristics,a):
 		#print self.get_lower_level_abf(a)
@@ -215,7 +232,8 @@ class Abstractions():
 			return self.get_charge_abf()
 		elif a.policy_set.TA.index == 1:
 			#Explore
-			return self.get_explore_abf()+str(a.policy_set.TA.LA.index)+":"+str(self.regions[a.policy_set.TA.LA.index-1].hash)+"end"
+			#return self.get_explore_abf()+str(a.policy_set.TA.LA.index)+":"+str(self.regions[a.policy_set.TA.LA.index-1].hash)+"end"
+			return self.get_explore_abf()+"end"
 
 	def get_lower_level_trigger(self,a):
 		if a.policy_set.TA.index == 0:
@@ -245,14 +263,33 @@ class Abstractions():
 		for i in self.regions:
 			h=h+str(i.hash)+":"
 
-		for i in self.work_load:
-			h=h+str(i.hash)+":"
+		#for i in self.work_load:
+		#	h=h+str(i.hash)+":"
 
-		h=h+str(self.location.hash)+":"
+		#h=h+str(self.location.hash)+":"
 
 
 
 		return h
+
+	def get_reward_abf(self, a, region_num):
+		if region_num== 0:
+			return "charging"
+		else:
+			h ="reward_abf_explore:"
+			h = h + str(Regions.get_region_type(region_num-1)) + ":"
+			h = h + str(self.regions[region_num-1].hash) + ":"
+			h = h + str(self.work_load[region_num-1].hash)+ ":"
+			if self.location.inside_region is True:
+				h=h+"search"
+			else:
+				h=h+"travel"
+			
+		return h
+
+
+		
+		
 
 
 

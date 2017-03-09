@@ -61,6 +61,8 @@ class Region():
 
 	def update(self,s):
 		#get output hash
+
+
 		self.score=int(s.get_region_score((self.region_center[0]-self.region_size,self.region_center[0]+self.region_size),(self.region_center[1]-self.region_size,self.region_center[1]+self.region_size)))
 		self.hash=self.score
 
@@ -77,7 +79,11 @@ class Region():
 		#the input here will be number of workers
 	
 		#print heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(workload))
-		self.score=int(heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(workload)))#BANDAID
+		#indent=A1.regions[i].identification
+		#base=A1.regions[i].hash
+		#input_=A1.regions[i].get_input(A1.work_load[i])
+
+		self.score=int(heuristics.pull_new_abstraction(self.identification, str(self.hash),str(self.get_input(workload))))#BANDAID
 		#print self.score, "SCORE"
 		self.hash=self.score
 
@@ -99,12 +105,23 @@ class Battery():
 		print "dont use this"
 		return None
 
-	def evolve(self):
-		self.num-=1
-		if self.num < 0:
-			self.num=0
+	def evolve(self,a,base):
+		#if a.policy_set.TA.index==0:
+			#print "trying"
+		if a.policy_set.TA.index==0 and base is True:#a.x==50 and a.y ==50:
+			#print "trying to charge",self.num
+			self.num+=5
+			if self.num > 100:
+				self.num=100
 
-		self.update(self.num)
+			self.update(self.num)
+		
+		else:
+			self.num-=.25
+			if self.num < 0:
+				self.num=0
+
+			self.update(self.num)
 		
 
 class WorkLoad():
@@ -140,18 +157,26 @@ class Location():
 		self.identification="AL"
 		self.distance=0
 		self.inside_region = False
+		self.reg=0
+		self.goto=0
 
 	def update(self,a):
 		if a.policy_set.TA.LA.index > 0:
+			self.goto=a.policy_set.TA.LA.index-1
 			self.distance=Regions.get_distance(a.x,a.y,Regions.region[a.policy_set.TA.LA.index-1][0],Regions.region[a.policy_set.TA.LA.index-1][1])#regions get distance between goal and 
 		else:
+			self.goto=14
 			self.distance=Regions.get_distance(a.x,a.y,Regions.region[14][0],Regions.region[14][1])
+			#print self.distance
 		self.check_inside()
 		self.hash=str(self.distance)
+		self.reg=Regions.get_region(a.x,a.y)
 
 	def check_inside(self):
 		if self.distance < 10: 
+
 			self.inside_region =True
+			self.reg=self.goto
 		else:
 			self.inside_region =False
 		
@@ -164,8 +189,25 @@ class Location():
 
 	def evolve(self,heuristics,goal):
 		self.distance-=1
+		#print self.distance
 		self.check_inside()
 		#self.hash = heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(goal))
+
+	def update_action(self,action):
+		self.inside_region =False
+		if action > 0:
+			self.goto=action-1
+			self.distance=Regions.get_distance(Regions.region[self.reg][0],Regions.region[self.reg][1],Regions.region[action-1][0],Regions.region[action-1][1])#regions get distance between goal and 
+		else:
+			self.goto=14
+			self.distance=Regions.get_distance(Regions.region[self.reg][0],Regions.region[self.reg][1],Regions.region[14][0],Regions.region[14][1])
+			self.check_inside()
+			self.hash=str(self.distance)
+			#print "GOING TO MIDDLE", self.inside_region
+			
+
+	
+
 
 class Abstractions():
 	def __init__(self):
@@ -211,17 +253,43 @@ class Abstractions():
 		self.location.update(a)
 		#print self.location.hash, "loc"
 
+	def get_reward_abf(self, a, region_num):
+		if region_num== 0:
+			return "charging"
+		else:
+			h ="reward_abf_explore:"
+			h = h + str(Regions.get_region_type(region_num-1)) + ":"
+			h = h + str(self.regions[region_num-1].hash) + ":"
+
+			if self.work_load[region_num-1].hash==0:
+				h = h + str(1)+ ":"
+			else:
+				h = h + str(self.work_load[region_num-1].hash)+ ":"
+			if self.location.inside_region is True:
+				h=h+"search"
+			else:
+				h=h+"travel"
+			
+		return h
+
+	def new_action(self, action):
+		self.location.update_action(action)
+
+
 	def evolve_all(self,heuristics,a):
 		#print self.get_lower_level_abf(a)
 		#def pull_from_rewards(self,classifier,base,input_):
 		#append_dict(H.R,a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index,0.)
-		r= heuristics.pull_from_rewards(a.policy_set.TA.identification,self.get_lower_level_abf(a),a.policy_set.TA.LA.index)
+		#append_dict(H.R,a.policy_set.TA.identification,A1.get_reward_abf(a,a.policy_set.TA.LA.index),"empty",0.)
+		r= heuristics.pull_from_rewards(a.policy_set.TA.identification,self.get_reward_abf(a,a.policy_set.TA.LA.index),"empty")
+		#print a.policy_set.TA.identification,self.get_reward_abf(a,a.policy_set.TA.LA.index),"empty"
+		#print heuristics.R[a.policy_set.TA.identification][self.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"]
 				
 		for i in range(25):
 			self.work_load[i].evolve(heuristics,self.regions[i])
 			self.regions[i].evolve(heuristics,self.work_load[i])
 
-		self.battery.evolve()
+		self.battery.evolve(a,self.location.inside_region)
 
 		self.location.evolve(heuristics,a.policy_set.TA.LA.index)
 		self.all_regions.update(self.regions)
@@ -265,28 +333,13 @@ class Abstractions():
 		for i in self.regions:
 			h=h+str(i.hash)+":"
 
-		#for i in self.work_load:
-		#	h=h+str(i.hash)+":"
+		for i in self.work_load:
+			h=h+str(i.hash)+":"
 
-		#h=h+str(self.location.hash)+":"
+		h=h+str(self.location.reg)+":"
+		
 
 
-
-		return h
-
-	def get_reward_abf(self, a, region_num):
-		if region_num== 0:
-			return "charging"
-		else:
-			h ="reward_abf_explore:"
-			h = h + str(Regions.get_region_type(region_num-1)) + ":"
-			h = h + str(self.regions[region_num-1].hash) + ":"
-			h = h + str(self.work_load[region_num-1].hash)+ ":"
-			if self.location.inside_region is True:
-				h=h+"search"
-			else:
-				h=h+"travel"
-			
 		return h
 
 

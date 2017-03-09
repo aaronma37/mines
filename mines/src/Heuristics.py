@@ -21,6 +21,15 @@ def append_dict(P,h1,h2,h3,r):
 	else:
 		P[h1][h2][h3]+=r
 
+def append_dict_if_missing(P,h1,h2,h3,r):
+	if P.get(h1) is None:
+		P[h1]={h2:{h3:r}}
+	elif P[h1].get(h2) is None:
+		P[h1][h2]={h3:r}
+	elif P[h1][h2].get(h3) is None:
+		P[h1][h2][h3]=r
+
+
 def append_dict2(P,h1,h2,h3,h4,r):
 	if P.get(h1) is None:
 		P[h1]={h2:{h3:{h4:r}}}
@@ -53,21 +62,42 @@ class heuristic:
 #		append_dict(self.R,classifier, base,input_,(reward-self.R[classifier][input_])/self.N[classifier][input_])
 
 
+	def print_N(self):
+		for i in range(1,6):
+			for k,v in self.A["AR: " + str(i)].items():
+				for k2,v2 in self.A["AR: " + str(i)][k].items():
+					for k3,v3 in self.A["AR: " + str(i)][k][k2].items():
+						print("A" +","+"AR: " + str(i) + "," + str(k) + ","+   str(k2) + "," + str(k3) + "," + str(v3) + "," +  str(self.N["AR: " + str(i)][k][k2]))
+
+		print "end"
+
 
 	def pull_new_abstraction(self,classifier, base,input_):
+
+		#classifier=str(classifier)
+		#base=str(base)
+		#input_=str(input_)
+
+		#print classifier,base,input_
 
 		if base is None:
 			print "error in abstraction pull"
 			return base
 
-
+		
 		if self.N.get(classifier) is None:
+			print classifier,base,input_, "class NOT FOUND"
+			#self.print_N()
 			append_dict(self.N,classifier, base,input_,1.)
 			append_dict2(self.A,classifier, base,input_,base,1.)
 		if self.N[classifier].get(base) is None:
+			print classifier,base,input_ , "base NOT FOUND"
+			#self.print_N()
 			append_dict(self.N,classifier, base,input_,1.)
 			append_dict2(self.A,classifier, base,input_,base,1.)
 		if self.N[classifier][base].get(input_) is None:
+			print classifier,base,input_ , "intput_NOT FOUND"
+			#self.print_N()
 			append_dict(self.N,classifier, base,input_,1.)
 			append_dict2(self.A,classifier, base,input_,base,1.)
 
@@ -81,13 +111,14 @@ class heuristic:
 			return base
 
 		for k,v in self.A[classifier][base][input_].items():
-			#print k,v,"b",N
+			#print classifier,base,input_,k,v,"b",N
 			#print "DIDNT MAKE IT HERE",c,v/N
 			if r < c+v/N:
+				#print "returning k: ", k, "with: ",v,N
 				return k
 			c+=v/N
 
-		print "MADE IT TO NONE SHOUJLDNOT HAPPEN",c,N
+		print "MADE IT TO NONE SHOUJLDNOT HAPPEN",v,N,classifier,base
 		return None
 
 	def pull_from_rewards(self,classifier,base,input_):
@@ -99,12 +130,14 @@ class heuristic:
 		if self.R.get(classifier) is None:
 			#if classifier=="Explore":
 			#	return self.get_inherent_reward(classifier,base,input_,num)
+			print classifier, base,input_,"class not found"
 			if input_ == 0:
 				append_dict(self.R,classifier, base,input_,1.)
 			else:
 				append_dict(self.R,classifier, base,input_,1.)
 
 		if self.R[classifier].get(base) is None:
+			print classifier, base,input_,"base not found"
 			#if classifier=="Explore":
 			#	return self.get_inherent_reward(classifier,base,input_,num)
 			if input_ == 0:
@@ -113,6 +146,7 @@ class heuristic:
 				append_dict(self.R,classifier, base,input_,1.)
 
 		if self.R[classifier][base].get(input_) is None:
+			print classifier, base,input_,"input not found"
 			#if classifier=="Explore":
 			#	return self.get_inherent_reward(classifier,base,input_,num)
 			if input_ == 0:
@@ -132,7 +166,14 @@ class heuristic:
 		#print num
 		return num
 		
+	def check_size(self,H):
+		count=0
+		for k,v in H.items():
+			for k2,v2 in H[k].items():
+				for k3,v3 in H[k][k2].items():
+					count+=1
 
+		print "size of H is", count
 
 def update_H(H,A1,A2,a,R):
 	#STUFF HEURISTICS HERE
@@ -140,13 +181,13 @@ def update_H(H,A1,A2,a,R):
 	#append_dict(H.NN,a.policy_set.TA.identification,A1.get_lower_level_abf(a),1.) 
 
 	#HIGHER LEVEL REWARD
-	append_dict(H.N,a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index,1.)
+	append_dict(H.N,a.policy_set.identification,A1.get_top_level_abf(),str(a.policy_set.TA.index),1.)
 
-	append_dict(H.R,a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index,0.)
-	append_dict(H.R,a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index,(R-H.R[a.policy_set.identification][A1.get_top_level_abf()][a.policy_set.TA.index])/H.N[a.policy_set.identification][A1.get_top_level_abf()][a.policy_set.TA.index])
+	append_dict(H.R,a.policy_set.identification,A1.get_top_level_abf(),str(a.policy_set.TA.index),0.)
+	append_dict(H.R,a.policy_set.identification,A1.get_top_level_abf(),str(a.policy_set.TA.index),(R-H.R[a.policy_set.identification][A1.get_top_level_abf()][str(a.policy_set.TA.index)])/H.N[a.policy_set.identification][A1.get_top_level_abf()][str(a.policy_set.TA.index)])
 
 
-	append_dict(H.visits,a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index,1.)
+	append_dict(H.visits,a.policy_set.identification,A1.get_top_level_abf(),str(a.policy_set.TA.index),1.)
 	#LOWER LEVEL REWARD
 	#print "adding", H.R[a.policy_set.identification][A1.get_top_level_abf()][a.policy_set.TA.index],a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index
 
@@ -162,10 +203,10 @@ def update_H(H,A1,A2,a,R):
 	for i in range(len(A1.regions)):
 
 		indent=A1.regions[i].identification
-		base=A1.regions[i].hash
-		input_=A1.regions[i].get_input(A1.work_load[i])
+		base=str(A1.regions[i].hash)
+		input_=str(A1.regions[i].get_input(A1.work_load[i]))
 		
-		output=A2.regions[i].hash
+		output=str(A2.regions[i].hash)
 		append_dict(H.N,indent,base,input_,1.)
 		append_dict2(H.A,indent,base,input_,output,1.)
 
@@ -173,9 +214,9 @@ def update_H(H,A1,A2,a,R):
 	for i in range(len(A1.work_load)):
 
 		indent=A1.work_load[i].identification
-		base=A1.work_load[i].hash
-		input_=A1.work_load[i].get_input(A1.regions[i])
-		output=A2.work_load[i].hash
+		base=str(A1.work_load[i].hash)
+		input_=str(A1.work_load[i].get_input(A1.regions[i]))
+		output=str(A2.work_load[i].hash)
 		
 		append_dict(H.N,indent,base,input_,1.)
 		append_dict2(H.A,indent,base,input_,output,1.)
@@ -215,10 +256,10 @@ def load_file(H,filename):
 	for line in f:
 		l = line.split(",")
 		if l[0] == 'A':
-			append_dict(H.N,l[1],l[2],l[3],float(l[6].strip('\n')))
+			append_dict_if_missing(H.N,l[1],l[2],l[3],float(l[6].strip('\n')))
 			append_dict2(H.A,l[1],l[2],l[3],l[4],float(l[5]))
 		elif l[0]== 'R':
-			append_dict(H.N,l[1],l[2],l[3],float(l[5].strip('\n')))
+			append_dict_if_missing(H.N,l[1],l[2],l[3],float(l[5].strip('\n')))
 			append_dict(H.R,l[1],l[2],l[3],float(l[4]))
 
 	print "FILES LOADED"

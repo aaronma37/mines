@@ -12,7 +12,8 @@ from sets import Set
 import time
 import Policies
 from random import shuffle
-H=250
+
+H=10
 gamma=.95
 
 class Solver: 
@@ -78,34 +79,60 @@ class Solver:
 #			depth+=n
 #
 #		return (r1,r2)
-	
+
+	def new_lower_action(self,A,a_,action):
+		a_.policy_set.TA.LA = a_.policy_set.TA.LA=Policies.policy_low_level(action)
+		a_.policy_set.TA.LA.set_trigger(A,a_)
+		A.new_action(a_.policy_set.TA.LA.index)
+
+	def new_top_action(self,A,a_,action,abstraction):
+
+
+		a_.policy_set.TA = a_.policy_set.policy_set[action]
+		a_.policy_set.TA.set_trigger(A)
+
+
+		self.append_dict(self.N,a_.policy_set.TA.identification,abstraction,0)
+		self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,0,0.)
+		self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,0,0.)
+
+		self.new_lower_action(A,a_,self.arg_max_ucb(a_.policy_set.TA.identification,abstraction,a_.policy_set.TA))
+
+
 
 	def search_top(self,a_,A,depth):
-	
+
 		if depth>H:
 			return (0,1)
 
-		elif a_.battery < 1:
-			return (0,H-depth)
+		elif A.battery.num < 1:
+			return (0,1)
 		else:
 
 			abstraction = A.get_top_level_abf()
 
 			if abstraction not in self.T:
 				self.T.add(abstraction)#MOD
-				self.append_dict(self.N,"root",abstraction,1)
-#				return self.rollout(a_,depth,s)#MOD
-			
-			a_.policy_set.TA = a_.policy_set.policy_set[self.arg_max_ucb("root",abstraction,a_.policy_set)]
-			a_.policy_set.TA.set_trigger(A)
+				self.append_dict(self.N,"root",abstraction,0)
+				self.append_dict2(self.Q,"root",abstraction,0,0.)
+				self.append_dict2(self.Na,"root",abstraction,0,0.)
 
-			a_.policy_set.TA.LA = a_.policy_set.TA.LA=Policies.policy_low_level(self.arg_max_ucb(a_.policy_set.TA.index,abstraction,a_.policy_set.TA))
+#			return self.rollout(a_,depth,s)#MOD
+			self.new_top_action(A,a_,self.arg_max_ucb("root",abstraction,a_.policy_set),abstraction)
+			#a_.policy_set.TA = a_.policy_set.policy_set[self.arg_max_ucb("root",abstraction,a_.policy_set)]
+			#a_.policy_set.TA.set_trigger(A)
 
-			a_.policy_set.TA.LA.set_trigger(A,a_)
 
+
+			#a_.policy_set.TA.LA = a_.policy_set.TA.LA=Policies.policy_low_level(self.arg_max_ucb("root",abstraction,a_.policy_set))
+			#a_.policy_set.TA.LA.set_trigger(A,a_)
+			#A.new_action(a_.policy_set.TA.LA.index)
 			#print "UPPER LEVEL CHOSEN: ", a_.policy_set.TA.index
-
-			r1,n = self.search_bottom(a_,A,depth)
+			d=depth
+			r1,n = self.search_bottom(a_,A,depth,0)
+			#n=depth-d
+			#n=depth
+			#print n, a_.policy_set.TA.index
 
 			r1_,n2 = self.search_top(a_,A,depth+n)
 			r1+=gamma*r1_
@@ -124,57 +151,70 @@ class Solver:
 			#if a_.policy_set.TA.index==0:
 				#print "CHARGE BIG: ", n, a_.policy_set.TA.trigger, a_.policy_set.TA.LA.trigger
 			self.append_dict2(self.Q,"root",abstraction,a_.policy_set.TA.index,(r1-(self.Q["root"][abstraction][a_.policy_set.TA.index]))/self.Na["root"][abstraction][a_.policy_set.TA.index])
-
+			#print "appending","root"
 				
 			return r1,n+n2
 
-	def search_bottom(self,a_,A,depth):
-	
-		if depth>H:
-			return (0,1)
+	def search_bottom(self,a_,A,depth,n_):
 
-		elif a_.battery < 1:
-			return (0,H-depth)
+		if depth>H:
+			return (0,n_+1)
+
+		elif A.battery.num < 1:# and A.battery.num > 9 :
+			return (0,n_+1)
+		#elif A.battery.num < 10:
+			#return (-1,depth+H-depth+1)
 		else:
 
 			abstraction =A.get_lower_level_abf(a_)
 
 			if abstraction not in self.T:
 				self.T.add(abstraction)#MOD
-				self.append_dict(self.N,a_.policy_set.TA.index,abstraction,1)
+				self.append_dict(self.N,a_.policy_set.TA.identification,abstraction,1)
+				self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,0,0.)
+				self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,0,0.)
 			#	return self.rollout(a_,depth,s)
 
 			if a_.policy_set.TA.LA.check_trigger(A,a_) is True:
 				if a_.policy_set.TA.check_trigger(A) is True:
-					return (0,1)
-			else:
-				a_.policy_set.TA.LA = a_.policy_set.TA.LA=Policies.policy_low_level(self.arg_max_ucb(a_.policy_set.TA.index,abstraction,a_.policy_set.TA))
-				a_.policy_set.TA.LA.set_trigger(A,a_)
-				#print "LOWER LEVEL CHOSEN: ", a_.policy_set.TA.LA.index
+					return (0,n_+1)
+
+				if a_.policy_set.TA.LA.index==0:
+					print "exiting charging at: ", A.location.distance,a_.policy_set.TA.LA.check_trigger(A,a_)
+				#print "HERE?:", a_.policy_set.TA.LA.index
+				self.new_lower_action(A,a_,self.arg_max_ucb(a_.policy_set.TA.identification,abstraction,a_.policy_set.TA))
+			
+				#a_.policy_set.TA.LA = a_.policy_set.TA.LA=Policies.policy_low_level(self.arg_max_ucb(a_.policy_set.TA.identification,abstraction,a_.policy_set.TA))
+				#a_.policy_set.TA.LA.set_trigger(A,a_)
+				#A.new_action(a_.policy_set.TA.LA.index)
+				#print "LOWER LEVEL CHOSEN: ", a_.policy_set.TA.LA.index, "f:",a_.policy_set.TA.index
 
 
 			#print a_.policy_set.TA.LA.trigger,a_.policy_set.TA.LA.index, "low"
+			#if a_.policy_set.TA.LA.index==0:
+			#	r = A.evolve_all(self.H,a_)
+			#	r=0
+			#else:
 			r = A.evolve_all(self.H,a_)
-			#print r
-			r1,n = self.search_bottom(a_,A,depth+1)
-
+			#print r, A.get_reward_abf(a_,a_.policy_set.TA.LA.index), depth,a_.policy_set.TA.LA.index
+			r1,n = self.search_bottom(a_,A,depth+1,n_)
+			#print n
 			r+=gamma*r1
+			n_+=n
+			self.append_dict(self.N,a_.policy_set.TA.identification,abstraction,0.)
+			self.append_dict(self.N,a_.policy_set.TA.identification,abstraction,1.)
+
+			self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,a_.policy_set.TA.LA.index,0.)
+			self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,a_.policy_set.TA.LA.index,1.)
 
 
-			self.append_dict(self.N,a_.policy_set.TA.index,abstraction,0.)
-			self.append_dict(self.N,a_.policy_set.TA.index,abstraction,1.)
+			self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,a_.policy_set.TA.LA.index,0.)
 
-			self.append_dict2(self.Na,a_.policy_set.TA.index,abstraction,a_.policy_set.TA.LA.index,0.)
-			self.append_dict2(self.Na,a_.policy_set.TA.index,abstraction,a_.policy_set.TA.LA.index,1.)
-
-			self.append_dict2(self.Q,a_.policy_set.TA.index,abstraction,a_.policy_set.TA.LA.index,0.)
-
-
-			self.append_dict2(self.Q,a_.policy_set.TA.index,abstraction,a_.policy_set.TA.LA.index,(r-(self.Q[a_.policy_set.TA.index][abstraction][a_.policy_set.TA.LA.index]))/self.Na[a_.policy_set.TA.index][abstraction][a_.policy_set.TA.LA.index])
+			self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,a_.policy_set.TA.LA.index,(r-(self.Q[a_.policy_set.TA.identification][abstraction][a_.policy_set.TA.LA.index]))/self.Na[a_.policy_set.TA.identification][abstraction][a_.policy_set.TA.LA.index])
 			#print a_.policy_set.TA.index,abstraction,a_.policy_set.TA.LA.index,self.Na[a_.policy_set.TA.index][abstraction][a_.policy_set.TA.LA.index]
-
-				
-			return r,n+1.
+			#print "appending",abstraction
+			#print "made it here",depth,n_	
+			return r,n_+1
 
 
 
@@ -210,10 +250,10 @@ class Solver:
 				print "chose: ", k[v.index(max(v))], " with : :", max(v)
      				return k[v.index(max(v))]
 			else:
-				print "ERROR ABSTRACTION NOT FOUND CORRECTLY"
+				print abstraction,"ERROR ABSTRACTION NOT FOUND CORRECTLY"
 				return 0
 		else:
-			print "ERROR IDENTITY NOT FOUND CORRECTLY"
+			print identification, "ERROR IDENTITY NOT FOUND CORRECTLY"
 			return 0
 
 	def explore_ucb(self,identification,abstraction,P):
@@ -262,6 +302,7 @@ class Solver:
 
 		if self.Q.get(identification) is not None:
 			if self.Q[identification].get(abstraction) is not None:
+				
 				k = range(P.bottom,P.top)
 				shuffle(k)
 				for kz in k:
@@ -276,11 +317,12 @@ class Solver:
 						max=self.ucb(self.N[identification][abstraction],self.Q[identification][abstraction][kz],self.Na[identification][abstraction][kz]+1.)
 						policy_index = kz
 			else:
-				#print "RETURN DOUBLE EARLY"
-				return 0
+				print identification,abstraction,P.identification,"RETURN DOUBLE EARLY"
+				
+				return randint(P.bottom,P.top)
 		else:
-			#print "RETURN EARLY"
-			return 0
+			print identification,"RETURN EARLY"
+			return randint(P.bottom,P.top)
 
 		return policy_index
 

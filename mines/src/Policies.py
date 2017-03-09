@@ -77,11 +77,15 @@ class policy_low_level:
 		# index 1: 25 is go to region (region -1 ) 
 
 	def check_trigger(self,A,a):
-		if self.trigger != self.get_trigger_definition(A,a):
+		if self.trigger != self.get_trigger_definition(A,a) and self.index >0:
 			return True
 
-		if A.battery.num>90 and self.index==0:
+		if A.battery.num>60 and self.index==0:
+			#print "RETURN TRUE"
 			return True
+		#else:
+			#print A.battery.num
+
 
 		if self.index > 0 and A.regions[self.index-1].score<1: #bandaid
 			return True

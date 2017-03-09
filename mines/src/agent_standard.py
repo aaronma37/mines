@@ -92,9 +92,9 @@ class Simulator:
 		while not rospy.is_shutdown():
 			start=time.time()
 			s.imprint(si)
-			a.step(si,ai,.1)
+			a.step(si,ai,1)
 			s.imprint(si)
-			to_wait = start-time.time() + .1
+			to_wait = start-time.time() + 1
 			
 
 			if to_wait >0:

@@ -165,6 +165,7 @@ class Simulator:
 
 	def reset_pub(self):
 		reset_publisher.publish(reset_)
+		agent_dict={}
 
 	def pub_to_buoys(self):
 		sb.calculate_region_score(agent_dict)
@@ -191,7 +192,7 @@ class Simulator:
 				#s.reset()
 			#	start = time.time()
 
-			if time.time()-start > .1:
+			if time.time()-start > 1:
 				self.pub()
 				self.pub2()
 				self.pub_to_buoys()

@@ -109,8 +109,8 @@ class Battery():
 		#if a.policy_set.TA.index==0:
 			#print "trying"
 		if a.policy_set.TA.index==0 and base is True:#a.x==50 and a.y ==50:
-			#print "trying to charge",self.num
-			self.num+=5
+			#print "trying to charge",self.num,a.x,a.y
+			self.num+=5.
 			if self.num > 100:
 				self.num=100
 
@@ -122,6 +122,7 @@ class Battery():
 				self.num=0
 
 			self.update(self.num)
+		#print self.num
 		
 
 class WorkLoad():
@@ -236,6 +237,10 @@ class Abstractions():
 
 		a.location.hash=self.location.hash
 
+	def battery_charge(self):
+		self.battery.num=95
+		self.battery.update(self.battery.num)
+		self.location.reg=14
 
 
 
@@ -352,7 +357,8 @@ class Abstractions():
 		h="top:"
 
 		h=h+self.battery.hash + ":"
-		h=h+str(self.all_regions.hash)
+		h=h+str(self.all_regions.hash)+":"
+		h=h+str(Regions.get_region_type(self.location.reg))
 		return h
 
 	def get_charge_abf(self):

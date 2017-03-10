@@ -15,7 +15,8 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import OccupancyGrid
 from std_msgs.msg import Int32MultiArray
-from std_msgs.msg import Bool
+
+from std_msgs.msg import Int32
 from agent_classes import Agent
 
 import sys
@@ -35,7 +36,7 @@ env_pub =rospy.Publisher('/environment_matrix', OccupancyGrid, queue_size=100)#C
 agent_occ =rospy.Publisher('/work_load', OccupancyGrid, queue_size=100)#CHANGE TO MATRIX
 score_pub =rospy.Publisher('/buoy_scores', Int32MultiArray, queue_size=100)#CHANGE TO MATRIX
 worker_pub =rospy.Publisher('/buoy_targets', Int32MultiArray, queue_size=100)#CHANGE TO MATRIX
-reset_publisher = rospy.Publisher('/reset', Bool, queue_size=100)#CHANGE TO MATRIX
+reset_publisher = rospy.Publisher('/reset', Int32, queue_size=100)#CHANGE TO MATRIX
 
 
 region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
@@ -55,8 +56,8 @@ o = OccupancyGrid()
 o2= OccupancyGrid()
 o3= Int32MultiArray()
 o4= Int32MultiArray()
-reset_ = Bool()
-reset_.data = True
+reset_ = Int32()
+reset_.data = 0
 
 networks = OccupancyGrid()
 
@@ -164,6 +165,9 @@ class Simulator:
 		agent_occ.publish(o2)
 
 	def reset_pub(self):
+		reset_.data=self.s.get_reward()
+		self.s.reset()
+
 		reset_publisher.publish(reset_)
 		agent_dict={}
 
@@ -184,6 +188,7 @@ class Simulator:
 
 	def run(self):
 		start = time.time()
+		start2= time.time()
 		self.s.reset()
 		while not rospy.is_shutdown():
 		
@@ -192,12 +197,15 @@ class Simulator:
 				#s.reset()
 			#	start = time.time()
 
-			if time.time()-start > 1:
+			if time.time()-start > .25:
 				self.pub()
 				self.pub2()
 				self.pub_to_buoys()
 				start = time.time()
 
+			if time.time()-start2 > 100:
+				self.reset_pub()
+				start2=time.time()
 
 ###MAIN
 def main(args):

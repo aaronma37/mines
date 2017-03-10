@@ -57,7 +57,7 @@ class Agent:
 	def predict_A(self):
 		self.new_A.evolve_all(self.solver.H,self)
 
-	def reset(self,s):
+	def reset(self,s,val):
 		self.x=self.map_size/2
 		self.y=self.map_size/2
 		self.policy_set=policy_root()
@@ -66,6 +66,7 @@ class Agent:
 		self.battery=50
 		self.old_A.update_all(s,self)
 		self.new_A.update_all(s,self)
+		self.solver.write_file(self.solver.Q,self.solver.N,self.solver.Na,val)
 
 
 

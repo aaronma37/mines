@@ -13,7 +13,7 @@ import time
 import Policies
 from random import shuffle
 
-H=10
+H=5
 gamma=.95
 
 class Solver: 
@@ -23,6 +23,7 @@ class Solver:
 		self.N={}#{level_type:{state abstraction: num visited}}
 		self.Na={}#{level_type:{state abstraction: {policy: num visited}}
 		self.Q={}#{state abstraction:{policy:Expected Reward}}
+		self.great=[]
 		self.T=Set()
 		self.H=heuristic()
 		Heuristics.load_file(self.H,'testfile.txt')
@@ -40,6 +41,7 @@ class Solver:
 		x=agent_.x
 		y=agent_.y
 		s.imprint(self.environment_data)
+		
 		while end - start < time_to_work:
 			agent_.imprint(a_)
 			s.imprint(self.environment_data)
@@ -87,17 +89,27 @@ class Solver:
 
 	def new_top_action(self,A,a_,action,abstraction):
 
-
-		a_.policy_set.TA = a_.policy_set.policy_set[action]
+		#if a_.policy_set.TA.index==0:
+			#@print action, "here"
+		a_.policy_set.TA = Policies.policy_top_level(action)
 		a_.policy_set.TA.set_trigger(A)
 
 
 		self.append_dict(self.N,a_.policy_set.TA.identification,abstraction,0)
-		self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,0,0.)
-		self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,0,0.)
+		if a_.policy_set.TA.index==0:
+			self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,0,0.)
+			self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,0,0.)
+		else:
+			self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,14,0.)
+			self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,14,0.)
 
 		self.new_lower_action(A,a_,self.arg_max_ucb(a_.policy_set.TA.identification,abstraction,a_.policy_set.TA))
 
+	def print_Q(self,Q,N,Na):
+		print "Start"
+		for k,v in Q.items():
+			for k2,v2 in Q[k].items():
+				print k,k2,v2,Na[k][k2],N[k]
 
 
 	def search_top(self,a_,A,depth):
@@ -105,8 +117,8 @@ class Solver:
 		if depth>H:
 			return (0,1)
 
-		elif A.battery.num < 1:
-			return (0,1)
+		#elif A.battery.num < 5:
+			#return (0,1)
 		else:
 
 			abstraction = A.get_top_level_abf()
@@ -114,11 +126,16 @@ class Solver:
 			if abstraction not in self.T:
 				self.T.add(abstraction)#MOD
 				self.append_dict(self.N,"root",abstraction,0)
-				self.append_dict2(self.Q,"root",abstraction,0,0.)
-				self.append_dict2(self.Na,"root",abstraction,0,0.)
+				self.append_dict2(self.Q,"root",abstraction,1,0.)
+				self.append_dict2(self.Na,"root",abstraction,1,0.)
 
 #			return self.rollout(a_,depth,s)#MOD
+
+
+			#if a_.policy_set.TA.index==0:
+			#	print A.battery.num, depth 
 			self.new_top_action(A,a_,self.arg_max_ucb("root",abstraction,a_.policy_set),abstraction)
+
 			#a_.policy_set.TA = a_.policy_set.policy_set[self.arg_max_ucb("root",abstraction,a_.policy_set)]
 			#a_.policy_set.TA.set_trigger(A)
 
@@ -128,15 +145,22 @@ class Solver:
 			#a_.policy_set.TA.LA.set_trigger(A,a_)
 			#A.new_action(a_.policy_set.TA.LA.index)
 			#print "UPPER LEVEL CHOSEN: ", a_.policy_set.TA.index
+
 			d=depth
 			r1,n = self.search_bottom(a_,A,depth,0)
+
 			#n=depth-d
 			#n=depth
 			#print n, a_.policy_set.TA.index
 
 			r1_,n2 = self.search_top(a_,A,depth+n)
-			r1+=gamma*r1_
+			r1+=math.pow(gamma,n2)*r1_
 			#print r1
+			#if a_.policy_set.TA.index==0:
+			#	if n >1:
+			#		print n, A.battery.num, depth,r1_
+			#else:
+			#	print r1_
 
 
 			self.append_dict(self.N,"root",abstraction,0.)
@@ -148,9 +172,11 @@ class Solver:
 			self.append_dict2(self.Q,"root",abstraction,a_.policy_set.TA.index,0.)
 
 
-			#if a_.policy_set.TA.index==0:
-				#print "CHARGE BIG: ", n, a_.policy_set.TA.trigger, a_.policy_set.TA.LA.trigger
-			self.append_dict2(self.Q,"root",abstraction,a_.policy_set.TA.index,(r1-(self.Q["root"][abstraction][a_.policy_set.TA.index]))/self.Na["root"][abstraction][a_.policy_set.TA.index])
+
+			if r1 != 0:
+				#if a_.policy_set.TA.index==0:
+					#print "CHARGE BIG: ", n,depth,depth+n+n2,r1
+				self.append_dict2(self.Q,"root",abstraction,a_.policy_set.TA.index,(r1-(self.Q["root"][abstraction][a_.policy_set.TA.index]))/self.Na["root"][abstraction][a_.policy_set.TA.index])
 			#print "appending","root"
 				
 			return r1,n+n2
@@ -160,8 +186,7 @@ class Solver:
 		if depth>H:
 			return (0,n_+1)
 
-		elif A.battery.num < 1:# and A.battery.num > 9 :
-			return (0,n_+1)
+
 		#elif A.battery.num < 10:
 			#return (-1,depth+H-depth+1)
 		else:
@@ -170,17 +195,26 @@ class Solver:
 
 			if abstraction not in self.T:
 				self.T.add(abstraction)#MOD
-				self.append_dict(self.N,a_.policy_set.TA.identification,abstraction,1)
-				self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,0,0.)
-				self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,0,0.)
+				self.append_dict(self.N,a_.policy_set.TA.identification,abstraction,0)
+				if a_.policy_set.TA.index==0:
+					self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,0,0.)
+					self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,0,0.)
+				else:
+					self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,14,0.)
+					self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,14,0.)
 			#	return self.rollout(a_,depth,s)
+
+			if a_.policy_set.TA.LA.index==0:
+				A.battery_charge()
+				return (0,20)
 
 			if a_.policy_set.TA.LA.check_trigger(A,a_) is True:
 				if a_.policy_set.TA.check_trigger(A) is True:
+					#if a_.policy_set.TA.LA.index==0:
+					#	print "exiting charging at: ", A.location.distance,a_.policy_set.TA.LA.check_trigger(A,a_)
 					return (0,n_+1)
+		
 
-				if a_.policy_set.TA.LA.index==0:
-					print "exiting charging at: ", A.location.distance,a_.policy_set.TA.LA.check_trigger(A,a_)
 				#print "HERE?:", a_.policy_set.TA.LA.index
 				self.new_lower_action(A,a_,self.arg_max_ucb(a_.policy_set.TA.identification,abstraction,a_.policy_set.TA))
 			
@@ -188,14 +222,21 @@ class Solver:
 				#a_.policy_set.TA.LA.set_trigger(A,a_)
 				#A.new_action(a_.policy_set.TA.LA.index)
 				#print "LOWER LEVEL CHOSEN: ", a_.policy_set.TA.LA.index, "f:",a_.policy_set.TA.index
-
+			#else:
+				#if a_.policy_set.TA.LA.index==0:
+					#print A.location.distance
 
 			#print a_.policy_set.TA.LA.trigger,a_.policy_set.TA.LA.index, "low"
 			#if a_.policy_set.TA.LA.index==0:
 			#	r = A.evolve_all(self.H,a_)
 			#	r=0
 			#else:
+
 			r = A.evolve_all(self.H,a_)
+
+
+			if A.battery.num < 50:# and A.battery.num > 9 :				
+				r=-1
 			#print r, A.get_reward_abf(a_,a_.policy_set.TA.LA.index), depth,a_.policy_set.TA.LA.index
 			r1,n = self.search_bottom(a_,A,depth+1,n_)
 			#print n
@@ -247,7 +288,8 @@ class Solver:
 				v = list(self.Q[identification][abstraction].values())
 				k = list(self.Q[identification][abstraction].keys())
 				print k,v, identification
-				print "chose: ", k[v.index(max(v))], " with : :", max(v)
+				print "chose: ", k[v.index(max(v))], " with : :", max(v), "at", abstraction
+				self.print_Q(self.Q["root"],self.N["root"],self.Na["root"])
      				return k[v.index(max(v))]
 			else:
 				print abstraction,"ERROR ABSTRACTION NOT FOUND CORRECTLY"
@@ -340,5 +382,28 @@ class Solver:
 			for ele in self.Q[1]:
 				for ele2,v in self.Q[1][ele].items():
 					print ele,ele2,v,self.N[1][ele]
+
+
+	def write_file(self,Q,N,Na,val):
+
+		self.great.append(val)
+
+		file = open('Q.txt','w') 
+
+		for i in self.great:
+			file.write(str(i) + "\n")
+
+		for k,v in Q.items():
+			for k2,v2 in Q[k].items():
+				for k3,v3 in Q[k][k2].items():
+					file.write("Q"+","+str(k) + "," +  str(k2) + "," + str(k3) + "," + str(v3) + "," +  str(Na[k][k2][k3]) + "\n")
+
+		for k,v in Q.items():
+			for k2,v2 in Q[k].items():
+				file.write("N"+","+str(k) + "," +  str(k2) + ","  + str(v3) + "," +  str(N[k][k2]) + "\n")
+
+
+		 
+		file.close()
 
 

@@ -63,7 +63,6 @@ class policy_top_level:
 
 
 
-
 class policy_low_level:
 	def __init__(self,index):
 		self.index=index
@@ -77,10 +76,10 @@ class policy_low_level:
 		# index 1: 25 is go to region (region -1 ) 
 
 	def check_trigger(self,A,a):
-		if self.trigger != self.get_trigger_definition(A,a) and self.index >0:
+		if self.trigger != self.get_trigger_definition(A,a) and self.index>0:
 			return True
 
-		if A.battery.num>60 and self.index==0:
+		if A.battery.num>90 and self.index==0:
 			#print "RETURN TRUE"
 			return True
 		#else:
@@ -91,6 +90,8 @@ class policy_low_level:
 			return True
 
 		return False
+
+	
 
 	def get_distance(self,x,y,x2,y2):
 		return max(math.fabs(x-x2),math.fabs(y-y2))

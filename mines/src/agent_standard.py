@@ -8,7 +8,7 @@ import time
 import math
 from sets import Set
 from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Bool
+from std_msgs.msg import Int32
 from nav_msgs.msg import OccupancyGrid
 from agent_classes import Agent
 import numpy as np
@@ -80,10 +80,8 @@ class Simulator:
 
 
 	def reset_cb(self,data):
-		if data.data is True:
-
-			s.reset()
-			a.reset(s)
+		s.reset()
+		a.reset(s,data.data)
 
 
 
@@ -92,9 +90,9 @@ class Simulator:
 		while not rospy.is_shutdown():
 			start=time.time()
 			s.imprint(si)
-			a.step(si,ai,1)
-			s.imprint(si)
-			to_wait = start-time.time() + 1
+			a.step(si,ai,.25)
+			#s.imprint(si)
+			to_wait = start-time.time() + .25
 			
 
 			if to_wait >0:
@@ -130,7 +128,7 @@ def main(args):
 	environment_sub =rospy.Subscriber('/environment_matrix', OccupancyGrid , sim.s_cb)#CHANGE TO MATRIX
 
 	occ_sub =rospy.Subscriber('/work_load', OccupancyGrid , sim.work_load_cb)#CHANGE TO MATRIX
-	reset_sub =rospy.Subscriber('/reset', Bool , sim.reset_cb)#CHANGE TO MATRIX
+	reset_sub =rospy.Subscriber('/reset', Int32 , sim.reset_cb)#CHANGE TO MATRIX
 	time.sleep(random.random())
 
 	try:

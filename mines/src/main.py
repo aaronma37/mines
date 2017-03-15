@@ -203,7 +203,7 @@ class Simulator:
 				self.pub_to_buoys()
 				start = time.time()
 
-			if time.time()-start2 > 100:
+			if time.time()-start2 > 500:
 				self.reset_pub()
 				start2=time.time()
 

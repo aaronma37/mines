@@ -66,7 +66,7 @@ class Agent:
 		self.battery=50
 		self.old_A.update_all(s,self)
 		self.new_A.update_all(s,self)
-		self.solver.write_file(self.solver.Q,self.solver.N,self.solver.Na,val)
+		#self.solver.write_file(self.solver.Q,self.solver.N,self.solver.Na,val)
 
 
 
@@ -89,42 +89,28 @@ class Agent:
 
 
 	def step(self,s,a_,time_to_work):	
-		self.solver.OnlinePlanning(self,s,a_,time_to_work)
+		''''''		
+		#self.solver.OnlinePlanning(self,s,a_,time_to_work)
 
 
-	def check_trigger_high_level(self,s):
+	def check_trigger_high_level(self,s): 
+		self.policy_set.TA.index=1
 		if self.policy_set.TA.LA.check_trigger(self.new_A,self) is True:
-			if self.policy_set.TA.check_trigger(self.new_A) is True:
-				self.policy_set.TA=self.policy_set.policy_set[self.solver.arg_max("root",self.new_A.get_top_level_abf())]
-				self.policy_set.TA.set_trigger(self.new_A)	
+			self.policy_set.TA.index==1
+			self.policy_set.TA.LA=Policies.policy_low_level(self.solver.step(s,self)+1)
 
-				self.policy_set.TA.LA=Policies.policy_low_level(self.solver.arg_max(self.policy_set.TA.identification,self.new_A.get_lower_level_abf(self)))
-				#print self.policy_set.TA.identification,self.new_A.get_lower_level_abf(self)
-				self.policy_set.TA.LA.set_trigger(self.new_A,self)	
+			self.policy_set.TA.LA.set_trigger(self.new_A,self)
+			#print self.policy_set.TA.LA.trigger, "set"
 
+			
 
-				#print "Chose high level: ", self.new_A.get_lower_level_abf(self)
-				#if self.solver.H.R.get(self.policy_set.TA.identification) is not None:
-					#if self.solver.H.R[self.policy_set.TA.identification].get(self.new_A.get_lower_level_abf(self)) is not None:
-						#if self.solver.H.R[self.policy_set.TA.identification][self.new_A.get_lower_level_abf(self)].get(self.policy_set.TA.LA.index) is not None:
-							#print self.solver.H.R[self.policy_set.TA.identification][self.new_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index]
-
-
-
-
-
-			else:
-				self.policy_set.TA.LA=Policies.policy_low_level(self.solver.arg_max(self.policy_set.TA.identification,self.new_A.get_lower_level_abf(self)))
-				#print Policies.policy_low_level(self.solver.arg_max(self.policy_set.TA.identification,self.new_A.get_lower_level_abf(self)))
-				#print self.solver.arg_max(self.policy_set.TA.identification,self.new_A.get_lower_level_abf(self))
-				#print self.policy_set.TA.LA.index
-				self.policy_set.TA.LA.set_trigger(self.new_A,self)
 
 
 
 
 	def decide(self,s):	
 		self.new_A.update_all(s,self)
+		#self.solver.step(s,self)
 		self.check_trigger_high_level(s)
 				
 		
@@ -132,7 +118,7 @@ class Agent:
 		#print self.policy_set.TA.LA.index
 
 
-		self.work=self.policy_set.TA.LA.index-1
+		#self.work=self.policy_set.TA.LA.index-1
 		self.execute(action,s)#NEED TO RESOLVE s
 
 

@@ -317,6 +317,7 @@ class Abstractions():
 		elif a.policy_set.TA.index == 1:
 			#Explore
 			return self.get_explore_trigger(a.policy_set.TA.LA.index-1)
+		print "MISSED"
 
 	def get_charge_trigger(self):
 		h="charge trigger:"

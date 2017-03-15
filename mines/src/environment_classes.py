@@ -47,6 +47,7 @@ class Mine_Data:
 		return math.ceil(3.*score/size)
 
 
+
 	def calculate_occupied(self,agent_dict,region,r_size):
 		self.occupied=[]
 		for i in range(25):

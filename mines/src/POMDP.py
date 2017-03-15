@@ -12,9 +12,93 @@ from sets import Set
 import time
 import Policies
 from random import shuffle
+from six.moves import xrange
+from ortools.constraint_solver import pywrapcp
+from ortools.constraint_solver import routing_enums_pb2
+import Regions
+
 
 H=5
-gamma=.95
+Gamma=.5
+
+
+def distance(x1, y1, x2, y2):
+    # Manhattan distance
+    dist = abs(x1 - x2) + abs(y1 - y2)
+
+    return dist
+
+
+# Demand callback
+class CreateDemandCallback(object):
+	"""Create callback to get demands at location node."""
+
+	def __init__(self, demands):
+    		self.matrix = demands
+
+	def Demand(self, from_node, to_node):
+    		return self.matrix[from_node]
+
+
+
+# Service time (proportional to demand) callback.
+class CreateServiceTimeCallback(object):
+  	"""Create callback to get time windows at each location."""
+
+	def __init__(self, demands, time_per_demand_unit):
+    		self.matrix = demands
+    		self.time_per_demand_unit = time_per_demand_unit
+
+  	def ServiceTime(self, from_node, to_node):
+    		return self.matrix[from_node] * self.time_per_demand_unit
+
+
+# Create total_time callback (equals service time plus travel time).
+class CreateTotalTimeCallback(object):
+	def __init__(self, service_time_callback, dist_callback, speed):
+    		self.service_time_callback = service_time_callback
+    		self.dist_callback = dist_callback
+    		self.speed = speed
+
+  	def TotalTime(self, from_node, to_node):
+   		service_time = self.service_time_callback(from_node, to_node)
+    		travel_time = self.dist_callback(from_node, to_node) / self.speed
+    		return service_time + travel_time
+
+class CreateDistanceCallback(object):
+ 	"""Create callback to calculate distances and travel times between points."""
+
+	def __init__(self, locations,reward_list):
+		"""Initialize distance array."""
+    		num_locations = len(locations)
+    		self.matrix = {}
+		self.reward_matrix= {}
+
+    		for from_node in xrange(num_locations):
+      			self.matrix[from_node] = {}
+			self.reward_matrix[from_node]=reward_list[from_node]
+      			for to_node in xrange(num_locations):
+        			if from_node == to_node:
+			  		self.matrix[from_node][to_node] = 0
+				else:
+					  x1 = locations[from_node][0]
+					  y1 = locations[from_node][1]
+					  x2 = locations[to_node][0]
+					  y2 = locations[to_node][1]
+					  self.matrix[from_node][to_node] = distance(x1, y1, x2, y2)
+
+  	def Distance(self, from_node, to_node):
+    		return self.matrix[from_node][to_node]
+
+  	def DiscountedDistance(self,from_node,to_node):
+		#print from_node,to_node,1/math.pow(Gamma,self.Distance(from_node,to_node)*self.reward_matrix[to_node]/1000.)
+		if self.reward_matrix[to_node]==0:
+			return 1./(math.pow(Gamma,self.Distance(from_node,to_node)/3.)*.2)
+		else:
+			return 1./(math.pow(Gamma,self.Distance(from_node,to_node)/3.)*self.reward_matrix[to_node])
+
+
+
 
 class Solver: 
 
@@ -32,378 +116,155 @@ class Solver:
 
 
 
-	def OnlinePlanning(self,agent_,s,a_,time_to_work):
-		#self.print_n()
-		#self.H.print_me()
-		start = time.time()
-		end = start
-		agent_.imprint(a_)
-		x=agent_.x
-		y=agent_.y
-		s.imprint(self.environment_data)
-		
-		while end - start < time_to_work:
-			agent_.imprint(a_)
-			s.imprint(self.environment_data)
-			self.action_counter=0
-
-			self.A.update_all(self.environment_data,a_)
-
-			self.search_top(a_,self.A,0)
-			end = time.time()
-
-#	def rollout_top(self,a_,depth):
-#		r1=0.
-#		r2=0.
-#		while depth<H and a_.battery > 1:
-#			policy = a_.policy_set[1]
-#			if a_.battery < 1:
-#
-#			r1+=gamma*r1_
-#			r2+=gamma*r2_
-#			
-#			depth+=n
-#
-#		return (r1,r2)
-#
-#	def rollout_bottom(self,a_,depth):
-#		r1=0.
-#		r2=0.
-#		while depth<H and a_.battery > 1:
-#			policy = a_.policy_set[1]
-#			if a_.battery < 1:
-#				policy = a_.policy_set[1]
-#
-#			(s,r1_,r2_,n) = a_.simulate_full(policy,s)
-#			r1+=gamma*r1_
-#			r2+=gamma*r2_
-#			
-#			depth+=n
-#
-#		return (r1,r2)
-
-	def new_lower_action(self,A,a_,action):
-		a_.policy_set.TA.LA = a_.policy_set.TA.LA=Policies.policy_low_level(action)
-		a_.policy_set.TA.LA.set_trigger(A,a_)
-		A.new_action(a_.policy_set.TA.LA.index)
-
-	def new_top_action(self,A,a_,action,abstraction):
-
-		#if a_.policy_set.TA.index==0:
-			#@print action, "here"
-		a_.policy_set.TA = Policies.policy_top_level(action)
-		a_.policy_set.TA.set_trigger(A)
 
 
-		self.append_dict(self.N,a_.policy_set.TA.identification,abstraction,0)
-		if a_.policy_set.TA.index==0:
-			self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,0,0.)
-			self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,0,0.)
-		else:
-			self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,14,0.)
-			self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,14,0.)
+	def create_data_array(self,s):
 
-		self.new_lower_action(A,a_,self.arg_max_ucb(a_.policy_set.TA.identification,abstraction,a_.policy_set.TA))
+  		locations = 	Regions.region_modded
 
-	def print_Q(self,Q,N,Na):
-		print "Start"
-		for k,v in Q.items():
-			for k2,v2 in Q[k].items():
-				print k,k2,v2,Na[k][k2],N[k]
+		reward_list=[]
+		for i in locations:
+			reward_list.append(int(s.get_region_score((i[0]-Regions.region_size,i[0]+Regions.region_size),(i[1]-Regions.region_size,i[1]+Regions.region_size))))
 
+		print len(locations)
 
-	def search_top(self,a_,A,depth):
+  		demands =  []
+		start_times=[]
+		for i in range(len(locations)):
+			demands.append(1)
+			start_times.append(0)
 
-		if depth>H:
-			return (0,1)
-
-		#elif A.battery.num < 5:
-			#return (0,1)
-		else:
-
-			abstraction = A.get_top_level_abf()
-
-			if abstraction not in self.T:
-				self.T.add(abstraction)#MOD
-				self.append_dict(self.N,"root",abstraction,0)
-				self.append_dict2(self.Q,"root",abstraction,1,0.)
-				self.append_dict2(self.Na,"root",abstraction,1,0.)
-
-#			return self.rollout(a_,depth,s)#MOD
+  		data = [locations, demands, start_times, reward_list]
+  		return data
 
 
-			#if a_.policy_set.TA.index==0:
-			#	print A.battery.num, depth 
-			self.new_top_action(A,a_,self.arg_max_ucb("root",abstraction,a_.policy_set),abstraction)
+	def step(self,s,a):
 
-			#a_.policy_set.TA = a_.policy_set.policy_set[self.arg_max_ucb("root",abstraction,a_.policy_set)]
-			#a_.policy_set.TA.set_trigger(A)
+		# Create the data.
+		data = self.create_data_array(s)
+		locations = data[0]
+		demands = data[1]
+		start_times = data[2]
+		reward_list = data[3]
+
+		num_locations = len(locations)
+		depot = Regions.get_region(a.x,a.y)
+		num_vehicles = 1
+		search_time_limit = 400000
+
+		# Create routing model.
+		if num_locations > 15:
+
+			# The number of nodes of the VRP is num_locations.
+			# Nodes are indexed from 0 to num_locations - 1. By default the start of
+			# a route is node 0.
+			routing = pywrapcp.RoutingModel(num_locations, num_vehicles, [depot],[14])
+			search_parameters = pywrapcp.RoutingModel.DefaultSearchParameters()
+
+			# Setting first solution heuristic: the
+			# method for finding a first solution to the problem.
+			search_parameters.first_solution_strategy = (
+			routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+
+			# The 'PATH_CHEAPEST_ARC' method does the following:
+			# Starting from a route "start" node, connect it to the node which produces the
+			# cheapest route segment, then extend the route by iterating on the last
+			# node added to the route.
+
+			# Put callbacks to the distance function and travel time functions here.
+
+			dist_between_locations = CreateDistanceCallback(locations,reward_list)
+			dist_callback = dist_between_locations.DiscountedDistance
+
+			routing.SetArcCostEvaluatorOfAllVehicles(dist_callback)
+			demands_at_locations = CreateDemandCallback(demands)
+			demands_callback = demands_at_locations.Demand
+
+			# Adding capacity dimension constraints.
+			#VehicleCapacity = 100;
+			#NullCapacitySlack = 0;
+			fix_start_cumul_to_zero = True
+			#capacity = "Capacity"
+
+			#routing.AddDimension(demands_callback, NullCapacitySlack, VehicleCapacity,
+			#                      fix_start_cumul_to_zero, capacity)
+
+			# Adding time dimension constraints.
+			time_per_demand_unit = 300
+			horizon = 24 * 3600
+			time = "Time"
+			tw_duration = 5 * 36000
+			speed = 1000
+
+			service_times = CreateServiceTimeCallback(demands, time_per_demand_unit)
+			service_time_callback = service_times.ServiceTime
+
+			total_times = CreateTotalTimeCallback(service_time_callback, dist_callback, speed)
+			total_time_callback = total_times.TotalTime
+
+			# Add a dimension for time-window constraints and limits on the start times and end times.
+
+			routing.AddDimension(total_time_callback,  # total time function callback
+					 horizon,
+					 horizon,
+					 fix_start_cumul_to_zero,
+					 time)
+
+
+			# Add limit on size of the time windows.
+			time_dimension = routing.GetDimensionOrDie(time)
+
+			for order in xrange(1, num_locations):
+				start = start_times[order]
+				time_dimension.CumulVar(order).SetRange(start, start + tw_duration)
 
 
 
-			#a_.policy_set.TA.LA = a_.policy_set.TA.LA=Policies.policy_low_level(self.arg_max_ucb("root",abstraction,a_.policy_set))
-			#a_.policy_set.TA.LA.set_trigger(A,a_)
-			#A.new_action(a_.policy_set.TA.LA.index)
-			#print "UPPER LEVEL CHOSEN: ", a_.policy_set.TA.index
+			# Solve displays a solution if any.
+			assignment = routing.SolveWithParameters(search_parameters)
+			if assignment:
+				data = self.create_data_array(s)
+				locations = data[0]
+				demands = data[1]
+				start_times = data[2]
+				size = len(locations)
+				# Solution cost.
+				print ("Total distance of all routes: " , str(assignment.ObjectiveValue()))
+				# Inspect solution.
+				# capacity_dimension = routing.GetDimensionOrDie(capacity);
+				time_dimension = routing.GetDimensionOrDie(time);
 
-			d=depth
-			r1,n = self.search_bottom(a_,A,depth,0)
+				for vehicle_nbr in xrange(num_vehicles):
+					index = routing.Start(vehicle_nbr)
+					plan_output = 'Route {0}:'.format(vehicle_nbr)
 
-			#n=depth-d
-			#n=depth
-			#print n, a_.policy_set.TA.index
+					while not routing.IsEnd(index):
+						  node_index = routing.IndexToNode(index)
+						#   load_var = capacity_dimension.CumulVar(index)
+						  time_var = time_dimension.CumulVar(index)
+						  plan_output += \
+							    " {node_index})) -> ".format(
+								node_index=node_index)
 
-			r1_,n2 = self.search_top(a_,A,depth+n)
-			r1+=math.pow(gamma,n2)*r1_
-			#print r1
-			#if a_.policy_set.TA.index==0:
-			#	if n >1:
-			#		print n, A.battery.num, depth,r1_
-			#else:
-			#	print r1_
+						  index = assignment.Value(routing.NextVar(index))
 
-
-			self.append_dict(self.N,"root",abstraction,0.)
-			self.append_dict(self.N,"root",abstraction,1.)
-
-			self.append_dict2(self.Na,"root",abstraction,a_.policy_set.TA.index,0.)
-			self.append_dict2(self.Na,"root",abstraction,a_.policy_set.TA.index,1.)
-
-			self.append_dict2(self.Q,"root",abstraction,a_.policy_set.TA.index,0.)
-
-
-
-			if r1 != 0:
-				#if a_.policy_set.TA.index==0:
-					#print "CHARGE BIG: ", n,depth,depth+n+n2,r1
-				self.append_dict2(self.Q,"root",abstraction,a_.policy_set.TA.index,(r1-(self.Q["root"][abstraction][a_.policy_set.TA.index]))/self.Na["root"][abstraction][a_.policy_set.TA.index])
-			#print "appending","root"
-				
-			return r1,n+n2
-
-	def search_bottom(self,a_,A,depth,n_):
-
-		if depth>H:
-			return (0,n_+1)
-
-
-		#elif A.battery.num < 10:
-			#return (-1,depth+H-depth+1)
-		else:
-
-			abstraction =A.get_lower_level_abf(a_)
-
-			if abstraction not in self.T:
-				self.T.add(abstraction)#MOD
-				self.append_dict(self.N,a_.policy_set.TA.identification,abstraction,0)
-				if a_.policy_set.TA.index==0:
-					self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,0,0.)
-					self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,0,0.)
-				else:
-					self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,14,0.)
-					self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,14,0.)
-			#	return self.rollout(a_,depth,s)
-
-			if a_.policy_set.TA.LA.index==0:
-				A.battery_charge()
-				return (0,20)
-
-			if a_.policy_set.TA.LA.check_trigger(A,a_) is True:
-				if a_.policy_set.TA.check_trigger(A) is True:
-					#if a_.policy_set.TA.LA.index==0:
-					#	print "exiting charging at: ", A.location.distance,a_.policy_set.TA.LA.check_trigger(A,a_)
-					return (0,n_+1)
-		
-
-				#print "HERE?:", a_.policy_set.TA.LA.index
-				self.new_lower_action(A,a_,self.arg_max_ucb(a_.policy_set.TA.identification,abstraction,a_.policy_set.TA))
-			
-				#a_.policy_set.TA.LA = a_.policy_set.TA.LA=Policies.policy_low_level(self.arg_max_ucb(a_.policy_set.TA.identification,abstraction,a_.policy_set.TA))
-				#a_.policy_set.TA.LA.set_trigger(A,a_)
-				#A.new_action(a_.policy_set.TA.LA.index)
-				#print "LOWER LEVEL CHOSEN: ", a_.policy_set.TA.LA.index, "f:",a_.policy_set.TA.index
-			#else:
-				#if a_.policy_set.TA.LA.index==0:
-					#print A.location.distance
-
-			#print a_.policy_set.TA.LA.trigger,a_.policy_set.TA.LA.index, "low"
-			#if a_.policy_set.TA.LA.index==0:
-			#	r = A.evolve_all(self.H,a_)
-			#	r=0
-			#else:
-
-			r = A.evolve_all(self.H,a_)
-
-
-			if A.battery.num < 50:# and A.battery.num > 9 :				
-				r=-1
-			#print r, A.get_reward_abf(a_,a_.policy_set.TA.LA.index), depth,a_.policy_set.TA.LA.index
-			r1,n = self.search_bottom(a_,A,depth+1,n_)
-			#print n
-			r+=gamma*r1
-			n_+=n
-			self.append_dict(self.N,a_.policy_set.TA.identification,abstraction,0.)
-			self.append_dict(self.N,a_.policy_set.TA.identification,abstraction,1.)
-
-			self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,a_.policy_set.TA.LA.index,0.)
-			self.append_dict2(self.Na,a_.policy_set.TA.identification,abstraction,a_.policy_set.TA.LA.index,1.)
-
-
-			self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,a_.policy_set.TA.LA.index,0.)
-
-			self.append_dict2(self.Q,a_.policy_set.TA.identification,abstraction,a_.policy_set.TA.LA.index,(r-(self.Q[a_.policy_set.TA.identification][abstraction][a_.policy_set.TA.LA.index]))/self.Na[a_.policy_set.TA.identification][abstraction][a_.policy_set.TA.LA.index])
-			#print a_.policy_set.TA.index,abstraction,a_.policy_set.TA.LA.index,self.Na[a_.policy_set.TA.index][abstraction][a_.policy_set.TA.LA.index]
-			#print "appending",abstraction
-			#print "made it here",depth,n_	
-			return r,n_+1
-
-
-
-	def append_dict(self,P,ab_action,hash1,r):
-		if P.get(ab_action) is None:
-			P[ab_action]={hash1:r}
-		elif P[ab_action].get(hash1) is None:
-			P[ab_action][hash1]=r
-		else:
-			P[ab_action][hash1]+=r
-
-	def append_dict2(self,P,ab_action,hash1,hash2,r):
-		if P.get(ab_action) is None:
-			P[ab_action]={hash1:{hash2:r}}	
-		elif P[ab_action].get(hash1) is None:
-			P[ab_action][hash1]={hash2:r}
-		elif P[ab_action][hash1].get(hash2) is None:
-			P[ab_action][hash1][hash2]=r
-		else:
-			P[ab_action][hash1][hash2]+=r
-
-
-
-	def arg_max(self,identification,abstraction):
-
-		
-		# returns index of best policy		
-		if self.Q.get(identification) is not None:
-			if self.Q[identification].get(abstraction) is not None:
-				v = list(self.Q[identification][abstraction].values())
-				k = list(self.Q[identification][abstraction].keys())
-				print k,v, identification
-				print "chose: ", k[v.index(max(v))], " with : :", max(v), "at", abstraction
-				self.print_Q(self.Q["root"],self.N["root"],self.Na["root"])
-     				return k[v.index(max(v))]
+					node_index = routing.IndexToNode(index)
+					#  load_var = capacity_dimension.CumulVar(index)
+					time_var = time_dimension.CumulVar(index)
+					plan_output += \
+						  " {node_index}) Time({tmin}, {tmax})".format(
+						      node_index=node_index,
+						 #     load=assignment.Value(load_var),
+						      tmin=str(assignment.Min(time_var)),
+						      tmax=str(assignment.Max(time_var)))
+					print (plan_output)
 			else:
-				print abstraction,"ERROR ABSTRACTION NOT FOUND CORRECTLY"
-				return 0
+				print ('No solution found.')
 		else:
-			print identification, "ERROR IDENTITY NOT FOUND CORRECTLY"
-			return 0
+			print ('Specify an instance greater than 0.')
+		print xrange(num_vehicles)
+		print routing.IndexToNode(assignment.Value(routing.NextVar(routing.Start(0))))
+		return routing.IndexToNode(assignment.Value(routing.NextVar(routing.Start(0))))
 
-	def explore_ucb(self,identification,abstraction,P):
-		max=-1000
-		policy_index = None
-		total=0.
-		
-
-
-		if self.H.visits.get(identification) is not None:
-			if self.H.visits[identification].get(abstraction) is not None:
-
-
-				for k,v in self.H.visits[identification][abstraction].items():
-					total+=v
-
-				k = range(P.bottom,P.top)
-				shuffle(k)
-				for kz in k:
-					if self.H.visits[identification][abstraction].get(kz) is None:
-						#self.append_dict2(self.Q,identification,abstraction,kz,0.)
-						#self.append_dict2(self.Na,identification,abstraction,kz,0.)
-						#print "DID NOT FIND", identification, abstraction, kz
-						print "ex: action", abstraction,kz
-						return kz
-					#else:
-						#print "FOUND: ", kz-P.bottom
-					if self.ucb(total,0,self.H.visits[identification][abstraction][kz]+1.) > max:
-						max=self.ucb(total,0,self.H.visits[identification][abstraction][kz]+1.)
-						policy_index = kz
-			else:
-				print "ex: abstraction", abstraction
-				return 0
-		else:
-			print "ex: Identification", identification
-			return 0
-
-		return policy_index
-
-	def arg_max_ucb(self,identification,abstraction,P):
-		max=-1000
-		policy_index = None
-
-		
-
-
-		if self.Q.get(identification) is not None:
-			if self.Q[identification].get(abstraction) is not None:
-				
-				k = range(P.bottom,P.top)
-				shuffle(k)
-				for kz in k:
-					if self.Q[identification][abstraction].get(kz) is None:
-						self.append_dict2(self.Q,identification,abstraction,kz,0.)
-						self.append_dict2(self.Na,identification,abstraction,kz,0.)
-						#print "DID NOT FIND", identification, abstraction, kz
-						return kz
-					#else:
-						#print "FOUND: ", kz-P.bottom
-					if self.ucb(self.N[identification][abstraction],self.Q[identification][abstraction][kz],self.Na[identification][abstraction][kz]+1.) > max:
-						max=self.ucb(self.N[identification][abstraction],self.Q[identification][abstraction][kz],self.Na[identification][abstraction][kz]+1.)
-						policy_index = kz
-			else:
-				print identification,abstraction,P.identification,"RETURN DOUBLE EARLY"
-				
-				return randint(P.bottom,P.top)
-		else:
-			print identification,"RETURN EARLY"
-			return randint(P.bottom,P.top)
-
-		return policy_index
-
-
-
-	def ucb(self,N,Q,Na):
-		return Q+1000000.*math.sqrt(math.log(1+N)/(1+Na))
-
-
-
-
-
-	def print_n(self):
-		if self.Q.get(1) is not None:
-			for ele in self.Q[1]:
-				for ele2,v in self.Q[1][ele].items():
-					print ele,ele2,v,self.N[1][ele]
-
-
-	def write_file(self,Q,N,Na,val):
-
-		self.great.append(val)
-
-		file = open('Q.txt','w') 
-
-		for i in self.great:
-			file.write(str(i) + "\n")
-
-		for k,v in Q.items():
-			for k2,v2 in Q[k].items():
-				for k3,v3 in Q[k][k2].items():
-					file.write("Q"+","+str(k) + "," +  str(k2) + "," + str(k3) + "," + str(v3) + "," +  str(Na[k][k2][k3]) + "\n")
-
-		for k,v in Q.items():
-			for k2,v2 in Q[k].items():
-				file.write("N"+","+str(k) + "," +  str(k2) + ","  + str(v3) + "," +  str(N[k][k2]) + "\n")
-
-
-		 
-		file.close()
 
 

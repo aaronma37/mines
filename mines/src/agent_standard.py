@@ -129,7 +129,7 @@ def main(args):
 
 	occ_sub =rospy.Subscriber('/work_load', OccupancyGrid , sim.work_load_cb)#CHANGE TO MATRIX
 	reset_sub =rospy.Subscriber('/reset', Int32 , sim.reset_cb)#CHANGE TO MATRIX
-	time.sleep(random.random())
+	time.sleep(random.random()*10	)
 
 	try:
 		sim.run()

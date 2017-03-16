@@ -96,8 +96,14 @@ class Agent:
 	def check_trigger_high_level(self,s): 
 		self.policy_set.TA.index=1
 		if self.policy_set.TA.LA.check_trigger(self.new_A,self) is True:
-			self.policy_set.TA.index==1
-			self.policy_set.TA.LA=Policies.policy_low_level(self.solver.step(s,self)+1)
+			self.policy_set.TA.index=1
+			chosen=self.solver.step(s,self)+1
+			if chosen ==26:
+				self.policy_set.TA.index=0
+				self.policy_set.TA.LA=Policies.policy_low_level(0)
+			else:
+				self.policy_set.TA.index=1
+				self.policy_set.TA.LA=Policies.policy_low_level(chosen)
 
 			self.policy_set.TA.LA.set_trigger(self.new_A,self)
 			#print self.policy_set.TA.LA.trigger, "set"

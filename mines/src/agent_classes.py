@@ -7,7 +7,6 @@ import math
 from sets import Set
 from geometry_msgs.msg import PoseStamped
 import numpy as np
-from Policies import policy_root
 from abstraction_classes import Abstractions
 from Heuristics import update_H
 import Regions
@@ -32,14 +31,13 @@ class Agent:
 		self.work_load=[]
 		self.work=0
 		self.last_reward=0.
+		self.current_action=Policies.Policy(0)
 		for i in range(len(Regions.region)):
 			self.work_load.append(0)
 
 		self.old_A=Abstractions()
 		self.new_A=Abstractions()
 
-
-		self.policy_set=policy_root()
 		self.time_away_from_network=0
 		
 	def update_heuristics(self,old_s,new_s):
@@ -57,10 +55,10 @@ class Agent:
 	def predict_A(self):
 		self.new_A.evolve_all(self.solver.H,self)
 
-	def reset(self,s,val):
+	def reset(self,s):
 		self.x=self.map_size/2
 		self.y=self.map_size/2
-		self.policy_set=policy_root()
+		self.current_action=Policies.Policy(0)
 		self.old_A=Abstractions()
 		self.new_A=Abstractions()
 		self.battery=50
@@ -89,42 +87,19 @@ class Agent:
 
 
 	def step(self,s,a_,time_to_work):	
-		''''''		
-		#self.solver.OnlinePlanning(self,s,a_,time_to_work)
+		self.solver.OnlinePlanning(self,s,a_,time_to_work)
 
 
-	def check_trigger_high_level(self,s): 
-		self.policy_set.TA.index=1
-		if self.policy_set.TA.LA.check_trigger(self.new_A,self) is True:
-			self.policy_set.TA.index=1
-			chosen=self.solver.step(s,self)+1
-			if chosen ==26:
-				self.policy_set.TA.index=0
-				self.policy_set.TA.LA=Policies.policy_low_level(0)
-			else:
-				self.policy_set.TA.index=1
-				self.policy_set.TA.LA=Policies.policy_low_level(chosen)
-
-			self.policy_set.TA.LA.set_trigger(self.new_A,self)
-			#print self.policy_set.TA.LA.trigger, "set"
-
-			
-
-
-
-
+	def check_action(self,s): 
+		if self.current_action.check_trigger() is True:
+			self.current_action=Policies.Policy(self.solver.get_action(0,self.new_A))
 
 	def decide(self,s):	
 		self.new_A.update_all(s,self)
-		#self.solver.step(s,self)
-		self.check_trigger_high_level(s)
+		self.check_action(s)
 				
 		
-		action = self.policy_set.TA.LA.get_next_action(self,s)
-		#print self.policy_set.TA.LA.index
-
-
-		#self.work=self.policy_set.TA.LA.index-1
+		action = self.current_action.get_next_action(self,s)
 		self.execute(action,s)#NEED TO RESOLVE s
 
 

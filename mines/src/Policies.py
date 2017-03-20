@@ -9,105 +9,29 @@ import Regions
 
 from random import shuffle
 
-class policy_root:
-	def __init__(self):
-		self.identification="root"
+action_index_max=26
+action_list=[]
 
-		self.policy_set=[]
-		self.policy_set.append(policy_top_level(0))
-		self.policy_set.append(policy_top_level(1))
-		self.TA=policy_top_level(policy_top_level(0))
-		self.bottom=0
-		self.top=2
 
-class policy_top_level:
+for i in range(action_index_max):
+	action_list.append(i)
+
+class Policy:
 	def __init__(self,index):
 		self.index=index
-		self.identification="Not set"
-		#index=0 is to go charge
-		#index 1 is to go explore
-		self.trigger="Not set"
-		self.policy_set=[]
-		self.bottom=0
-		self.top=0
-		if self.index==0:
-			self.bottom=0
-			self.identification="Charge"
-			self.policy_set.append(policy_low_level(0))
-			self.top=1
-		else:
-			self.bottom=1
-			self.identification="Explore"
-			self.top=26
-			for i in range(1,self.top):
-				self.policy_set.append(policy_low_level(i))
+		self.time=10
 
-		self.LA=(policy_low_level(0))
-
-	def check_trigger(self,A):
-
-		if self.trigger != self.get_trigger_definition(A):
-			return True
-
-		if A.battery.num>90 and self.index==0:
-			return True
-
-		return False
-
-	def get_trigger_definition(self,A):
-		return A.get_top_level_abf()
-
-	def set_trigger(self,A):
-		self.trigger=self.get_trigger_definition(A)
+	def check_trigger(self):
+		if self.time > 0:
+			return False
+		return True
 	
-
-
-
-class policy_low_level:
-	def __init__(self,index):
-		self.index=index
-		self.trigger="Not set"
-		if self.index==0:
-			self.identification="Charge"
-		else:
-			self.identification="Explore " + str(self.index) 
-		# index = 0 is go to base and charge
-
-		# index 1: 25 is go to region (region -1 ) 
-
-	def check_trigger(self,A,a):
-		if self.trigger != self.get_trigger_definition(A,a) and self.index>0:
-			return True
-
-		if A.battery.num>90 and self.index==0:
-			#print "RETURN TRUE"
-			return True
-		#else:
-			#print A.battery.num
-
-
-		if self.index > 0 and A.regions[self.index-1].score<1: #bandaid
-			return True
-
-		return False
-
-	
-
 	def get_distance(self,x,y,x2,y2):
 		return max(math.fabs(x-x2),math.fabs(y-y2))
 
-	def get_trigger_definition(self,A,a):
-		return A.get_lower_level_trigger(a)
-
 	def set_trigger(self,A,a):
+		#depreciated
 		self.trigger=self.get_trigger_definition(A,a)
-
-
-	#def get_abstraction(self,A):
-	#	if self.index==0:
-	#		return abf_battery(a)
-	#	elif self.index <26:
-	#		return abf_region(s,self.index-1)
 
 	def get_target(self,a,s):
 		if self.index==0:
@@ -126,12 +50,10 @@ class policy_low_level:
 				print "none found"
 			return loc
 						
-				
-			
-
 	def get_next_action(self,a,s):
 		next_x=0
 		next_y=0
+		self.time-=1
 		target = self.get_target(a,s)
 	
 		if a.x < target[0]:

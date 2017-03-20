@@ -105,11 +105,9 @@ class Battery():
 		print "dont use this"
 		return None
 
-	def evolve(self,a,base):
-		#if a.policy_set.TA.index==0:
-			#print "trying"
-		if a.policy_set.TA.index==0 and base is True:#a.x==50 and a.y ==50:
-			#print "trying to charge",self.num,a.x,a.y
+	def evolve(self,base):
+
+		if base is True:
 			self.num+=5.
 			if self.num > 100:
 				self.num=100
@@ -122,7 +120,7 @@ class Battery():
 				self.num=0
 
 			self.update(self.num)
-		#print self.num
+
 		
 
 class WorkLoad():
@@ -162,9 +160,9 @@ class Location():
 		self.goto=0
 
 	def update(self,a):
-		if a.policy_set.TA.LA.index > 0:
-			self.goto=a.policy_set.TA.LA.index-1
-			self.distance=Regions.get_distance(a.x,a.y,Regions.region[a.policy_set.TA.LA.index-1][0],Regions.region[a.policy_set.TA.LA.index-1][1])#regions get distance between goal and 
+		if a.current_action.index > 0:
+			self.goto=a.current_action.index-1
+			self.distance=Regions.get_distance(a.x,a.y,Regions.region[a.current_action.index-1][0],Regions.region[a.current_action.index-1][1])#regions get distance between goal and 
 		else:
 			self.goto=14
 			self.distance=Regions.get_distance(a.x,a.y,Regions.region[14][0],Regions.region[14][1])
@@ -258,7 +256,7 @@ class Abstractions():
 		self.location.update(a)
 		#print self.location.hash, "loc"
 
-	def get_reward_abf(self, a, region_num):
+	def get_reward_abf(self,region_num):
 		if region_num== 0:
 			return "charging"
 		else:
@@ -281,42 +279,47 @@ class Abstractions():
 		self.location.update_action(action)
 
 
-	def evolve_all(self,heuristics,a):
-		#print self.get_lower_level_abf(a)
-		#def pull_from_rewards(self,classifier,base,input_):
-		#append_dict(H.R,a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index,0.)
-		#append_dict(H.R,a.policy_set.TA.identification,A1.get_reward_abf(a,a.policy_set.TA.LA.index),"empty",0.)
-		r= heuristics.pull_from_rewards(a.policy_set.TA.identification,self.get_reward_abf(a,a.policy_set.TA.LA.index),"empty")
-		#print a.policy_set.TA.identification,self.get_reward_abf(a,a.policy_set.TA.LA.index),"empty"
-		#print heuristics.R[a.policy_set.TA.identification][self.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"]
+	def evolve_all(self,heuristics,action):
+
+		r= heuristics.pull_from_rewards(self.get_reward_abf(action))
 				
 		for i in range(25):
 			self.work_load[i].evolve(heuristics,self.regions[i])
 			self.regions[i].evolve(heuristics,self.work_load[i])
 
-		self.battery.evolve(a,self.location.inside_region)
+		self.battery.evolve(self.location.inside_region)
 
-		self.location.evolve(heuristics,a.policy_set.TA.LA.index)
+		self.location.evolve(heuristics,action)
 		self.all_regions.update(self.regions)
 
 		return r
 
+
+
+
+
+
+
+
+
+
+
 	def get_lower_level_abf(self,a):
-		if a.policy_set.TA.index == 0:
+		if a.current_action.index == 0:
 			#charge
 			return self.get_charge_abf()
-		elif a.policy_set.TA.index == 1:
+		elif a.current_action.index == 1:
 			#Explore
 			#return self.get_explore_abf()+str(a.policy_set.TA.LA.index)+":"+str(self.regions[a.policy_set.TA.LA.index-1].hash)+"end"
 			return self.get_explore_abf()+"end"
 
 	def get_lower_level_trigger(self,a):
-		if a.policy_set.TA.index == 0:
+		if a.current_action.index == 0:
 			#charge
 			return self.get_charge_trigger()
-		elif a.policy_set.TA.index == 1:
+		elif a.current_action.index == 1:
 			#Explore
-			return self.get_explore_trigger(a.policy_set.TA.LA.index-1)
+			return self.get_explore_trigger(a.current_action.index-1)
 		print "MISSED"
 
 	def get_charge_trigger(self):

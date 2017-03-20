@@ -74,9 +74,9 @@ class Simulator:
 	def work_load_cb(self,grid):
 		for i in range(len(Regions.region)):
 			a.work_load[i]=grid.data[i]
-		if a.policy_set.TA.LA.index > 0:
-			if a.work_load[a.policy_set.TA.LA.index-1] == 0:
-				a.work_load[a.policy_set.TA.LA.index-1]=1
+		if a.current_action.index > 0:
+			if a.work_load[a.current_action.index-1] == 0:
+				a.work_load[a.current_action.index-1]=1
 
 
 	def reset_cb(self,data):
@@ -111,7 +111,7 @@ class Simulator:
 			pose.pose.position.x=a.x
 			pose.pose.position.y=a.y
 			pose.pose.position.z=a.battery
-			pose.pose.orientation.x=a.policy_set.TA.LA.index-1
+			pose.pose.orientation.x=a.current_action.index-1
 			pose.pose.orientation.y=a.time_away_from_network
 			pose_pub.publish(pose)
 
@@ -129,7 +129,7 @@ def main(args):
 
 	occ_sub =rospy.Subscriber('/work_load', OccupancyGrid , sim.work_load_cb)#CHANGE TO MATRIX
 	reset_sub =rospy.Subscriber('/reset', Int32 , sim.reset_cb)#CHANGE TO MATRIX
-	time.sleep(random.random()*10	)
+	#time.sleep(random.random()*10	)
 
 	try:
 		sim.run()

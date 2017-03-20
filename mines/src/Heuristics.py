@@ -10,6 +10,11 @@ import Regions
 import random
 import os
 
+def append_dict_1(P,h1,r):
+	if P.get(h1) is None:
+		P[h1]=r
+	else:
+		P[h1]+=r
 
 def append_dict(P,h1,h2,h3,r):
 	if P.get(h1) is None:
@@ -121,44 +126,12 @@ class heuristic:
 		print "MADE IT TO NONE SHOUJLDNOT HAPPEN",v,N,classifier,base
 		return None
 
-	def pull_from_rewards(self,classifier,base,input_):
-		
-		#if classifier=="Explore" and num==0:
-			#return 0.
-			
+	def pull_from_rewards(self,abstraction_function):
+		if self.R.get(abstraction_function) is None:
+			print abstraction_function, "abstraction_function not found"
+			append_dict_1(self.R,abstraction_function,1.)
 
-		if self.R.get(classifier) is None:
-			#if classifier=="Explore":
-			#	return self.get_inherent_reward(classifier,base,input_,num)
-			print classifier, base,input_,"class not found"
-			if input_ == 0:
-				append_dict(self.R,classifier, base,input_,1.)
-			else:
-				append_dict(self.R,classifier, base,input_,1.)
-
-		if self.R[classifier].get(base) is None:
-			print classifier, base,input_,"base not found"
-			#if classifier=="Explore":
-			#	return self.get_inherent_reward(classifier,base,input_,num)
-			if input_ == 0:
-				append_dict(self.R,classifier, base,input_,1.)
-			else:
-				append_dict(self.R,classifier, base,input_,1.)
-
-		if self.R[classifier][base].get(input_) is None:
-			print classifier, base,input_,"input not found"
-			#if classifier=="Explore":
-			#	return self.get_inherent_reward(classifier,base,input_,num)
-			if input_ == 0:
-				append_dict(self.R,classifier, base,input_,1.)
-			else:
-				append_dict(self.R,classifier, base,input_,1.)
-
-		#print self.R[classifier][base][input_]
-		#if self.N.get(classifier)is not None:
-		#	print self.N[classifier][base][input_]
-		#print classifier,base,input_
-		return self.R[classifier][base][input_]		
+		return self.R[abstraction_function]		
 		
 	def get_inherent_reward(self,c,b,i,num):
 
@@ -179,59 +152,50 @@ def update_H(H,A1,A2,a,R):
 	#STUFF HEURISTICS HERE
 	#REW	self.get_lower_level_abf(a)
 	#append_dict(H.NN,a.policy_set.TA.identification,A1.get_lower_level_abf(a),1.) 
-
-	#HIGHER LEVEL REWARD
-	append_dict(H.N,a.policy_set.identification,A1.get_top_level_abf(),str(a.policy_set.TA.index),1.)
-
-	append_dict(H.R,a.policy_set.identification,A1.get_top_level_abf(),str(a.policy_set.TA.index),0.)
-	append_dict(H.R,a.policy_set.identification,A1.get_top_level_abf(),str(a.policy_set.TA.index),(R-H.R[a.policy_set.identification][A1.get_top_level_abf()][str(a.policy_set.TA.index)])/H.N[a.policy_set.identification][A1.get_top_level_abf()][str(a.policy_set.TA.index)])
-
-
-	append_dict(H.visits,a.policy_set.identification,A1.get_top_level_abf(),str(a.policy_set.TA.index),1.)
 	#LOWER LEVEL REWARD
 	#print "adding", H.R[a.policy_set.identification][A1.get_top_level_abf()][a.policy_set.TA.index],a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index
 
-	append_dict(H.N,a.policy_set.TA.identification,A1.get_reward_abf(a,a.policy_set.TA.LA.index),"empty",1.)
-	append_dict(H.R,a.policy_set.TA.identification,A1.get_reward_abf(a,a.policy_set.TA.LA.index),"empty",0.)
-	append_dict(H.R,a.policy_set.TA.identification,A1.get_reward_abf(a,a.policy_set.TA.LA.index),"empty",(R-H.R[a.policy_set.TA.identification][A1.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"])/H.N[a.policy_set.TA.identification][A1.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"])
+	append_dict_1(H.N,A1.get_reward_abf(a.current_action.index),1.)
+	append_dict_1(H.R,A1.get_reward_abf(a.current_action.index),1.)
+	append_dict_1(H.R,A1.get_reward_abf(a.current_action.index),(R-H.R[A1.get_reward_abf(a.current_action.index)])/H.N[A1.get_reward_abf(a.current_action.index)])
 	
-	append_dict(H.visits,a.policy_set.TA.identification,A1.get_lower_level_abf(a),a.policy_set.TA.LA.index,1.)
+	append_dict_1(H.visits,A1.get_reward_abf(a.current_action.index),1.)
 
 	#print "adding", H.R[a.policy_set.TA.identification][A1.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"], a.policy_set.TA.identification,A1.get_reward_abf(a,a.policy_set.TA.LA.index),a.policy_set.TA.LA.index,H.N[a.policy_set.TA.identification][A1.get_reward_abf(a,a.policy_set.TA.LA.index)]["empty"]
 
 	#A
-	for i in range(len(A1.regions)):
+	#for i in range(len(A1.regions)):
 
-		indent=A1.regions[i].identification
-		base=str(A1.regions[i].hash)
-		input_=str(A1.regions[i].get_input(A1.work_load[i]))
+	#	indent=A1.regions[i].identification
+	#	base=str(A1.regions[i].hash)
+	#	input_=str(A1.regions[i].get_input(A1.work_load[i]))
 		
-		output=str(A2.regions[i].hash)
-		append_dict(H.N,indent,base,input_,1.)
-		append_dict2(H.A,indent,base,input_,output,1.)
+	#	output=str(A2.regions[i].hash)
+	#	append_dict(H.N,indent,base,input_,1.)
+	#	append_dict2(H.A,indent,base,input_,output,1.)
 
 
-	for i in range(len(A1.work_load)):
+	#for i in range(len(A1.work_load)):
 
-		indent=A1.work_load[i].identification
-		base=str(A1.work_load[i].hash)
-		input_=str(A1.work_load[i].get_input(A1.regions[i]))
-		output=str(A2.work_load[i].hash)
+	#	indent=A1.work_load[i].identification
+	#	base=str(A1.work_load[i].hash)
+	#	input_=str(A1.work_load[i].get_input(A1.regions[i]))
+	##	output=str(A2.work_load[i].hash)
 		
-		append_dict(H.N,indent,base,input_,1.)
-		append_dict2(H.A,indent,base,input_,output,1.)
+	#	append_dict(H.N,indent,base,input_,1.)
+	#	append_dict2(H.A,indent,base,input_,output,1.)
 
 	#print_region_transitions(H,A1)
 
-	indent=A1.location.identification
-	base=A1.location.hash
-	input_=A1.location.get_input(a.policy_set.TA.LA.index)
-	output=A2.location.hash
+	#indent=A1.location.identification
+	#base=A1.location.hash
+	#input_=A1.location.get_input(a.policy_set.TA.LA.index)
+	#output=A2.location.hash
 
 	#print_location_transitions(H,A1)
 
-	append_dict(H.N,indent,base,input_,1.)
-	append_dict2(H.A,indent,base,input_,output,1.)
+	#append_dict(H.N,indent,base,input_,1.)
+	#append_dict2(H.A,indent,base,input_,output,1.)
 
 def print_region_transitions(H,A):
 	print "begin"

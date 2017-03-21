@@ -197,7 +197,7 @@ class Simulator:
 				#s.reset()
 			#	start = time.time()
 
-			if time.time()-start > .25:
+			if time.time()-start > .1:
 				self.pub()
 				self.pub2()
 				self.pub_to_buoys()

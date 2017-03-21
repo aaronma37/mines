@@ -27,7 +27,7 @@ class Agent:
 		self.measurement_space=[]
 		self.alpha=[.9,.1,0]
 		#self.reset()
-		self.battery=50
+		self.battery=10
 		self.work_load=[]
 		self.work=0
 		self.last_reward=0.
@@ -64,7 +64,7 @@ class Agent:
 		self.battery=50
 		self.old_A.update_all(s,self)
 		self.new_A.update_all(s,self)
-		#self.solver.write_file(self.solver.Q,self.solver.N,self.solver.Na,val)
+		self.solver.write_file()
 
 
 
@@ -92,13 +92,15 @@ class Agent:
 
 	def check_action(self,s): 
 		if self.current_action.check_trigger() is True:
+
 			self.current_action=Policies.Policy(self.solver.get_action(0,self.new_A))
+			#self.current_action=Policies.Policy(self.solver.explore_ucb(0,self.new_A))
+			self.work=self.current_action.index-1
 
 	def decide(self,s):	
 		self.new_A.update_all(s,self)
 		self.check_action(s)
-				
-		
+			
 		action = self.current_action.get_next_action(self,s)
 		self.execute(action,s)#NEED TO RESOLVE s
 
@@ -116,7 +118,9 @@ class Agent:
 		if self.battery < 1:
 			self.death()
 
+
 		self.last_reward= environment_data_.get_reward()- base_r
+
 
 	
 

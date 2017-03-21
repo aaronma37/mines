@@ -91,6 +91,7 @@ class Mine_Data:
 		self.seen[loc[0]][loc[1]]=1
 		self.pre_num_unknown_locations-= 1
 
+
 	def check_boundaries(self, loc):
 		if loc[0]<0 or loc[0] >= self.map_size:
 			return False

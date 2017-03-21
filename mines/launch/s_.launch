@@ -2,8 +2,6 @@
 
 <node pkg="mines" type="agent_standard.py" name="1" output="screen">
 </node>
-<node pkg="mines" type="agent_standard.py" name="2" output="screen">
-</node>
 
 
 </launch>

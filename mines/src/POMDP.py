@@ -14,8 +14,8 @@ import Policies
 from random import shuffle
 import POMDP_Values as v
 
-H=5
-Gamma=.95
+H=50
+Gamma=.99
 
 class Solver: 
 
@@ -31,7 +31,7 @@ class Solver:
 
 
 		self.H=heuristic()
-		Heuristics.load_file(self.H,'testfile.txt')
+		Heuristics.load_file(self.H,'testfile_d.txt')
 		self.A=Abstractions()
 		self.environment_data=E(e_args)
 
@@ -52,32 +52,44 @@ class Solver:
 
 			self.A.update_all(self.environment_data,a_)
 
-			self.search(0,self.A)
+			self.search(0,self.A,0)
 			end = time.time()
 
 
-	def search(self,L,A):
+	def search(self,L,A,depth):
+
+		if depth>H:
+			return 0.
+		
+		a,roll = self.arg_max_ucb(L,A)
+
+		pi_i=self.Pi.get(L,A,self.Phi,self.Psi)
+		phi_i=self.Phi.get(L,A)
 
 
-		a = self.arg_max_ucb(L,A)
 		r = A.evolve_all(self.H,a)
-		if a!=0:
-			r += math.pow(Gamma,self.search(L,A))
 
-		self.N.append_to(L,A,self.Pi,self.Phi,self.Psi,1.)
-		self.Na.append_to(L,A,self.Pi,self.Phi,self.Psi,a,1.)
-		self.Q.append_to(L,A,self.Pi,self.Phi,self.Psi,a,0.)
-		self.Q.append_to(L,A,self.Pi,self.Phi,self.Psi,a,(r-self.Q.get(L,A,self.Pi,self.Phi,self.Psi,a))/self.Na.get(L,A,self.Pi,self.Phi,self.Psi,a))
+
+		#if a!=0:
+		#if roll is True:
+		r += math.pow(Gamma,depth)*self.search(L,A,depth+1)
+		#else:
+			#r+= math.pow(Gamma,depth)*self.rollout(L,A,a,depth)
+
+		self.N.append_to(L,pi_i,phi_i,1.)
+		self.Na.append_to(L,pi_i,phi_i,a,1.)
+		self.Q.append_to(L,pi_i,phi_i,a,0.)
+		self.Q.append_to(L,pi_i,phi_i,a,(r-self.Q.get_direct(L,pi_i,phi_i,a))/self.Na.get_direct(L,pi_i,phi_i,a))
 
 		return r	
 
 	def get_action(self,L,A):
 		return self.arg_max(L,A)	
 
-	def arg_max(self,L,A):
-		return self.Pi.get(L,A,self.Phi,self.Psi)
+	def arg_max(self,L,A):	
+		#return self.Pi.get(L,A,self.Phi,self.Psi)
 
-		if self.Q.check(L,A,self.Pi,self.Phi,self.Psi) is False:
+		if self.Q.check(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A)) is False:
 			return self.Pi.get(L,A,self.Phi,self.Psi)
 
 
@@ -89,50 +101,66 @@ class Solver:
 
 
 
+	def rollout(self,L,A,a,depth):
+		r=0
+		for i in range(depth,H):
+			r+=math.pow(Gamma,depth)*A.evolve_all(self.H,a)
+		print r
+		return r
 
 	def arg_max_ucb(self,L,A):	
-		if self.Q.check(L,A,self.Pi,self.Phi,self.Psi) is False:
-			return self.Pi.get(L,A,self.Phi,self.Psi)
+		if self.Q.check(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A)) is False:
+
+			return self.Pi.get(L,A,self.Phi,self.Psi),False
 
 		k=range(Policies.action_index_max)	
 		shuffle(k)
-		return k[0]
-		if self.Na.check(L,A,self.Pi,self.Phi,self.Psi,k[0]) is False:
-			return k[0]
+		#return k[0]
+
+		if self.Na.check(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A),k[0]) is False:
+
+			return k[0],False
 
 		a=k[0]
 		max_num=self.ucb(L,A,k[0])
 
 		for i in k:
-			if self.Na.check(L,A,self.Pi,self.Phi,self.Psi,i) is False:
-				return i
+			if self.Na.check(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A),i) is False:
+				return i,False
 			if self.ucb(L,A,i)>max_num:
 
 				max_num=self.ucb(L,A,i)
 				a = i
-		return a
+
+		return a,True
 
 	def ucb(self,L,A,a):
-		return self.Q.get(L,A,self.Pi,self.Phi,self.Psi,a)+1000000.*math.sqrt(math.log(1+self.N.get(L,A,self.Pi,self.Phi,self.Psi))/(1+self.Na.get(L,A,self.Pi,self.Phi,self.Psi,a)))
+		return self.Q.get(L,A,self.Pi,self.Phi,self.Psi,a)+1.*math.sqrt(math.log(1+self.N.get(L,A,self.Pi,self.Phi,self.Psi))/(1+self.Na.get(L,A,self.Pi,self.Phi,self.Psi,a)))
 
 
-	def write_file(self,Q,N,Na,val):
+	def explore_ucb(self,L,A):
+		k=range(26)
+		shuffle(k)
+		v=[]
+		v.append(k[0])
+		v.append(self.Pi.get(L,A,self.Phi,self.Psi))
+		shuffle(v)
+		return v[0]
 
-		self.great.append(val)
+	def write_file(self):
 
-		file = open('Q.txt','w') 
+		file = open('Q_d.txt','w') 
 
-		for i in self.great:
-			file.write(str(i) + "\n")
 
-		for k,v in Q.items():
-			for k2,v2 in Q[k].items():
-				for k3,v3 in Q[k][k2].items():
-					file.write("Q"+","+str(k) + "," +  str(k2) + "," + str(k3) + "," + str(v3) + "," +  str(Na[k][k2][k3]) + "\n")
+		for k,v in self.Q.q.items():
+			file.write("\n")
+			for k2,v2 in self.Q.q[k].items():
+				file.write("\n")
+				for k3,v3 in self.Q.q[k][k2].items():
+					file.write("\n")
+					for k4,v4 in self.Q.q[k][k2][k3].items():
+						file.write("Q"+","+str(k) + "," +  str(k2) + "," + str(k3) + "," + str(k4) + "," + str(v4) + "," + str(self.Na.na[k][k2][k3][k4]) + "\n")
 
-		for k,v in Q.items():
-			for k2,v2 in Q[k].items():
-				file.write("N"+","+str(k) + "," +  str(k2) + ","  + str(v3) + "," +  str(N[k][k2]) + "\n")
 
 
 		 

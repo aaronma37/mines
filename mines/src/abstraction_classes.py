@@ -9,7 +9,25 @@ from geometry_msgs.msg import PoseStamped
 import numpy as np
 import Regions
 
+def get_next_action(loc,i):
+	next_x=0
+	next_y=0
+	target = Regions.region[i]
 
+	if loc[0] < target[0]:
+		next_x = 1
+	elif loc[0] > target[0]:
+		next_x = -1
+
+	if loc[1] <target[1]:
+		next_y= 1
+	elif loc[1] > target[1]:
+		next_y=-1
+
+	if loc[0] is target[0] and loc[1] is target[1]:
+		return (0,0)
+	else:	
+		return (next_x,next_y)
 
 
 def append_dict(P,h1,h2,h3,r):
@@ -93,8 +111,10 @@ class Battery():
 	def __init__(self):
 		self.hash="None"
 		self.num=0.
+		self.val=0.
 
 	def update(self,num):
+		self.val=num
 		self.hash=str(int(num/10.))
 		self.num=num
 
@@ -108,18 +128,19 @@ class Battery():
 	def evolve(self,base):
 
 		if base is True:
+			print "charging"
 			self.num+=5.
-			if self.num > 100:
-				self.num=100
+			if self.val > 100:
+				self.val=100
 
-			self.update(self.num)
+			self.update(self.val)
 		
 		else:
-			self.num-=.25
-			if self.num < 0:
-				self.num=0
+			self.val-=.25
+			if self.val < 0:
+				self.val=0
 
-			self.update(self.num)
+			self.update(self.val)
 
 		
 
@@ -156,28 +177,35 @@ class Location():
 		self.identification="AL"
 		self.distance=0
 		self.inside_region = False
-		self.reg=0
+
 		self.goto=0
+		self.loc=(0,0)
 
 	def update(self,a):
+		self.loc=(a.x,a.y)
 		if a.current_action.index > 0:
 			self.goto=a.current_action.index-1
-			self.distance=Regions.get_distance(a.x,a.y,Regions.region[a.current_action.index-1][0],Regions.region[a.current_action.index-1][1])#regions get distance between goal and 
+			self.distance=Regions.get_distance(self.loc[0],self.loc[1],Regions.region[a.current_action.index-1][0],Regions.region[a.current_action.index-1][1])#regions get distance between goal and 
 		else:
 			self.goto=14
-			self.distance=Regions.get_distance(a.x,a.y,Regions.region[14][0],Regions.region[14][1])
+			self.distance=Regions.get_distance(self.loc[0],self.loc[1],Regions.region[14][0],Regions.region[14][1])
 			#print self.distance
-		self.check_inside()
+		self.check_inside(a.current_action.index)
 		self.hash=str(self.distance)
-		self.reg=Regions.get_region(a.x,a.y)
 
-	def check_inside(self):
-		if self.distance < 10: 
 
-			self.inside_region =True
-			self.reg=self.goto
+	def check_inside(self,a):
+		if a!=0:
+			if self.distance < 10: 
+				self.inside_region =True
+			else:
+				self.inside_region =False
 		else:
-			self.inside_region =False
+			if self.distance < 2: 
+
+				self.inside_region =True
+			else:
+				self.inside_region =False
 		
 
 	def update_with_hash(self,h):
@@ -187,21 +215,30 @@ class Location():
 		return str(goal)
 
 	def evolve(self,heuristics,goal):
-		self.distance-=1
-		#print self.distance
-		self.check_inside()
-		#self.hash = heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(goal))
+		if goal-1==self.goto:
+			ev=get_next_action(self.loc,self.goto)
+
+			self.loc= (self.loc[0]+ev[0], self.loc[1]+ev[1])
+
+			self.distance-=1
+			#print self.goto,goal,self.distance,self.inside_region,self.loc	
+			self.check_inside(goal)
+			#self.hash = heuristics.pull_new_abstraction(self.identification, self.hash,self.get_input(goal))
+		else:
+			self.update_action(goal)
+			
 
 	def update_action(self,action):
 		self.inside_region =False
 		if action > 0:
 			self.goto=action-1
-			self.distance=Regions.get_distance(Regions.region[self.reg][0],Regions.region[self.reg][1],Regions.region[action-1][0],Regions.region[action-1][1])#regions get distance between goal and 
+			self.distance=Regions.get_distance(self.loc[0],self.loc[1],Regions.region[action-1][0],Regions.region[action-1][1])#regions get distance between goal and 
 		else:
 			self.goto=14
-			self.distance=Regions.get_distance(Regions.region[self.reg][0],Regions.region[self.reg][1],Regions.region[14][0],Regions.region[14][1])
-			self.check_inside()
+			self.distance=Regions.get_distance(self.loc[0],self.loc[1],Regions.region[14][0],Regions.region[14][1])
+			self.check_inside(action)
 			self.hash=str(self.distance)
+
 			#print "GOING TO MIDDLE", self.inside_region
 			
 
@@ -264,10 +301,10 @@ class Abstractions():
 			h = h + str(Regions.get_region_type(region_num-1)) + ":"
 			h = h + str(self.regions[region_num-1].hash) + ":"
 
-			if self.work_load[region_num-1].hash==0:
-				h = h + str(1)+ ":"
-			else:
-				h = h + str(self.work_load[region_num-1].hash)+ ":"
+			#if self.work_load[region_num-1].hash==0:
+			#	h = h + str(1)+ ":"
+			#else:
+			#	h = h + str(self.work_load[region_num-1].hash)+ ":"
 			if self.location.inside_region is True:
 				h=h+"search"
 			else:
@@ -275,32 +312,67 @@ class Abstractions():
 			
 		return h
 
+	def get_inherent_reward_func(self,a):
+		#r if exploring
+		#r = score/distance-(100-battery)*distance
+
+		# if charging
+		# r is static
+		if self.battery.num==0:
+			return 0.
+
+		if a!=0:
+			distance1=Regions.get_distance(self.location.loc[0],self.location.loc[1],Regions.region[a-1][0],Regions.region[a-1][1])/10.#regions get distance between goal and
+			distance2=Regions.get_distance(Regions.region[14][0],Regions.region[14][1],Regions.region[a-1][0],Regions.region[a-1][1])/10.#regions get distance between goal and
+		elif a==0:
+			#print a,1
+			return 0.
+
+		if distance1<1:
+			distance1=1
+		if distance2<1:
+			distance2=1
+		
+		if self.battery.num<20:
+			return -1
+
+		#print a,5*(self.regions[a-1].score/distance1-(100.-self.battery.val)*(100.-self.battery.val)*distance2/10000.),self.battery.val
+		return 5*(self.regions[a-1].score/distance1-(100.-self.battery.val)*(100.-self.battery.val)*distance2/10000.)
+
+
 	def new_action(self, action):
 		self.location.update_action(action)
 
 
 	def evolve_all(self,heuristics,action):
+		r=0
 
-		r= heuristics.pull_from_rewards(self.get_reward_abf(action))
+		for j in range(5):
+
 				
-		for i in range(25):
-			self.work_load[i].evolve(heuristics,self.regions[i])
-			self.regions[i].evolve(heuristics,self.work_load[i])
+			for i in range(25):
+				self.work_load[i].evolve(heuristics,self.regions[i])
+				self.regions[i].evolve(heuristics,self.work_load[i])
 
-		self.battery.evolve(self.location.inside_region)
+			if action==0 and self.location.inside_region is True:
+				self.battery.evolve(True)
+			else:
+				self.battery.evolve(False)
 
-		self.location.evolve(heuristics,action)
-		self.all_regions.update(self.regions)
+			if self.battery.num>20:
+				self.location.evolve(heuristics,action)
+				if self.location.inside_region is False:
+					r+=0.
+				else:
+					r += heuristics.pull_from_rewards(self.get_reward_abf(action))
+
+			else:
+				if action!=0:
+					r+=-100
+			self.all_regions.update(self.regions)
+			
 
 		return r
-
-
-
-
-
-
-
-
 
 
 
@@ -342,10 +414,12 @@ class Abstractions():
 		for i in self.regions:
 			h=h+str(i.hash)+":"
 
-		for i in self.work_load:
-			h=h+str(i.hash)+":"
+		#for i in self.work_load:
+		#	h=h+str(i.hash)+":"
 
-		h=h+str(self.location.reg)+":"
+		h=h+str(Regions.get_region(self.location.loc[0],self.location.loc[1]))+":"
+		h=h+str(self.battery.hash)+":"
+
 		
 
 

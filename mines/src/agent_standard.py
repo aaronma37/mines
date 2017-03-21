@@ -15,6 +15,8 @@ import numpy as np
 import sys
 import rospy
 import Regions
+from Heuristics import write_file
+
 ''' This is the ros file that runs an agent'''
 
 region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
@@ -81,8 +83,10 @@ class Simulator:
 
 	def reset_cb(self,data):
 		s.reset()
-		a.reset(s,data.data)
+		a.reset(s)
 
+
+		write_file(a.solver.H,pose.header.frame_id)
 
 
 	def run(self):
@@ -90,9 +94,9 @@ class Simulator:
 		while not rospy.is_shutdown():
 			start=time.time()
 			s.imprint(si)
-			a.step(si,ai,.25)
-			#s.imprint(si)
-			to_wait = start-time.time() + .25
+			a.step(si,ai,.1)
+			s.imprint(si)
+			to_wait = start-time.time() + .1
 			
 
 			if to_wait >0:

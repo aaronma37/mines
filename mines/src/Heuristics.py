@@ -26,14 +26,8 @@ def append_dict(P,h1,h2,h3,r):
 	else:
 		P[h1][h2][h3]+=r
 
-def append_dict_if_missing(P,h1,h2,h3,r):
-	if P.get(h1) is None:
-		P[h1]={h2:{h3:r}}
-	elif P[h1].get(h2) is None:
-		P[h1][h2]={h3:r}
-	elif P[h1][h2].get(h3) is None:
-		P[h1][h2][h3]=r
-
+def append_dict_if_missing(P,h1,r):
+	P[h1]=r
 
 def append_dict2(P,h1,h2,h3,h4,r):
 	if P.get(h1) is None:
@@ -156,7 +150,7 @@ def update_H(H,A1,A2,a,R):
 	#print "adding", H.R[a.policy_set.identification][A1.get_top_level_abf()][a.policy_set.TA.index],a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index
 
 	append_dict_1(H.N,A1.get_reward_abf(a.current_action.index),1.)
-	append_dict_1(H.R,A1.get_reward_abf(a.current_action.index),1.)
+	append_dict_1(H.R,A1.get_reward_abf(a.current_action.index),0.)
 	append_dict_1(H.R,A1.get_reward_abf(a.current_action.index),(R-H.R[A1.get_reward_abf(a.current_action.index)])/H.N[A1.get_reward_abf(a.current_action.index)])
 	
 	append_dict_1(H.visits,A1.get_reward_abf(a.current_action.index),1.)
@@ -214,41 +208,39 @@ def print_location_transitions(H,A):
 				for k3,v3 in H.A["AL"][k][k2].items():
 					print k,k2,k3,v3/H.N["AL"][k][k2]
 
-def load_file(H,filename):
 
-	f = open(filename,'r')
-	for line in f:
-		l = line.split(",")
-		if l[0] == 'A':
-			append_dict_if_missing(H.N,l[1],l[2],l[3],float(l[6].strip('\n')))
-			append_dict2(H.A,l[1],l[2],l[3],l[4],float(l[5]))
-		elif l[0]== 'R':
-			append_dict_if_missing(H.N,l[1],l[2],l[3],float(l[5].strip('\n')))
-			append_dict(H.R,l[1],l[2],l[3],float(l[4]))
-
-	print "FILES LOADED"
 
 
 def write_file(H,filename):
-	file = open('testfile__.txt','w') 
-
+	file = open('testfile_d_temp.txt','w') 
+	print "writing file: testfile_d.txt"
 	 
 
 	for k,v in H.R.items():
-		for k2,v2 in H.R[k].items():
-			for k3,v3 in H.R[k][k2].items():
-				file.write("R"+","+str(k) + "," +  str(k2) + "," + str(k3) + "," + str(v3) + "," +  str(H.N[k][k2][k3]) + "\n")
 
-	for i in range(1,6):
-		for k,v in H.A["AR: " + str(i)].items():
-			for k2,v2 in H.A["AR: " + str(i)][k].items():
-				for k3,v3 in H.A["AR: " + str(i)][k][k2].items():
-					file.write("A" +","+"AR: " + str(i) + "," + str(k) + ","+   str(k2) + "," + str(k3) + "," + str(v3) + "," +  str(H.N["AR: " + str(i)][k][k2]) + "\n")
+		file.write("R"+","+str(k) + "," + str(v) + "," +  str(H.N[k]) + "\n")
+
+	#for i in range(1,6):
+	#	for k,v in H.A["AR: " + str(i)].items():
+	#		for k2,v2 in H.A["AR: " + str(i)][k].items():
+	#			for k3,v3 in H.A["AR: " + str(i)][k][k2].items():
+	#				file.write("A" +","+"AR: " + str(i) + "," + str(k) + ","+   str(k2) + "," + str(k3) + "," + str(v3) + "," +  str(H.N["AR: " + str(i)][k][k2]) + "\n")
 
 
 
 	 
 	file.close()
+
+def load_file(H,filename):
+
+	f = open(filename,'r')
+	for line in f:
+		l = line.split(",")
+		append_dict_if_missing(H.N,l[1],float(l[3].strip('\n')))
+		append_dict_1(H.R,l[1],float(l[2]))
+
+	print "FILES LOADED"
+
 		
 				
 

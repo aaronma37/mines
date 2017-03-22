@@ -147,7 +147,7 @@ class Simulator:
 
 		for k,a in agent_dict.items():
 			if a.work >0 and a.work <26:
-				o2.data[a.work]+=1
+				o2.data[a.work-1]+=1
 
 	
 			
@@ -166,6 +166,7 @@ class Simulator:
 
 	def reset_pub(self):
 		reset_.data=self.s.get_reward()
+		print self.s.get_reward(), "H"
 		self.s.reset()
 
 		reset_publisher.publish(reset_)

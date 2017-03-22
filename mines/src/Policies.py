@@ -9,7 +9,7 @@ import Regions
 
 from random import shuffle
 
-action_index_max=26
+action_index_max=27
 action_list=[]
 
 
@@ -54,6 +54,11 @@ class Policy:
 		next_x=0
 		next_y=0
 		self.time-=1
+
+		if self.index==26:
+			return (0,0)
+
+
 		target = self.get_target(a,s)
 	
 		if a.x < target[0]:

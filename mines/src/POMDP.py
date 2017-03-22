@@ -14,8 +14,8 @@ import Policies
 from random import shuffle
 import POMDP_Values as v
 
-H=50
-Gamma=.99
+H=100
+Gamma=.95
 
 class Solver: 
 
@@ -27,6 +27,8 @@ class Solver:
 		self.Phi=v.Phi()
 		self.Psi=v.Psi()
 		self.Pi=v.Pi()
+		self.great=[]
+		self.steps=[]
 
 
 
@@ -49,36 +51,42 @@ class Solver:
 			agent_.imprint(a_)
 			s.imprint(self.environment_data)
 			self.action_counter=0
-
+			#print "start"
 			self.A.update_all(self.environment_data,a_)
-
-			self.search(0,self.A,0)
+			self.search(0,self.A,0,26)
 			end = time.time()
 
 
-	def search(self,L,A,depth):
+	def search(self,L,A,depth,last_action):
 
 		if depth>H:
 			return 0.
 		
-		a,roll = self.arg_max_ucb(L,A)
+		if last_action!=0 or A.battery.num>90:
+			a,roll = self.arg_max_ucb(L,A)
+		else:
+			if A.battery.num==0:
+				a=26
+			else:
+				a=0
+
 
 		pi_i=self.Pi.get(L,A,self.Phi,self.Psi)
 		phi_i=self.Phi.get(L,A)
 
+		self.N.append_to(L,pi_i,phi_i,1.)
+		self.Na.append_to(L,pi_i,phi_i,a,1.)
+		self.Q.append_to(L,pi_i,phi_i,a,0.)
+
+		
+		#print pi_i,a,A.battery.num,A.location.loc
 
 		r = A.evolve_all(self.H,a)
 
 
-		#if a!=0:
-		#if roll is True:
-		r += math.pow(Gamma,depth)*self.search(L,A,depth+1)
-		#else:
-			#r+= math.pow(Gamma,depth)*self.rollout(L,A,a,depth)
+		r += math.pow(Gamma,depth)*self.search(L,A,depth+1,a)
 
-		self.N.append_to(L,pi_i,phi_i,1.)
-		self.Na.append_to(L,pi_i,phi_i,a,1.)
-		self.Q.append_to(L,pi_i,phi_i,a,0.)
+
 		self.Q.append_to(L,pi_i,phi_i,a,(r-self.Q.get_direct(L,pi_i,phi_i,a))/self.Na.get_direct(L,pi_i,phi_i,a))
 
 		return r	
@@ -89,15 +97,19 @@ class Solver:
 	def arg_max(self,L,A):	
 		#return self.Pi.get(L,A,self.Phi,self.Psi)
 
-		if self.Q.check(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A)) is False:
+		if self.Psi.check(L,self.Pi.get(L,A,self.Phi,self.Psi)) is False:
+			#print "Did not find cluster", L, self.Pi.get(L,A,self.Phi,self.Psi)
 			return self.Pi.get(L,A,self.Phi,self.Psi)
+
+		#if self.Q.check(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A)) is False:
+		#	return self.Pi.get(L,A,self.Phi,self.Psi)
 
 
 		v = self.Q.vals(L,A,self.Pi,self.Phi,self.Psi)
 		k = self.Q.keys_(L,A,self.Pi,self.Phi,self.Psi)
 
+		return self.Psi.get_max(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A))
 
-		return k[v.index(max(v))]
 
 
 
@@ -135,7 +147,7 @@ class Solver:
 		return a,True
 
 	def ucb(self,L,A,a):
-		return self.Q.get(L,A,self.Pi,self.Phi,self.Psi,a)+1.*math.sqrt(math.log(1+self.N.get(L,A,self.Pi,self.Phi,self.Psi))/(1+self.Na.get(L,A,self.Pi,self.Phi,self.Psi,a)))
+		return self.Q.get(L,A,self.Pi,self.Phi,self.Psi,a)+100.*math.sqrt(math.log(1+self.N.get(L,A,self.Pi,self.Phi,self.Psi))/(1+self.Na.get(L,A,self.Pi,self.Phi,self.Psi,a)))
 
 
 	def explore_ucb(self,L,A):
@@ -147,9 +159,17 @@ class Solver:
 		shuffle(v)
 		return v[0]
 
-	def write_file(self):
+	def update_psi(self):
+		self.Psi.update(self.Q,self.Na)
+
+	def write_file(self,data,steps):
+		self.great.append(data)
+		self.steps.append(steps)
 
 		file = open('Q_d.txt','w') 
+
+		for i in range(len(self.great)):
+			file.write(str(self.great[i]) + ", " + str(self.steps[i])+ ", " + str(self.great[i]/self.steps[i]) +"\n")
 
 
 		for k,v in self.Q.q.items():
@@ -160,6 +180,22 @@ class Solver:
 					file.write("\n")
 					for k4,v4 in self.Q.q[k][k2][k3].items():
 						file.write("Q"+","+str(k) + "," +  str(k2) + "," + str(k3) + "," + str(k4) + "," + str(v4) + "," + str(self.Na.na[k][k2][k3][k4]) + "\n")
+
+	def write_psi(self):
+
+		file = open('psi.txt','w') 
+
+
+		for l,v in self.Psi.psi.items():
+			file.write("L = " + str(l) + " \n")
+			for pi,v2 in self.Psi.psi[l].items():
+				file.write("pi = " + str(pi) + " \n")
+				for k in range(len(self.Psi.psi[l][pi])):
+					file.write("k: " + str(self.Psi.psi[l][pi][k].a) + " \n")
+					for a in range(27):
+						file.write("action: " + str(a) + ", " + "reward: " + str(self.Psi.psi[l][pi][k].r[a]) + ", " + "visited: " + str(self.Psi.psi[l][pi][k].n[a]) + "\n")
+					for s in self.Psi.psi[l][pi][k].states:
+						file.write("state: " + str(s) + "\n")
 
 
 

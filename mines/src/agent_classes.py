@@ -32,6 +32,7 @@ class Agent:
 		self.work=0
 		self.last_reward=0.
 		self.current_action=Policies.Policy(0)
+		self.steps=0.
 		for i in range(len(Regions.region)):
 			self.work_load.append(0)
 
@@ -55,7 +56,7 @@ class Agent:
 	def predict_A(self):
 		self.new_A.evolve_all(self.solver.H,self)
 
-	def reset(self,s):
+	def reset(self,s,data):
 		self.x=self.map_size/2
 		self.y=self.map_size/2
 		self.current_action=Policies.Policy(0)
@@ -64,7 +65,10 @@ class Agent:
 		self.battery=50
 		self.old_A.update_all(s,self)
 		self.new_A.update_all(s,self)
-		self.solver.write_file()
+		self.solver.write_file(data,self.steps)
+		self.solver.update_psi()
+		self.solver.write_psi()
+		self.steps=0.
 
 
 
@@ -98,6 +102,7 @@ class Agent:
 			self.work=self.current_action.index-1
 
 	def decide(self,s):	
+		self.steps+=1.
 		self.new_A.update_all(s,self)
 		self.check_action(s)
 			

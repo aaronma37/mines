@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 from random import shuffle
+from sets import Set
+
 class Pi:
 	def __init__(self):
 		print "initializing Pi"
 
 	def seed_algorithm(self,A):
 		rewards=[]
-		for i in range(26):
+		for i in range(27):
 			rewards.append(A.get_inherent_reward_func(i))
 
 		#print  rewards.index(max(rewards)), max(rewards)
@@ -27,13 +29,101 @@ class Phi:
 	def get(self,L,A):
 		return A.get_explore_abf()
 
+class Cluster:
+	def __init__(self,a,default):
+		self.a=a #a is static
+		self.action_set=[]
+		self.r=[]
+		self.n=[]
+		for i in range(27):
+			self.action_set.append(i)
+			self.r.append(0.)
+			self.n.append(0.)
+
+		self.default=default
+
+		self.states=Set([])
+
+	def update(self,action,r,n,state):
+		self.states.add(state)
+		self.n[action]+=n
+		self.r[action]+=(r-self.r[action])/self.n[action]
+		if action==0:
+			print self.n[0],self.r[0]
+
 class Psi:
 	def __init__(self):
 		print "initializing Psi"
-		self.psi={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)]->a
+		self.psi={}#[L][pi(L-1,A,Phi,Psi)]-> cluster
+
+	def update(self,Q,Na):
+		self.psi={}
+
+		for l,v in Q.q.items():
+			for pi,v2 in Q.q[l].items():
+				self.check_and_append(l,pi)
+				for state, v3 in Q.q[l][pi].items():
+					
+					v = Q.q[l][pi][state].values()
+					key = Q.q[l][pi][state].keys()
+					k = self.splitter(self.psi[l][pi],key[v.index(max(v))])
+					#print key[v.index(max(v))], v.index(max(v)),v
+					for action,v4 in Q.q[l][pi][state].items():
+						if l==0 and pi ==0 and action ==0:
+							print v4, Na.na[l][pi][state][action], k
+						self.psi[l][pi][k].update(action,v4,Na.na[l][pi][state][action],state)
+
+	def splitter(self, cluster_list, m):
+		if cluster_list[0].a==m:
+			return 0
+
+		for i in cluster_list:
+			if i.default is False:
+				if i.a == m:
+					return cluster_list.index(i)
+
+
+		cluster_list.append(Cluster(m,False))
+
+		return len(cluster_list)-1
+
+	def check(self,L,pi):
+		if self.psi.get(L) is None:
+			return False
+		if self.psi[L].get(pi) is None:
+			return False
+		return True
+
+	def check_and_append(self,l,pi):
+		if self.psi.get(l) is None:
+			self.psi[l]={pi:[]}
+			self.psi[l][pi].append(Cluster(pi,True))
+		elif self.psi[l].get(pi) is None:
+			self.psi[l][pi]=[]
+			self.psi[l][pi].append(Cluster(pi,True))
+
 
 	def get(self,L,A,pi,phi):
-		return self.psi[L][pi.get(L,A,phi,psi)][phi.get(L,A)]
+		PSI = self.psi[L][pi.get(L,A,phi,psi)]
+		for p in PSI:
+			if p.default is False:
+				if phi(L,A) in p.states:
+					return p
+			else:
+				i=p
+
+		return i
+	
+	def get_from_state(self,cluster_list,phi):
+		for i in cluster_list:
+			if phi in i.states:
+				return i
+		#state not found yet
+		return cluster_list[0]
+
+	
+	def get_max(self,L,pi,phi):
+		return self.get_from_state(self.psi[L][pi],phi).a
 
 class Q:
 	def __init__(self):

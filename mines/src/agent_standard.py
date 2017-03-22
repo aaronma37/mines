@@ -76,14 +76,14 @@ class Simulator:
 	def work_load_cb(self,grid):
 		for i in range(len(Regions.region)):
 			a.work_load[i]=grid.data[i]
-		if a.current_action.index > 0:
+		if a.current_action.index > 0 and a.current_action.index < 26:
 			if a.work_load[a.current_action.index-1] == 0:
 				a.work_load[a.current_action.index-1]=1
 
 
 	def reset_cb(self,data):
 		s.reset()
-		a.reset(s)
+		a.reset(s,data.data)
 
 
 		write_file(a.solver.H,pose.header.frame_id)
@@ -94,9 +94,9 @@ class Simulator:
 		while not rospy.is_shutdown():
 			start=time.time()
 			s.imprint(si)
-			a.step(si,ai,.1)
+			a.step(si,ai,.2)
 			s.imprint(si)
-			to_wait = start-time.time() + .1
+			to_wait = start-time.time() + .3
 			
 
 			if to_wait >0:

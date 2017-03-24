@@ -297,7 +297,7 @@ def end_draw():
 
 
 
-def draw_all(s,agent_dict,map_size,buoy_dict,gui_data):
+def draw_all(s,agent_dict,map_size,buoy_dict,gui_data,step_num):
 
 	clear()
 	begin_basic()	
@@ -370,6 +370,8 @@ def draw_all(s,agent_dict,map_size,buoy_dict,gui_data):
 		draw_text(1.7,-.05+ 1.1-count/4.,"Action: " + str(a.current_action))
 		count+=1
 
+	draw_text(0, 1.1,"step: " + str(step_num))
+
 
 	setupTexture(4)
 
@@ -378,7 +380,7 @@ def draw_all(s,agent_dict,map_size,buoy_dict,gui_data):
 
                     
 
-def render_once(s,agent_dict,map_size,buoy_dict,gui_data,main):
+def render_once(s,agent_dict,map_size,buoy_dict,gui_data,main,step_num):
 	    #glEnable(GL_DEPTH_TEST)
 	    
 	    #glShadeModel(GL_FLAT)
@@ -396,7 +398,7 @@ def render_once(s,agent_dict,map_size,buoy_dict,gui_data,main):
 		    if event.type == KEYUP and event.key == K_ESCAPE:
 		        return    
 
-		draw_all(s,agent_dict,map_size,buoy_dict,gui_data)
+		draw_all(s,agent_dict,map_size,buoy_dict,gui_data,step_num)
 		pygame.display.flip()
 
 		pressed = pygame.mouse.get_pressed()

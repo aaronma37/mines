@@ -48,6 +48,7 @@ pose_pub = rospy.Publisher('/pose',PoseStamped,queue_size=1)
 class Simulator:
 	def __init__(self):
 		self.update_flag=False
+		self.reset_flag=False
 
 	def s_cb(self,grid):
 		#if a.x > grid.info.origin.position.x -  grid.info.origin.position.z/2 and a.x <  grid.info.origin.position.x +  grid.info.origin.position.z/2+1:
@@ -76,41 +77,52 @@ class Simulator:
 	def work_load_cb(self,grid):
 		for i in range(len(Regions.region)):
 			a.work_load[i]=grid.data[i]
-		if a.current_action.index > 0 and a.current_action.index < 26:
-			if a.work_load[a.current_action.index-1] == 0:
-				a.work_load[a.current_action.index-1]=1
+		#if a.current_action.index > 0 and a.current_action.index < 26:
+			#if a.work_load[a.current_action.index-1] == 0:
+				#a.work_load[a.current_action.index-1]=1
 
 
 	def reset_cb(self,data):
+		self.reset_flag=True
+		self.reset_data=data
+
+	def reset_fun(self,data):
 		s.reset()
-		a.reset(s,data.data)
+		a.reset(s,data.data,pose.header.frame_id)
 
 
 		write_file(a.solver.H,pose.header.frame_id)
+		time.sleep(random.random()*5.)
+		#a.get_psi()
 
 
 	def run(self):
 		a.new_A.update_all(s,a)
 		while not rospy.is_shutdown():
-			start=time.time()
-			s.imprint(si)
-			a.step(si,ai,.2)
-			s.imprint(si)
-			to_wait = start-time.time() + .3
-			
 
-			if to_wait >0:
-				time.sleep(to_wait)
 
 			if self.update_flag is True:
 				a.update_heuristics(s_old,s)
 				self.update_flag=False
-			#else:
-			#	a.predict_A()
-				#predict si
+			if self.reset_flag is True:
+				self.reset_fun(self.reset_data)
+				self.reset_flag=False
+
+			start=time.time()
+			s.imprint(si)
+			a.calculate_A(si)
+
+			a.step(si,ai,.1)
+			#s.imprint(si)
+			to_wait = start-time.time() + 1.
+			
+
+			a.decide(si)
 
 
-			a.decide(s)
+
+			if to_wait >0:
+				time.sleep(to_wait)
 
 			pose.pose.position.x=a.x
 			pose.pose.position.y=a.y
@@ -118,6 +130,11 @@ class Simulator:
 			pose.pose.orientation.x=a.current_action.index-1
 			pose.pose.orientation.y=a.time_away_from_network
 			pose_pub.publish(pose)
+			#else:
+			#	a.predict_A()
+				#predict si
+
+
 
 		
 
@@ -133,7 +150,7 @@ def main(args):
 
 	occ_sub =rospy.Subscriber('/work_load', OccupancyGrid , sim.work_load_cb)#CHANGE TO MATRIX
 	reset_sub =rospy.Subscriber('/reset', Int32 , sim.reset_cb)#CHANGE TO MATRIX
-	#time.sleep(random.random()*10	)
+	time.sleep(random.random()*5.)
 
 	try:
 		sim.run()

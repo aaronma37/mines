@@ -56,19 +56,25 @@ class Agent:
 	def predict_A(self):
 		self.new_A.evolve_all(self.solver.H,self)
 
-	def reset(self,s,data):
+	def reset(self,s,data,fn):
 		self.x=self.map_size/2
 		self.y=self.map_size/2
 		self.current_action=Policies.Policy(0)
 		self.old_A=Abstractions()
 		self.new_A=Abstractions()
-		self.battery=50
+		self.battery=100
 		self.old_A.update_all(s,self)
 		self.new_A.update_all(s,self)
-		self.solver.write_file(data,self.steps)
-		self.solver.update_psi()
-		self.solver.write_psi()
+		self.solver.write_file(data,self.steps,"/home/aaron/catkin_ws/src/mines/mines/src"+fn+".txt")
+		#self.solver.update_psi()
+		#self.solver.write_psi()
 		self.steps=0.
+		self.solver.reset()
+		
+
+	def get_psi(self):
+		self.solver.get_psi('/home/aaron/catkin_ws/src/mines/mines/src/psi_main.txt')
+
 
 
 
@@ -93,17 +99,19 @@ class Agent:
 	def step(self,s,a_,time_to_work):	
 		self.solver.OnlinePlanning(self,s,a_,time_to_work)
 
+	def calculate_A(self,s):
+		self.new_A.update_all(s,self)
 
 	def check_action(self,s): 
 		if self.current_action.check_trigger() is True:
-
+			self.battery=100
 			self.current_action=Policies.Policy(self.solver.get_action(0,self.new_A))
+			#self.battery=100
 			#self.current_action=Policies.Policy(self.solver.explore_ucb(0,self.new_A))
 			self.work=self.current_action.index-1
 
 	def decide(self,s):	
 		self.steps+=1.
-		self.new_A.update_all(s,self)
 		self.check_action(s)
 			
 		action = self.current_action.get_next_action(self,s)

@@ -123,8 +123,8 @@ class heuristic:
 	def pull_from_rewards(self,abstraction_function):
 		if self.R.get(abstraction_function) is None:
 			print abstraction_function, "abstraction_function not found"
-			append_dict_1(self.R,abstraction_function,1.)
-
+			#append_dict_1(self.R,abstraction_function,1.)
+			return 0.
 		return self.R[abstraction_function]		
 		
 	def get_inherent_reward(self,c,b,i,num):
@@ -148,7 +148,8 @@ def update_H(H,A1,A2,a,R):
 	#append_dict(H.NN,a.policy_set.TA.identification,A1.get_lower_level_abf(a),1.) 
 	#LOWER LEVEL REWARD
 	#print "adding", H.R[a.policy_set.identification][A1.get_top_level_abf()][a.policy_set.TA.index],a.policy_set.identification,A1.get_top_level_abf(),a.policy_set.TA.index
-
+	#print "adding",A1.get_reward_abf(a.current_action.index)
+	append_dict_1(H.N,A1.get_reward_abf(a.current_action.index),0.)
 	append_dict_1(H.N,A1.get_reward_abf(a.current_action.index),1.)
 	append_dict_1(H.R,A1.get_reward_abf(a.current_action.index),0.)
 	append_dict_1(H.R,A1.get_reward_abf(a.current_action.index),(R-H.R[A1.get_reward_abf(a.current_action.index)])/H.N[A1.get_reward_abf(a.current_action.index)])
@@ -212,12 +213,14 @@ def print_location_transitions(H,A):
 
 
 def write_file(H,filename):
-	file = open('testfile_d_temp.txt','w') 
+	file = open('testfile_d_temp_mult.txt','w') 
 	print "writing file: testfile_d.txt"
 	 
 
 	for k,v in H.R.items():
-
+		print H.R[k]
+		print k
+		print H.N[k],"g"
 		file.write("R"+","+str(k) + "," + str(v) + "," +  str(H.N[k]) + "\n")
 
 	#for i in range(1,6):

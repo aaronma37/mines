@@ -9,7 +9,7 @@ class Pi:
 	def seed_algorithm(self,A):
 		rewards=[]
 		for i in range(27):
-			rewards.append(A.get_inherent_reward_func(i))
+			rewards.append(A.get_inherent_reward_func2(i))
 
 		#print  rewards.index(max(rewards)), max(rewards)
 		return rewards.index(max(rewards))
@@ -17,6 +17,7 @@ class Pi:
 	def get(self,L,A,Phi,Psi):
 		if L == 0:
 			#print self.seed_algorithm(A), A.get_explore_abf(), A.battery.val
+			#return 26
 			return self.seed_algorithm(A)
 		else:
 			return Psi.get(L-1,A,self,Phi.get(L,A))
@@ -89,8 +90,10 @@ class Psi:
 
 	def check(self,L,pi):
 		if self.psi.get(L) is None:
+			print "L NOT FOUND", L
 			return False
 		if self.psi[L].get(pi) is None:
+			print "PI NOT FOUND", pi			
 			return False
 		return True
 
@@ -124,6 +127,51 @@ class Psi:
 	
 	def get_max(self,L,pi,phi):
 		return self.get_from_state(self.psi[L][pi],phi).a
+
+	def load(self,filename):
+		print "loading psi"
+		self.psi={}
+		f = open(filename,'r')
+		for line in f:
+			l = line.split(",")
+			if l[0]=="L":
+				L=int(l[1])
+				self.psi[L]={}
+			elif l[0]=="pi":
+				pi_i=int(l[1])
+				self.psi[L][pi_i]=[]
+				self.psi[L][pi_i].append(Cluster(pi_i,True))
+			elif l[0]=="k":
+				k=int(l[1])
+				if k!=pi_i:
+					self.psi[L][pi_i].append(Cluster(k,False))
+			elif l[0]=="action":
+
+				self.psi[L][pi_i][len(self.psi[L][pi_i])-1].r[int(l[1])]=float(l[2])
+				self.psi[L][pi_i][len(self.psi[L][pi_i])-1].n[int(l[1])]=float(l[3])
+			elif l[0]=="state":
+				self.psi[L][pi_i][len(self.psi[L][pi_i])-1].states.add(l[1])
+
+		self.write_psi("/home/aaron/catkin_ws/src/mines/mines/src/checkpsi.txt")
+
+
+	def write_psi(self, fn):
+
+		file = open(fn,'w') 
+
+
+		print "writing psi to" , fn
+		for l,v in self.psi.items():
+			file.write("L" + "," + str(l) + "," + "\n")
+			for pi,v2 in self.psi[l].items():
+				file.write("pi," + str(pi) + ","+ "\n")
+				for k in range(len(self.psi[l][pi])):
+					file.write("k," + str(self.psi[l][pi][k].a) + ","+ "\n")
+					for a in range(27):
+						file.write("action,"+str(a) + ", " +str(self.psi[l][pi][k].r[a]) + ", " + str(self.psi[l][pi][k].n[a]) + ","+ "\n")
+					for s in self.psi[l][pi][k].states:
+						file.write("state," + str(s) + "," + "\n")
+					file.write("\n")
 
 class Q:
 	def __init__(self):

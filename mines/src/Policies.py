@@ -16,6 +16,54 @@ action_list=[]
 for i in range(action_index_max):
 	action_list.append(i)
 
+def get_distance(x,y,x2,y2):
+	return max(math.fabs(x-x2),math.fabs(y-y2))
+
+def get_discrete_target(a,s,action):
+	if action==0:
+		return (s.middle[0],s.middle[1])
+	elif action <26:
+		m=1000
+		loc=(0,0)
+		l = Regions.region_list[action-1]
+		shuffle(l)
+		for i in l:
+			if s.seen[i[0]][i[1]]==s.NOT_SEEN:
+				if get_distance(a.x,a.y,i[0],i[1]) < m:
+					m=get_distance(a.x,a.y,i[0],i[1])
+					loc = i
+		if loc==(0,0):
+			print "none found"
+		return loc
+
+
+
+
+def get_discrete_action(a,s,action):
+	next_x=0
+	next_y=0
+
+	if action==26:
+		return (0,0)
+
+
+	target = get_discrete_target(a,s,action)
+
+	if a.x < target[0]:
+		next_x = 1
+	elif a.x > target[0]:
+		next_x = -1
+
+	if a.y <target[1]:
+		next_y= 1
+	elif a.y > target[1]:
+		next_y=-1
+
+	if a.x is target[0] and a.y is target[1]:
+		return (0,0)
+	else:	
+		return (next_x,next_y)
+
 class Policy:
 	def __init__(self,index):
 		self.index=index
@@ -49,6 +97,7 @@ class Policy:
 			if loc==(0,0):
 				print "none found"
 			return loc
+
 						
 	def get_next_action(self,a,s):
 		next_x=0

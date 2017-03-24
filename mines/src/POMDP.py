@@ -14,7 +14,8 @@ import Policies
 from random import shuffle
 import POMDP_Values as v
 
-H=100
+
+H=5
 Gamma=.95
 
 class Solver: 
@@ -33,10 +34,20 @@ class Solver:
 
 
 		self.H=heuristic()
-		Heuristics.load_file(self.H,'testfile_d.txt')
+		#Heuristics.load_file(self.H,'testfile_d.txt')
 		self.A=Abstractions()
 		self.environment_data=E(e_args)
+		#self.get_psi('/home/aaron/catkin_ws/src/mines/mines/src/psi_main.txt')
 
+	def reset(self):
+		self.N=v.N()
+		self.Na=v.Na()
+		self.Q=v.Q()
+		self.Phi=v.Phi()
+		self.Psi=v.Psi()
+		self.Pi=v.Pi()
+		self.H=heuristic()
+		self.A=Abstractions()
 
 
 	def OnlinePlanning(self,agent_,s,a_,time_to_work):
@@ -53,11 +64,14 @@ class Solver:
 			self.action_counter=0
 			#print "start"
 			self.A.update_all(self.environment_data,a_)
-			self.search(0,self.A,0,26)
+			#print self.A.get_explore_abf()
+			self.search(0,self.A,0,26,self.environment_data,a_)
 			end = time.time()
 
 
-	def search(self,L,A,depth,last_action):
+	def search(self,L,A,depth,last_action,s_,a_):
+
+		A.update_all(s_,a_)
 
 		if depth>H:
 			return 0.
@@ -82,9 +96,13 @@ class Solver:
 		#print pi_i,a,A.battery.num,A.location.loc
 
 		r = A.evolve_all(self.H,a)
+		
+		action_step=Policies.get_discrete_action(a_,s_,a)
+
+		a_.execute(action_step,s_)
 
 
-		r += math.pow(Gamma,depth)*self.search(L,A,depth+1,a)
+		r += math.pow(Gamma,depth)*self.search(L,A,depth+1,a,s_,a_)
 
 
 		self.Q.append_to(L,pi_i,phi_i,a,(r-self.Q.get_direct(L,pi_i,phi_i,a))/self.Na.get_direct(L,pi_i,phi_i,a))
@@ -98,13 +116,16 @@ class Solver:
 		#return self.Pi.get(L,A,self.Phi,self.Psi)
 
 		if self.Psi.check(L,self.Pi.get(L,A,self.Phi,self.Psi)) is False:
-			#print "Did not find cluster", L, self.Pi.get(L,A,self.Phi,self.Psi)
+			
+			print "Did not find cluster", L, self.Pi.get(L,A,self.Phi,self.Psi)
 			return self.Pi.get(L,A,self.Phi,self.Psi)
 
-		#if self.Q.check(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A)) is False:
-		#	return self.Pi.get(L,A,self.Phi,self.Psi)
+		if self.Q.check(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A)) is False:
+			print "Missing Q"	
+			return self.Pi.get(L,A,self.Phi,self.Psi)
 
 
+		
 		v = self.Q.vals(L,A,self.Pi,self.Phi,self.Psi)
 		k = self.Q.keys_(L,A,self.Pi,self.Phi,self.Psi)
 
@@ -159,19 +180,16 @@ class Solver:
 		shuffle(v)
 		return v[0]
 
+	def get_psi(self,filename):
+		self.Psi.load(filename)
+
 	def update_psi(self):
 		self.Psi.update(self.Q,self.Na)
 
-	def write_file(self,data,steps):
-		self.great.append(data)
-		self.steps.append(steps)
+	def write_file(self,data,steps,filename):
 
-		file = open('Q_d.txt','w') 
-
-		for i in range(len(self.great)):
-			file.write(str(self.great[i]) + ", " + str(self.steps[i])+ ", " + str(self.great[i]/self.steps[i]) +"\n")
-
-
+		self.write_performance(data,steps)
+		file = open(filename,'w') 
 		for k,v in self.Q.q.items():
 			file.write("\n")
 			for k2,v2 in self.Q.q[k].items():
@@ -179,23 +197,20 @@ class Solver:
 				for k3,v3 in self.Q.q[k][k2].items():
 					file.write("\n")
 					for k4,v4 in self.Q.q[k][k2][k3].items():
-						file.write("Q"+","+str(k) + "," +  str(k2) + "," + str(k3) + "," + str(k4) + "," + str(v4) + "," + str(self.Na.na[k][k2][k3][k4]) + "\n")
+						file.write("Q"+","+str(k) + "," +  str(k2) + "," + str(k3) + "," + str(k4) + "," + str(v4) + "," + str(self.Na.na[k][k2][k3][k4]) + "," +  "\n")
 
-	def write_psi(self):
+	def write_performance(self,data,steps):
+		self.great.append(data)
+		self.steps.append(steps)
 
-		file = open('psi.txt','w') 
+		file = open("/home/aaron/catkin_ws/src/mines/mines/src/performance.txt",'w') 
+
+		for i in range(len(self.great)):
+			file.write(str(self.great[i]) + ", " + str(self.steps[i])+ ", " + str(self.great[i]/self.steps[i]) +"\n")
 
 
-		for l,v in self.Psi.psi.items():
-			file.write("L = " + str(l) + " \n")
-			for pi,v2 in self.Psi.psi[l].items():
-				file.write("pi = " + str(pi) + " \n")
-				for k in range(len(self.Psi.psi[l][pi])):
-					file.write("k: " + str(self.Psi.psi[l][pi][k].a) + " \n")
-					for a in range(27):
-						file.write("action: " + str(a) + ", " + "reward: " + str(self.Psi.psi[l][pi][k].r[a]) + ", " + "visited: " + str(self.Psi.psi[l][pi][k].n[a]) + "\n")
-					for s in self.Psi.psi[l][pi][k].states:
-						file.write("state: " + str(s) + "\n")
+
+
 
 
 

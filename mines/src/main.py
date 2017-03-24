@@ -27,7 +27,7 @@ from mobile_buoy_classes import Agent_buoy
 from mobile_buoy_environment import Mobile_Buoy_Environment
 import Regions
 
-
+import POMDP_Values as v
 
 
 rospy.init_node('main', anonymous=True)
@@ -86,6 +86,46 @@ class Simulator:
 		self.s=Mine_Data(map_size)
 		self.s_old=Mine_Data(map_size)
 
+		self.Na=v.Na()
+		self.Q=v.Q()
+		self.Phi=v.Phi()
+		self.Psi=v.Psi()
+		self.Pi=v.Pi()
+
+	def load_files(self):
+		#self.Q=v.Q()
+		#self.Na=v.Na()
+		
+		for k,a in agent_dict.items():
+			self.load_file(k,a)
+
+	def load_file(self,k,a):
+		print "trying to load", "/home/aaron/catkin_ws/src/mines/mines/src"+k+".txt"
+
+		f = open("/home/aaron/catkin_ws/src/mines/mines/src"+k+".txt",'r')
+		for line in f:
+			l = line.split(",")
+			if l[0]=="Q":
+
+				L=l[1]
+				pi_i=l[2]
+				phi_i=l[3]
+				a_i=int(l[4])
+				r=float(l[5])
+				n=float(l[6])
+
+				print type(n),type(r)
+				self.Na.append_to(L,pi_i,phi_i,a_i,n)
+				self.Q.append_to(L,pi_i,phi_i,a_i,0.)
+				self.Q.append_to(L,pi_i,phi_i,a_i,(r-self.Q.get_direct(L,pi_i,phi_i,a_i))/self.Na.get_direct(L,pi_i,phi_i,a_i))
+
+		print "finished loading /home/aaron/catkin_ws/src/mines/mines/src"+k+".txt"
+
+	def calculate_policy(self):
+		self.Psi.update(self.Q,self.Na)
+		
+	def write_psi(self):
+		self.Psi.write_psi('/home/aaron/catkin_ws/src/mines/mines/src/psi_main.txt')
 
 	def pose_cb(self,data):
 		if data.header.frame_id not in agent_dict:
@@ -146,8 +186,9 @@ class Simulator:
 			o2.data[i]=0
 
 		for k,a in agent_dict.items():
-			if a.work >0 and a.work <26:
-				o2.data[a.work-1]+=1
+			#o2.data[Regions.get_region(a.x,a.y)]=o2.data[Regions.get_region(a.x,a.y)]+1
+			if  a.work <25:
+				o2.data[a.work]+=1
 
 	
 			
@@ -168,9 +209,11 @@ class Simulator:
 		reset_.data=self.s.get_reward()
 		print self.s.get_reward(), "H"
 		self.s.reset()
-
 		reset_publisher.publish(reset_)
-		agent_dict={}
+		time.sleep(1)
+		#self.load_files()
+		#self.calculate_policy()
+		#self.write_psi()
 
 	def pub_to_buoys(self):
 		sb.calculate_region_score(agent_dict)
@@ -193,18 +236,18 @@ class Simulator:
 		self.s.reset()
 		while not rospy.is_shutdown():
 		
-			draw.render_once(self.s,agent_dict,map_size,buoy_dict,gd,self.reset_pub)
+			draw.render_once(self.s,agent_dict,map_size,buoy_dict,gd,self.reset_pub,time.time()-start2)
 			#if time.time()-start > 100:
 				#s.reset()
 			#	start = time.time()
 
-			if time.time()-start > .1:
+			if time.time()-start > .025:
 				self.pub()
 				self.pub2()
 				self.pub_to_buoys()
 				start = time.time()
 
-			if time.time()-start2 > 500:
+			if time.time()-start2 > 200:
 				self.reset_pub()
 				start2=time.time()
 

@@ -65,8 +65,8 @@ class Psi:
 				self.check_and_append(l,pi)
 				for state, v3 in Q.q[l][pi].items():
 					
-					v = Q.q[l][pi][state].values()
-					key = Q.q[l][pi][state].keys()
+					v = list(Q.q[l][pi][state].values())
+					key = list(Q.q[l][pi][state].keys())
 					k = self.splitter(self.psi[l][pi],key[v.index(max(v))])
 					#print key[v.index(max(v))], v.index(max(v)),v
 					for action,v4 in Q.q[l][pi][state].items():
@@ -212,6 +212,18 @@ class Q:
 
 	def get_direct(self,L,pi,phi,a):
 		return self.q[L][pi][phi][a]
+
+	def write_q(self,filename,Na):
+
+		file = open(filename,'w') 
+		for k,v in self.q.items():
+			file.write("\n")
+			for k2,v2 in self.q[k].items():
+				file.write("\n")
+				for k3,v3 in self.q[k][k2].items():
+					file.write("\n")
+					for k4,v4 in self.q[k][k2][k3].items():
+						file.write("Q"+","+str(k) + "," +  str(k2) + "," + str(k3) + "," + str(k4) + "," + str(v4) + "," + str(Na.na[k][k2][k3][k4]) + "," +  "\n")
 
 
 

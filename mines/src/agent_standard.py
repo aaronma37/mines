@@ -34,13 +34,17 @@ si=Mine_Data(map_size)
 s_old=Mine_Data(map_size)
 
 pose= PoseStamped()
+task= PoseStamped()
 
 
 rospy.init_node('Agent', anonymous=True)
 pose.header.frame_id= rospy.get_name()
+task.header.frame_id= rospy.get_name()
 
 
 pose_pub = rospy.Publisher('/pose',PoseStamped,queue_size=1)
+task_pub = rospy.Publisher('/task',PoseStamped,queue_size=1)
+
 
 # need to modify to get sold and snew
 
@@ -75,11 +79,19 @@ class Simulator:
 		self.update_flag=True
 
 	def work_load_cb(self,grid):
-		for i in range(len(Regions.region)):
-			a.work_load[i]=grid.data[i]
-		#if a.current_action.index > 0 and a.current_action.index < 26:
-			#if a.work_load[a.current_action.index-1] == 0:
-				#a.work_load[a.current_action.index-1]=1
+		if grid.header.frame_id==rospy.get_name():
+			for i in range(len(Regions.region)):
+				a.work_load[i]=grid.data[i]
+
+			s.imprint(si)
+			a.calculate_A(si)
+			a.decide(si)
+
+			task.pose.position.x=a.current_action.index-1
+			task_pub.publish(task)
+			#if a.current_action.index > 0 and a.current_action.index < 26:
+				#if a.work_load[a.current_action.index-1] == 0:
+					#a.work_load[a.current_action.index-1]=1
 
 
 	def reset_cb(self,data):
@@ -93,7 +105,7 @@ class Simulator:
 
 		write_file(a.solver.H,pose.header.frame_id)
 		time.sleep(random.random()*5.)
-		#a.get_psi()
+		a.get_psi()
 
 
 	def run(self):
@@ -111,18 +123,7 @@ class Simulator:
 			start=time.time()
 			s.imprint(si)
 			a.calculate_A(si)
-
-			a.step(si,ai,.1)
-			#s.imprint(si)
-			to_wait = start-time.time() + 1.
-			
-
-			a.decide(si)
-
-
-
-			if to_wait >0:
-				time.sleep(to_wait)
+			a.move(s)
 
 			pose.pose.position.x=a.x
 			pose.pose.position.y=a.y
@@ -130,6 +131,20 @@ class Simulator:
 			pose.pose.orientation.x=a.current_action.index-1
 			pose.pose.orientation.y=a.time_away_from_network
 			pose_pub.publish(pose)
+
+			a.step(si,ai,.1)
+			#s.imprint(si)
+			to_wait = start-time.time() + 1.
+			
+
+
+
+
+
+			if to_wait >0:
+				time.sleep(to_wait)
+
+
 			#else:
 			#	a.predict_A()
 				#predict si

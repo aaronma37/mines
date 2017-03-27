@@ -407,7 +407,8 @@ class Abstractions():
 			if self.location.inside_region is True:
 				r=1.
 				r=r*self.regions[region_num-1].hash
-				#print self.work_load[region_num-1].hash, region_num-1
+
+
 				if self.work_load[region_num-1].hash > 0:
 					r=r/100.#(self.work_load[region_num-1].hash*self.work_load[region_num-1].hash*self.work_load[region_num-1].hash)
 					#print r, region_num-1, "HERE"
@@ -424,9 +425,9 @@ class Abstractions():
 		for j in range(5):
 
 				
-			for i in range(25):
-				self.work_load[i].evolve(heuristics,self.regions[i])
-				self.regions[i].evolve(heuristics,self.work_load[i])
+			#for i in range(25):
+			#	self.work_load[i].evolve(heuristics,self.regions[i])
+			#	self.regions[i].evolve(heuristics,self.work_load[i])
 
 			if action==0 and self.location.inside_region is True:
 				self.battery.evolve(True)

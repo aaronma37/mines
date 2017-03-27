@@ -19,7 +19,7 @@ H=5
 Gamma=.95
 
 class Solver: 
-
+	LOADING PROBLEM WITH Q (MISSING Q) FIGURE OUT
 
 	def __init__(self,E,e_args):
 		self.N=v.N()
@@ -121,7 +121,7 @@ class Solver:
 			return self.Pi.get(L,A,self.Phi,self.Psi)
 
 		if self.Q.check(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A)) is False:
-			print "Missing Q"	
+			print "Missing Q", L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A)
 			return self.Pi.get(L,A,self.Phi,self.Psi)
 
 

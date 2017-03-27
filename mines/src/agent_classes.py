@@ -111,11 +111,23 @@ class Agent:
 			self.work=self.current_action.index-1
 
 	def decide(self,s):	
-		self.steps+=1.
-		self.check_action(s)
+		#self.steps+=1.
+		#self.check_action(s)
 			
+
+		self.battery=100
+		self.current_action=Policies.Policy(self.solver.get_action(0,self.new_A))
+		#self.battery=100
+		#self.current_action=Policies.Policy(self.solver.explore_ucb(0,self.new_A))
+		self.work=self.current_action.index-1
+		#action = self.current_action.get_next_action(self,s)
+		#self.execute(action,s)#NEED TO RESOLVE s
+
+	def move(self,s):
+		self.steps+=1.
 		action = self.current_action.get_next_action(self,s)
 		self.execute(action,s)#NEED TO RESOLVE s
+
 
 
 	def execute(self,action_,environment_data_):

@@ -91,11 +91,11 @@ class Simulator:
 		self.Phi=v.Phi()
 		self.Psi=v.Psi()
 		self.Pi=v.Pi()
+		self.send_to=0
+		self.agent_num=0
+
 
 	def load_files(self):
-		#self.Q=v.Q()
-		#self.Na=v.Na()
-		
 		for k,a in agent_dict.items():
 			self.load_file(k,a)
 
@@ -105,7 +105,7 @@ class Simulator:
 		f = open("/home/aaron/catkin_ws/src/mines/mines/src"+k+".txt",'r')
 		for line in f:
 			l = line.split(",")
-			if l[0]=="Q":
+			if l[0]=="Q" and len(l)>6:
 
 				L=l[1]
 				pi_i=l[2]
@@ -114,7 +114,6 @@ class Simulator:
 				r=float(l[5])
 				n=float(l[6])
 
-				print type(n),type(r)
 				self.Na.append_to(L,pi_i,phi_i,a_i,n)
 				self.Q.append_to(L,pi_i,phi_i,a_i,0.)
 				self.Q.append_to(L,pi_i,phi_i,a_i,(r-self.Q.get_direct(L,pi_i,phi_i,a_i))/self.Na.get_direct(L,pi_i,phi_i,a_i))
@@ -125,6 +124,7 @@ class Simulator:
 		self.Psi.update(self.Q,self.Na)
 		
 	def write_psi(self):
+		self.Q.write_q('/home/aaron/catkin_ws/src/mines/mines/src/q_main.txt',self.Na)
 		self.Psi.write_psi('/home/aaron/catkin_ws/src/mines/mines/src/psi_main.txt')
 
 	def pose_cb(self,data):
@@ -139,6 +139,18 @@ class Simulator:
 		agent_dict[data.header.frame_id].time_away_from_network=int(data.pose.orientation.y)
 
 		agent_dict[data.header.frame_id].measure(self.s,False)
+
+	def task_cb(self,data):
+		if data.header.frame_id not in agent_dict:
+			agent_dict[data.header.frame_id]=Agent(Mine_Data,map_size)
+
+		agent_dict[data.header.frame_id].work=int(data.pose.position.x)
+
+		self.send_to+=1
+
+		if self.send_to + 1 > len(list(agent_dict.values())):
+			self.send_to=0
+	
 
 	def buoy_cb(self,data):
 		if data.header.frame_id not in buoy_dict:
@@ -159,7 +171,7 @@ class Simulator:
 			for j in range(map_size):
 				o.data[i*map_size+j+map_size*map_size]=self.s_old.seen[i][j]
 
-		print self.s.get_reward()-self.s_old.get_reward()
+		#print self.s.get_reward()-self.s_old.get_reward()
 
 		self.s.imprint(self.s_old)
 
@@ -196,14 +208,15 @@ class Simulator:
 	def pub2(self):
 
 
+		if self.agent_num > 0:
 	
-		#s.calculate_occupied(agent_dict,region,region_size)
+			#s.calculate_occupied(agent_dict,region,region_size)
 
-
-		self.calculate_work_load()
-		#for i in range(len(region)):
-		#		o2.data[i]=s.occupied[i]
-		agent_occ.publish(o2)
+			o2.header.frame_id=list(agent_dict.keys())[self.send_to]
+			agent_dict[o2.header.frame_id].work=26
+			self.calculate_work_load()
+			o2.header.frame_id=list(agent_dict.keys())[self.send_to]
+			agent_occ.publish(o2)
 
 	def reset_pub(self):
 		reset_.data=self.s.get_reward()
@@ -211,9 +224,9 @@ class Simulator:
 		self.s.reset()
 		reset_publisher.publish(reset_)
 		time.sleep(1)
-		#self.load_files()
-		#self.calculate_policy()
-		#self.write_psi()
+		self.load_files()
+		self.calculate_policy()
+		self.write_psi()
 
 	def pub_to_buoys(self):
 		sb.calculate_region_score(agent_dict)
@@ -233,6 +246,7 @@ class Simulator:
 	def run(self):
 		start = time.time()
 		start2= time.time()
+		asynch_timer=time.time()
 		self.s.reset()
 		while not rospy.is_shutdown():
 		
@@ -240,11 +254,17 @@ class Simulator:
 			#if time.time()-start > 100:
 				#s.reset()
 			#	start = time.time()
+			agents=list(agent_dict.keys())
+			self.agent_num = len(agents)
+			if self.agent_num > 0:
+				if (time.time() - asynch_timer) > (5./self.agent_num):
+					asynch_timer=time.time()
+					self.pub2()
 
 			if time.time()-start > .025:
 				self.pub()
-				self.pub2()
-				self.pub_to_buoys()
+				#self.pub2()
+				#self.pub_to_buoys()
 				start = time.time()
 
 			if time.time()-start2 > 200:
@@ -257,6 +277,7 @@ def main(args):
 	sim=Simulator()
 	posesub =rospy.Subscriber('/pose', PoseStamped, sim.pose_cb)#CHANGE TO MATRIX
 	mb_sub =rospy.Subscriber('/mobile_buoy', PoseStamped, sim.buoy_cb)#CHANGE TO MATRIX
+	task_sub =rospy.Subscriber('/task', PoseStamped, sim.task_cb)#CHANGE TO MATRIX
 #	draw.init(s,agent_dict,map_size)
 #	draw.start()
 

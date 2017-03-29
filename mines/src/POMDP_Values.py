@@ -4,7 +4,8 @@ from sets import Set
 
 class Pi:
 	def __init__(self):
-		print "initializing Pi"
+		'''init'''		
+		#print "initializing Pi"
 
 	def seed_algorithm(self,A):
 		rewards=[]
@@ -24,7 +25,8 @@ class Pi:
 
 class Phi:
 	def __init__(self):
-		print "initializing Phi"
+		'''init'''
+		#print "initializing Phi"
 		#Phi maps A->A*
 
 	def get(self,L,A):
@@ -49,12 +51,12 @@ class Cluster:
 		self.states.add(state)
 		self.n[action]+=n
 		self.r[action]+=(r-self.r[action])/self.n[action]
-		if action==0:
-			print self.n[0],self.r[0]
+		#if action==0:
+			#print self.n[0],self.r[0]
 
 class Psi:
 	def __init__(self):
-		print "initializing Psi"
+		#print "initializing Psi"
 		self.psi={}#[L][pi(L-1,A,Phi,Psi)]-> cluster
 
 	def update(self,Q,Na):
@@ -67,21 +69,21 @@ class Psi:
 					
 					v = list(Q.q[l][pi][state].values())
 					key = list(Q.q[l][pi][state].keys())
-					k = self.splitter(self.psi[l][pi],key[v.index(max(v))])
-					#print key[v.index(max(v))], v.index(max(v)),v
+					k = self.splitter(self.psi[l][pi],key[v.index(max(v))],pi)
+					#if len(v) == 25:
+						#print key[v.index(max(v))], v.index(max(v)),v
+						#if self.psi[l][pi][k].a != key[v.index(max(v))]:
+						#	print "broken match",self.psi[l][pi][k].a,key[v.index(max(v))]
 					for action,v4 in Q.q[l][pi][state].items():
-						if l==0 and pi ==0 and action ==0:
-							print v4, Na.na[l][pi][state][action], k
 						self.psi[l][pi][k].update(action,v4,Na.na[l][pi][state][action],state)
 
-	def splitter(self, cluster_list, m):
-		if cluster_list[0].a==m:
+	def splitter(self, cluster_list, m, pi):
+		if pi==m:
 			return 0
 
 		for i in cluster_list:
-			if i.default is False:
-				if i.a == m:
-					return cluster_list.index(i)
+			if i.a == m:
+				return cluster_list.index(i)
 
 
 		cluster_list.append(Cluster(m,False))
@@ -90,10 +92,10 @@ class Psi:
 
 	def check(self,L,pi):
 		if self.psi.get(L) is None:
-			print "L NOT FOUND", L
+			#print "L NOT FOUND", L
 			return False
 		if self.psi[L].get(pi) is None:
-			print "PI NOT FOUND", pi			
+			#print "PI NOT FOUND", pi			
 			return False
 		return True
 
@@ -107,26 +109,27 @@ class Psi:
 
 
 	def get(self,L,A,pi,phi):
+		print "finding"
 		PSI = self.psi[L][pi.get(L,A,phi,psi)]
+		if len(PSI) < 1:
+			print "missing psi?"
 		for p in PSI:
-			if p.default is False:
-				if phi(L,A) in p.states:
-					return p
-			else:
-				i=p
-
-		return i
+			if phi(L,A) in p.states:
+				return p
 	
-	def get_from_state(self,cluster_list,phi):
+		print "New state in psi", 
+		return pi.get(L,A,phi,psi), phi(L,A)
+	
+	def get_from_state(self,cluster_list,phi,pi):
 		for i in cluster_list:
 			if phi in i.states:
-				return i
-		#state not found yet
-		return cluster_list[0]
+				return i.a
+		#print "state not found yet", phi
+		return pi
 
 	
 	def get_max(self,L,pi,phi):
-		return self.get_from_state(self.psi[L][pi],phi).a
+		return self.get_from_state(self.psi[L][pi],phi,pi)
 
 	def load(self,filename):
 		print "loading psi"
@@ -135,20 +138,48 @@ class Psi:
 		for line in f:
 			l = line.split(",")
 			if l[0]=="L":
-				L=int(l[1])
+				try:
+					L=int(l[1])
+				except ValueError:
+					print "Value error trying to convert", l[1]					
+					continue
+
 				self.psi[L]={}
 			elif l[0]=="pi":
-				pi_i=int(l[1])
+				try:
+					pi_i=int(l[1])
+				except ValueError:
+					print "Value error trying to convert", l[1]					
+					continue
+
 				self.psi[L][pi_i]=[]
 				self.psi[L][pi_i].append(Cluster(pi_i,True))
 			elif l[0]=="k":
-				k=int(l[1])
-				if k!=pi_i:
+				try:
+					k=int(l[1])
+				except ValueError:
+					print "Value error trying to convert", l[1]					
+					continue
+
+				if len(self.psi[L][pi_i]):
 					self.psi[L][pi_i].append(Cluster(k,False))
 			elif l[0]=="action":
 
-				self.psi[L][pi_i][len(self.psi[L][pi_i])-1].r[int(l[1])]=float(l[2])
-				self.psi[L][pi_i][len(self.psi[L][pi_i])-1].n[int(l[1])]=float(l[3])
+				try:
+					self.psi[L][pi_i][len(self.psi[L][pi_i])-1].r[int(l[1])]=float(l[2])
+				except ValueError:
+					print "Value error trying to convert", l[2]					
+					continue
+
+				try:
+					self.psi[L][pi_i][len(self.psi[L][pi_i])-1].n[int(l[1])]=float(l[3])
+				except ValueError:
+					print "Value error trying to convert", l[2]					
+					continue
+
+
+
+
 			elif l[0]=="state":
 				self.psi[L][pi_i][len(self.psi[L][pi_i])-1].states.add(l[1])
 
@@ -172,10 +203,11 @@ class Psi:
 					for s in self.psi[l][pi][k].states:
 						file.write("state," + str(s) + "," + "\n")
 					file.write("\n")
+		print "finished writing psi to" ,fn
 
 class Q:
 	def __init__(self):
-		print "initializing Q"
+		#print "initializing Q"
 		self.q={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)][a]->r
 
 	def get(self,L,A,pi,phi,psi,a):
@@ -229,7 +261,7 @@ class Q:
 
 class N:
 	def __init__(self):
-		print "initializing N"
+		#print "initializing N"
 		self.n={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)]->n
 
 	def get(self,L,A,pi,phi,psi):
@@ -247,7 +279,7 @@ class N:
 
 class Na:
 	def __init__(self):
-		print "initializing Na"
+		#print "initializing Na"
 		self.na={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)][a]->n
 
 	def get(self,L,A,pi,phi,psi,a):

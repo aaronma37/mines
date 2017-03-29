@@ -102,40 +102,50 @@ class Simulator:
 		s.reset()
 		a.reset(s,data.data,pose.header.frame_id)
 
+	def restart_cb(self,data):
+		a.restart()
 
-		write_file(a.solver.H,pose.header.frame_id)
-		time.sleep(random.random()*5.)
-		a.get_psi()
+
+		#write_file(a.solver.H,pose.header.frame_id)
+		#time.sleep(random.random()*5.)
+		#a.get_psi()
 
 
 	def run(self):
 		a.new_A.update_all(s,a)
 		while not rospy.is_shutdown():
-
-
-			if self.update_flag is True:
-				a.update_heuristics(s_old,s)
-				self.update_flag=False
-			if self.reset_flag is True:
-				self.reset_fun(self.reset_data)
-				self.reset_flag=False
-
 			start=time.time()
-			s.imprint(si)
-			a.calculate_A(si)
-			a.move(s)
+			if a.available_flag is True:
+				if self.update_flag is True:
+					a.update_heuristics(s_old,s)
+					self.update_flag=False
+				if self.reset_flag is True:
+					self.reset_fun(self.reset_data)
+					self.reset_flag=False
 
-			pose.pose.position.x=a.x
-			pose.pose.position.y=a.y
-			pose.pose.position.z=a.battery
-			pose.pose.orientation.x=a.current_action.index-1
-			pose.pose.orientation.y=a.time_away_from_network
-			pose_pub.publish(pose)
 
-			a.step(si,ai,.1)
-			#s.imprint(si)
+				s.imprint(si)
+				a.calculate_A(si)
+				a.move(s)
+
+				pose.pose.position.x=a.x
+				pose.pose.position.y=a.y
+				pose.pose.position.z=a.battery
+				pose.pose.orientation.x=a.current_action.index-1
+				pose.pose.orientation.y=a.time_away_from_network
+				pose_pub.publish(pose)
+
+				a.step(si,ai,.5)
+				#s.imprint(si)
+
+
+
+				#else:
+				#	a.predict_A()
+					#predict si
+
 			to_wait = start-time.time() + 1.
-			
+		
 
 
 
@@ -143,11 +153,6 @@ class Simulator:
 
 			if to_wait >0:
 				time.sleep(to_wait)
-
-
-			#else:
-			#	a.predict_A()
-				#predict si
 
 
 
@@ -165,7 +170,8 @@ def main(args):
 
 	occ_sub =rospy.Subscriber('/work_load', OccupancyGrid , sim.work_load_cb)#CHANGE TO MATRIX
 	reset_sub =rospy.Subscriber('/reset', Int32 , sim.reset_cb)#CHANGE TO MATRIX
-	time.sleep(random.random()*5.)
+	restart_sub =rospy.Subscriber('/restart', Int32 , sim.restart_cb)#CHANGE TO MATRIX
+	#time.sleep(random.random()*5.)
 
 	try:
 		sim.run()

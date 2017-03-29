@@ -29,7 +29,9 @@ import Regions
 
 import POMDP_Values as v
 
-
+load_q_flag = rospy.get_param("/load_q")
+write_q_flag = rospy.get_param("/write_q")
+write_psi_flag = rospy.get_param("/write_psi")
 rospy.init_node('main', anonymous=True)
 env_pub =rospy.Publisher('/environment_matrix', OccupancyGrid, queue_size=100)#CHANGE TO MATRIX
 
@@ -37,6 +39,7 @@ agent_occ =rospy.Publisher('/work_load', OccupancyGrid, queue_size=100)#CHANGE T
 score_pub =rospy.Publisher('/buoy_scores', Int32MultiArray, queue_size=100)#CHANGE TO MATRIX
 worker_pub =rospy.Publisher('/buoy_targets', Int32MultiArray, queue_size=100)#CHANGE TO MATRIX
 reset_publisher = rospy.Publisher('/reset', Int32, queue_size=100)#CHANGE TO MATRIX
+restart_publisher = rospy.Publisher('/restart', Int32, queue_size=100)#CHANGE TO MATRIX
 
 
 region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
@@ -58,6 +61,9 @@ o3= Int32MultiArray()
 o4= Int32MultiArray()
 reset_ = Int32()
 reset_.data = 0
+
+restart_=Int32()
+restart_.data=0
 
 networks = OccupancyGrid()
 
@@ -94,38 +100,63 @@ class Simulator:
 		self.send_to=0
 		self.agent_num=0
 
+		if load_q_flag is True:
+			self.load_q()
+
+	def load_q(self):
+		self.load_file("/home/aaron/catkin_ws/src/mines/mines/src/q_main.txt")
+
 
 	def load_files(self):
 		for k,a in agent_dict.items():
-			self.load_file(k,a)
+			self.load_file("/home/aaron/catkin_ws/src/mines/mines/src"+k+".txt")
 
-	def load_file(self,k,a):
-		print "trying to load", "/home/aaron/catkin_ws/src/mines/mines/src"+k+".txt"
+	def load_file(self,fn):
+		print "trying to load", fn
 
-		f = open("/home/aaron/catkin_ws/src/mines/mines/src"+k+".txt",'r')
+		f = open(fn,'r')
+		size=0
 		for line in f:
+
 			l = line.split(",")
 			if l[0]=="Q" and len(l)>6:
-
+				size+=1
 				L=l[1]
 				pi_i=l[2]
 				phi_i=l[3]
-				a_i=int(l[4])
-				r=float(l[5])
-				n=float(l[6])
+				try:
+					a_i=int(l[4])
+				except ValueError:
+					print "Value error trying to convert", l[4]					
+					return
+
+				try:
+					r=float(l[5])
+				except ValueError:
+					print "Value error trying to convert", l[5]					
+					return
+
+				try:
+					n=float(l[6])
+				except ValueError:
+					print "Value error trying to convert", l[6]					
+					return
+
 
 				self.Na.append_to(L,pi_i,phi_i,a_i,n)
 				self.Q.append_to(L,pi_i,phi_i,a_i,0.)
 				self.Q.append_to(L,pi_i,phi_i,a_i,(r-self.Q.get_direct(L,pi_i,phi_i,a_i))/self.Na.get_direct(L,pi_i,phi_i,a_i))
 
-		print "finished loading /home/aaron/catkin_ws/src/mines/mines/src"+k+".txt"
+		print "Successfully appended",fn, "with", size, "lines"
 
 	def calculate_policy(self):
 		self.Psi.update(self.Q,self.Na)
 		
 	def write_psi(self):
-		self.Q.write_q('/home/aaron/catkin_ws/src/mines/mines/src/q_main.txt',self.Na)
-		self.Psi.write_psi('/home/aaron/catkin_ws/src/mines/mines/src/psi_main.txt')
+		if write_q_flag is True:
+			self.Q.write_q('/home/aaron/catkin_ws/src/mines/mines/src/q_main.txt',self.Na)
+		if write_psi_flag is True:
+			self.Psi.write_psi('/home/aaron/catkin_ws/src/mines/mines/src/psi_main.txt')
 
 	def pose_cb(self,data):
 		if data.header.frame_id not in agent_dict:
@@ -199,7 +230,7 @@ class Simulator:
 
 		for k,a in agent_dict.items():
 			#o2.data[Regions.get_region(a.x,a.y)]=o2.data[Regions.get_region(a.x,a.y)]+1
-			if  a.work <25:
+			if  a.work >-1 and a.work <25:
 				o2.data[a.work]+=1
 
 	
@@ -219,14 +250,20 @@ class Simulator:
 			agent_occ.publish(o2)
 
 	def reset_pub(self):
+		for i in range(25):
+			o2.data[i]=0
 		reset_.data=self.s.get_reward()
 		print self.s.get_reward(), "H"
 		self.s.reset()
 		reset_publisher.publish(reset_)
-		time.sleep(1)
+		time.sleep(2)
+
 		self.load_files()
 		self.calculate_policy()
 		self.write_psi()
+		self.s.reset()	
+
+		restart_publisher.publish(restart_)
 
 	def pub_to_buoys(self):
 		sb.calculate_region_score(agent_dict)
@@ -257,7 +294,7 @@ class Simulator:
 			agents=list(agent_dict.keys())
 			self.agent_num = len(agents)
 			if self.agent_num > 0:
-				if (time.time() - asynch_timer) > (5./self.agent_num):
+				if (time.time() - asynch_timer) > (20./self.agent_num):
 					asynch_timer=time.time()
 					self.pub2()
 
@@ -267,7 +304,7 @@ class Simulator:
 				#self.pub_to_buoys()
 				start = time.time()
 
-			if time.time()-start2 > 200:
+			if time.time()-start2 > 50:
 				self.reset_pub()
 				start2=time.time()
 

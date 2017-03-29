@@ -16,10 +16,9 @@ import POMDP_Values as v
 
 
 H=5
-Gamma=.95
+Gamma=.5
 
 class Solver: 
-	LOADING PROBLEM WITH Q (MISSING Q) FIGURE OUT
 
 	def __init__(self,E,e_args):
 		self.N=v.N()
@@ -96,10 +95,12 @@ class Solver:
 		#print pi_i,a,A.battery.num,A.location.loc
 
 		r = A.evolve_all(self.H,a)
-		
-		action_step=Policies.get_discrete_action(a_,s_,a)
-
-		a_.execute(action_step,s_)
+		#if a_.work_load[14]>1 and a == 15:
+		#	print r, "ere", A.work_load[14].hash
+			#r=.01
+		for j in range(20):
+			action_step=Policies.get_discrete_action(a_,s_,a)
+			a_.execute(action_step,s_)
 
 
 		r += math.pow(Gamma,depth)*self.search(L,A,depth+1,a,s_,a_)
@@ -117,17 +118,17 @@ class Solver:
 
 		if self.Psi.check(L,self.Pi.get(L,A,self.Phi,self.Psi)) is False:
 			
-			print "Did not find cluster", L, self.Pi.get(L,A,self.Phi,self.Psi)
+			#print "Did not find cluster", L, self.Pi.get(L,A,self.Phi,self.Psi)
 			return self.Pi.get(L,A,self.Phi,self.Psi)
 
-		if self.Q.check(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A)) is False:
-			print "Missing Q", L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A)
-			return self.Pi.get(L,A,self.Phi,self.Psi)
+		#if self.Q.check(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A)) is False:
+		#	print "Missing Q", L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A)
+		#	return self.Pi.get(L,A,self.Phi,self.Psi)
 
 
 		
-		v = self.Q.vals(L,A,self.Pi,self.Phi,self.Psi)
-		k = self.Q.keys_(L,A,self.Pi,self.Phi,self.Psi)
+		#v = self.Q.vals(L,A,self.Pi,self.Phi,self.Psi)
+		#k = self.Q.keys_(L,A,self.Pi,self.Phi,self.Psi)
 
 		return self.Psi.get_max(L,self.Pi.get(L,A,self.Phi,self.Psi),self.Phi.get(L,A))
 

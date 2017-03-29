@@ -218,9 +218,9 @@ def write_file(H,filename):
 	 
 
 	for k,v in H.R.items():
-		print H.R[k]
-		print k
-		print H.N[k],"g"
+		#print H.R[k]
+		#print k
+		#print H.N[k],"g"
 		file.write("R"+","+str(k) + "," + str(v) + "," +  str(H.N[k]) + "\n")
 
 	#for i in range(1,6):

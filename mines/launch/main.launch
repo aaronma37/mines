@@ -1,4 +1,11 @@
 <launch>
+<param name="load_q" type="bool" value="False"/>
+<param name="write_q" type="bool" value="True"/>
+<param name="write_psi" type="bool" value="True"/>
+
+
+<node pkg="mines" type="main.py" name="main" output="screen">
+</node>
 
 <node pkg="mines" type="agent_standard.py" name="1" output="screen">
 </node>

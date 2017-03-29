@@ -27,12 +27,13 @@ class Agent:
 		self.measurement_space=[]
 		self.alpha=[.9,.1,0]
 		#self.reset()
-		self.battery=10
+		self.battery=100
 		self.work_load=[]
 		self.work=0
 		self.last_reward=0.
 		self.current_action=Policies.Policy(0)
 		self.steps=0.
+		self.available_flag=True
 		for i in range(len(Regions.region)):
 			self.work_load.append(0)
 
@@ -66,10 +67,13 @@ class Agent:
 		self.old_A.update_all(s,self)
 		self.new_A.update_all(s,self)
 		self.solver.write_file(data,self.steps,"/home/aaron/catkin_ws/src/mines/mines/src"+fn+".txt")
-		#self.solver.update_psi()
-		#self.solver.write_psi()
+		self.available_flag=False
+
+	def restart(self):
 		self.steps=0.
 		self.solver.reset()
+		self.get_psi()
+		self.available_flag=True
 		
 
 	def get_psi(self):
@@ -119,7 +123,10 @@ class Agent:
 		self.current_action=Policies.Policy(self.solver.get_action(0,self.new_A))
 		#self.battery=100
 		#self.current_action=Policies.Policy(self.solver.explore_ucb(0,self.new_A))
-		self.work=self.current_action.index-1
+		if self.current_action.index < 26 and self.current_action.index > 0:
+			self.work=self.current_action.index-1
+		else:
+			self.work=-1
 		#action = self.current_action.get_next_action(self,s)
 		#self.execute(action,s)#NEED TO RESOLVE s
 
@@ -188,13 +195,13 @@ class Agent:
 		
 
 
-		if action != (0,0):
-			self.add_battery(-.25)
-			if self.battery <1:
-				return (x,y)
-		else:
-			if (x,y)==middle:
-				self.add_battery(5)
+		#if action != (0,0):
+		#	self.add_battery(-.25)
+		#	if self.battery <1:
+		#		return (x,y)
+		#else:
+		#	if (x,y)==middle:
+		#		self.add_battery(5)
 			#else:
 				#self.add_battery(1)	
 

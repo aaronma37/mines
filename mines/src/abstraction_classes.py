@@ -410,7 +410,7 @@ class Abstractions():
 
 
 				if self.work_load[region_num-1].hash > 0:
-					r=r/100.#(self.work_load[region_num-1].hash*self.work_load[region_num-1].hash*self.work_load[region_num-1].hash)
+					r=r/300.#(self.work_load[region_num-1].hash*self.work_load[region_num-1].hash*self.work_load[region_num-1].hash)
 					#print r, region_num-1, "HERE"
 			else:
 				r=0.
@@ -422,11 +422,11 @@ class Abstractions():
 	def evolve_all(self,heuristics,action):
 		r=0
 
-		for j in range(5):
+		for j in range(20):
 
 				
-			#for i in range(25):
-			#	self.work_load[i].evolve(heuristics,self.regions[i])
+			for i in range(25):
+				self.work_load[i].evolve(heuristics,self.regions[i])
 			#	self.regions[i].evolve(heuristics,self.work_load[i])
 
 			if action==0 and self.location.inside_region is True:
@@ -446,6 +446,8 @@ class Abstractions():
 				r+=0.
 			else:
 				#r += heuristics.pull_from_rewards(self.get_reward_abf(action))
+				#if action==15 and self.work_load[action-1].hash > 0:
+				#	print self.work_load[action-1].hash, self.reward_func(action)
 				r += self.reward_func(action)
 
 			self.all_regions.update(self.regions)

@@ -119,38 +119,36 @@ class Simulator:
 		for line in f:
 
 			l = line.split(",")
-			if l[0]=="Q" and len(l)>6:
+			if l[0]=="Q" and len(l)>4:
 				size+=1
-				L=l[1]
-				pi_i=l[2]
-				phi_i=l[3]
+				phi_i=l[1]
 				try:
-					a_i=int(l[4])
+					a_i=int(l[2])
+				except ValueError:
+					print "Value error trying to convert", l[2]					
+					return
+
+				try:
+					r=float(l[3])
+				except ValueError:
+					print "Value error trying to convert", l[3]					
+					return
+
+				try:
+					n=float(l[4])
 				except ValueError:
 					print "Value error trying to convert", l[4]					
 					return
 
-				try:
-					r=float(l[5])
-				except ValueError:
-					print "Value error trying to convert", l[5]					
-					return
 
-				try:
-					n=float(l[6])
-				except ValueError:
-					print "Value error trying to convert", l[6]					
-					return
-
-
-				self.Na.append_to(L,pi_i,phi_i,a_i,n)
-				self.Q.append_to(L,pi_i,phi_i,a_i,0.)
-				self.Q.append_to(L,pi_i,phi_i,a_i,(r-self.Q.get_direct(L,pi_i,phi_i,a_i))/self.Na.get_direct(L,pi_i,phi_i,a_i))
+				self.Na.append_to(phi_i,a_i,n)
+				self.Q.append_to(phi_i,a_i,0.)
+				self.Q.append_to(phi_i,a_i,(r-self.Q.get_direct(phi_i,a_i))/self.Na.get_direct(phi_i,a_i))
 
 		print "Successfully appended",fn, "with", size, "lines"
 
 	def calculate_policy(self):
-		self.Psi.update(self.Q,self.Na)
+		self.Psi.update(self.Pi,self.Phi,self.Q,self.Na)
 		
 	def write_psi(self):
 		if write_q_flag is True:

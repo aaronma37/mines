@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 from random import shuffle
 from sets import Set
+from abstraction_classes import Abstractions
+
+As=Abstractions()
+
+L_MAX=2
+
 
 class Pi:
 	def __init__(self):
@@ -8,6 +14,7 @@ class Pi:
 		#print "initializing Pi"
 
 	def seed_algorithm(self,A):
+		return 26
 		rewards=[]
 		for i in range(27):
 			rewards.append(A.get_inherent_reward_func2(i))
@@ -15,22 +22,53 @@ class Pi:
 		#print  rewards.index(max(rewards)), max(rewards)
 		return rewards.index(max(rewards))
 
+	def seed_algorithm_from_state(self,state):
+		return 26
+
 	def get(self,L,A,Phi,Psi):
-		if L == 0:
-			#print self.seed_algorithm(A), A.get_explore_abf(), A.battery.val
-			#return 26
+		if L == -1:
 			return self.seed_algorithm(A)
 		else:
-			return Psi.get(L-1,A,self,Phi.get(L,A))
+			return Psi.get(L,A,self,Phi)
+
+	def get_from_state(self,L,state,Phi,Psi):
+		if L==-1:
+			return self.seed_algorithm_from_state(state)
+		else:
+			return Psi.get_from_state(Psi.psi[L][self.get_from_state(L-1,Phi.get_from_state(L-1,state),Phi,Psi)],state,self.get_from_state(L-1,Phi.get_from_state(L-1,state),Phi,Psi))
 
 class Phi:
 	def __init__(self):
 		'''init'''
 		#print "initializing Phi"
 		#Phi maps A->A*
+	
+	def length_of_abstraction(self,L):
+		if L==0:
+			return As.location_abf_length()+As.battery_abf_length()
+		elif L==1:
+			return As.location_abf_length()+As.battery_abf_length()+As.region_score_abf_length()
+		elif L==2:
+			return As.complete_abf_length()
+
+	def get_max_level(self,A):
+		return A.get_complete_abf()
 
 	def get(self,L,A):
-		return A.get_explore_abf()
+		if L==0:
+			return A.get_location_abf()+A.get_battery_abf()
+		elif L==1:
+			return A.get_location_abf()+A.get_battery_abf()+A.get_region_score_abf()
+		elif L==2:
+			return A.get_location_abf()+A.get_battery_abf()+A.get_region_score_abf()+A.get_work_load_abf()
+
+		return A.get_complete_abf()
+	
+	def get_from_state(self,L,state):
+		if L==0:
+			#stop state when it is beginning of L1
+		return state[:self.length_of_abstraction(L)]
+		
 
 class Cluster:
 	def __init__(self,a,default):
@@ -59,23 +97,18 @@ class Psi:
 		#print "initializing Psi"
 		self.psi={}#[L][pi(L-1,A,Phi,Psi)]-> cluster
 
-	def update(self,Q,Na):
+	def update(self,Pi,Phi,Q,Na):
 		self.psi={}
 
-		for l,v in Q.q.items():
-			for pi,v2 in Q.q[l].items():
+		for l in range(L_MAX):
+			for state,v in Q.q.items():
+				pi=Pi.get_from_state(l-1,state,Phi,self)
 				self.check_and_append(l,pi)
-				for state, v3 in Q.q[l][pi].items():
-					
-					v = list(Q.q[l][pi][state].values())
-					key = list(Q.q[l][pi][state].keys())
-					k = self.splitter(self.psi[l][pi],key[v.index(max(v))],pi)
-					#if len(v) == 25:
-						#print key[v.index(max(v))], v.index(max(v)),v
-						#if self.psi[l][pi][k].a != key[v.index(max(v))]:
-						#	print "broken match",self.psi[l][pi][k].a,key[v.index(max(v))]
-					for action,v4 in Q.q[l][pi][state].items():
-						self.psi[l][pi][k].update(action,v4,Na.na[l][pi][state][action],state)
+				v=list(Q.q[state].values())
+				key=list(Q.q[state].keys())
+				k = self.splitter(self.psi[l][pi],key[v.index(max(v))],pi)
+				for action,v2 in Q.q[state].items():
+					self.psi[l][pi][k].update(action,v2,Na.na[state][action],Phi.get_from_state(l,state))
 
 	def splitter(self, cluster_list, m, pi):
 		if pi==m:
@@ -108,17 +141,23 @@ class Psi:
 			self.psi[l][pi].append(Cluster(pi,True))
 
 
-	def get(self,L,A,pi,phi):
-		print "finding"
-		PSI = self.psi[L][pi.get(L,A,phi,psi)]
+	def get(self,L,A,Pi,Phi):
+		if self.check(L,Pi.get(L-1,A,Phi,self)) is False:
+			return Pi.get(L-1,A,Phi,self)
+
+		PSI = self.psi[L][Pi.get(L-1,A,Phi,self)]
 		if len(PSI) < 1:
 			print "missing psi?"
 		for p in PSI:
-			if phi(L,A) in p.states:
+			if Phi.get(L,A) in p.states:
 				return p
+
+			else:
+				print "states",p.states
+				print "this one",L,Phi.get(L,A)
 	
-		print "New state in psi", 
-		return pi.get(L,A,phi,psi), phi(L,A)
+
+		return Pi.get(L-1,A,Phi,self)
 	
 	def get_from_state(self,cluster_list,phi,pi):
 		for i in cluster_list:
@@ -203,6 +242,8 @@ class Psi:
 					for s in self.psi[l][pi][k].states:
 						file.write("state," + str(s) + "," + "\n")
 					file.write("\n")
+
+		file.close()
 		print "finished writing psi to" ,fn
 
 class Q:
@@ -210,52 +251,39 @@ class Q:
 		#print "initializing Q"
 		self.q={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)][a]->r
 
-	def get(self,L,A,pi,phi,psi,a):
-		return self.q[L][pi.get(L,A,phi,psi)][phi.get(L,A)][a]
+	def get(self,A,phi,a):
+		return self.q[phi.get(L_MAX,A)][a]
 
-	def check(self,L,pi,phi):
-		if self.q.get(L) is None:
-			return False
-			#self.q[L]={pi.get(L,A,phi,psi):{phi.get(L,A):{a:r}}}	
-		elif self.q[L].get(pi) is None:
-			return False
-		elif self.q[L][pi].get(phi) is None:
+	def check(self,phi):
+		if self.q.get(phi) is None:
 			return False
 		return True
 	
-	def vals(self,L,A,pi,phi,psi):
-		return list(self.q[L][pi.get(L,A,phi,psi)][phi.get(L,A)].values())
+	def vals(self,A,phi):
+		return list(self.q[phi.get(L_MAX,A)].values())
 
-	def keys_(self,L,A,pi,phi,psi):
-		return list(self.q[L][pi.get(L,A,phi,psi)][phi.get(L,A)].keys())
+	def keys_(self,A,phi):
+		return list(self.q[phi.get(L_MAX,A)].keys())
 
-	def append_to(self,L,pi,phi,a,r):
-		#print "pi",a,pi,L,phi
-		if self.q.get(L) is None:
-			self.q[L]={pi:{phi:{a:r}}}	
-		elif self.q[L].get(pi) is None:
-			self.q[L][pi]={phi:{a:r}}	
-		elif self.q[L][pi].get(phi) is None:
-			self.q[L][pi][phi]={a:r}
-		elif self.q[L][pi][phi].get(a) is None:
-			self.q[L][pi][phi][a]=r	
+	def append_to(self,phi,a,r):
+		if self.q.get(phi) is None:
+			self.q[phi]={a:r}	
+		elif self.q[phi].get(a) is None:
+			self.q[phi][a]=r	
 		else:
-			self.q[L][pi][phi][a]+=r	
+			self.q[phi][a]+=r	
 
-	def get_direct(self,L,pi,phi,a):
-		return self.q[L][pi][phi][a]
+	def get_direct(self,phi,a):
+		return self.q[phi][a]
 
 	def write_q(self,filename,Na):
-
 		file = open(filename,'w') 
 		for k,v in self.q.items():
 			file.write("\n")
 			for k2,v2 in self.q[k].items():
-				file.write("\n")
-				for k3,v3 in self.q[k][k2].items():
-					file.write("\n")
-					for k4,v4 in self.q[k][k2][k3].items():
-						file.write("Q"+","+str(k) + "," +  str(k2) + "," + str(k3) + "," + str(k4) + "," + str(v4) + "," + str(Na.na[k][k2][k3][k4]) + "," +  "\n")
+				file.write("Q"+","+str(k) + "," +  str(k2)  + "," + str(v2) + "," + str(Na.na[k][k2]) + "," +  "\n")
+
+		file.close()
 
 
 
@@ -264,51 +292,38 @@ class N:
 		#print "initializing N"
 		self.n={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)]->n
 
-	def get(self,L,A,pi,phi,psi):
-		return self.n[L][pi.get(L,A,phi,psi)][phi.get(L,A)]
+	def get(self,A,phi):
+		return self.n[phi.get(L_MAX,A)]
 
-	def append_to(self,L,pi,phi,r):
-		if self.n.get(L) is None:
-			self.n[L]={pi:{phi:r}}	
-		elif self.n[L].get(pi) is None:
-			self.n[L][pi]={phi:r}	
-		elif self.n[L][pi].get(phi) is None:
-			self.n[L][pi][phi]=r	
+	def append_to(self,phi,r):
+		if self.n.get(phi) is None:
+			self.n[phi]=r	
 		else:
-			self.n[L][pi][phi]+=r
+			self.n[phi]+=r
 
 class Na:
 	def __init__(self):
 		#print "initializing Na"
 		self.na={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)][a]->n
 
-	def get(self,L,A,pi,phi,psi,a):
-		return self.na[L][pi.get(L,A,phi,psi)][phi.get(L,A)][a]
+	def get(self,A,phi,a):
+		return self.na[phi.get(L_MAX,A)][a]
 
-	def check(self,L,pi,phi,i):
-		if self.na.get(L) is None:
+	def check(self,phi,i):
+		if self.na.get(phi) is None:
 			return False
-			#self.q[L]={pi.get(L,A,phi,psi):{phi.get(L,A):{a:r}}}	
-		elif self.na[L].get(pi) is None:
-			return False
-		elif self.na[L][pi].get(phi) is None:
-			return False
-		elif self.na[L][pi][phi].get(i) is None:
+		elif self.na[phi].get(i) is None:
 			return False
 		return True
 
-	def append_to(self,L,pi,phi,a,r):
-		if self.na.get(L) is None:
-			self.na[L]={pi:{phi:{a:r}}}	
-		elif self.na[L].get(pi) is None:
-			self.na[L][pi]={phi:{a:r}}	
-		elif self.na[L][pi].get(phi) is None:
-			self.na[L][pi][phi]={a:r}
-		elif self.na[L][pi][phi].get(a) is None:
-			self.na[L][pi][phi][a]=r	
+	def append_to(self,phi,a,r):
+		if self.na.get(phi) is None:
+			self.na[phi]={a:r}	
+		elif self.na[phi].get(a) is None:
+			self.na[phi][a]=r		
 		else:
-			self.na[L][pi][phi][a]+=r
+			self.na[phi][a]+=r
 
-	def get_direct(self,L,pi,phi,a):
-		return self.na[L][pi][phi][a]
+	def get_direct(self,phi,a):
+		return self.na[phi][a]
 

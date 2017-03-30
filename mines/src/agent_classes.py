@@ -106,21 +106,10 @@ class Agent:
 	def calculate_A(self,s):
 		self.new_A.update_all(s,self)
 
-	def check_action(self,s): 
-		if self.current_action.check_trigger() is True:
-			self.battery=100
-			self.current_action=Policies.Policy(self.solver.get_action(0,self.new_A))
-			#self.battery=100
-			#self.current_action=Policies.Policy(self.solver.explore_ucb(0,self.new_A))
-			self.work=self.current_action.index-1
-
 	def decide(self,s):	
-		#self.steps+=1.
-		#self.check_action(s)
-			
-
 		self.battery=100
-		self.current_action=Policies.Policy(self.solver.get_action(0,self.new_A))
+		self.current_action=Policies.Policy(self.solver.get_action(self.new_A))
+		print "Chose to " , self.current_action.index
 		#self.battery=100
 		#self.current_action=Policies.Policy(self.solver.explore_ucb(0,self.new_A))
 		if self.current_action.index < 26 and self.current_action.index > 0:

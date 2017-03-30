@@ -9,6 +9,10 @@ from geometry_msgs.msg import PoseStamped
 import numpy as np
 import Regions
 
+
+
+
+
 def get_next_action(loc,i):
 	next_x=0
 	next_y=0
@@ -456,76 +460,57 @@ class Abstractions():
 		return r
 
 
+	def get_location_abf(self):
+		return "loc:"+str(Regions.get_region(self.location.loc[0],self.location.loc[1]))+":"
 
-	def get_lower_level_abf(self,a):
-		if a.current_action.index == 0:
-			#charge
-			return self.get_charge_abf()
-		elif a.current_action.index == 1:
-			#Explore
-			#return self.get_explore_abf()+str(a.policy_set.TA.LA.index)+":"+str(self.regions[a.policy_set.TA.LA.index-1].hash)+"end"
-			return self.get_explore_abf()+"end"
+	def location_abf_length(self):
+		return len("loc:"+str(Regions.get_region(self.location.loc[0],self.location.loc[1]))+":")
+		
 
-	def get_lower_level_trigger(self,a):
-		if a.current_action.index == 0:
-			#charge
-			return self.get_charge_trigger()
-		elif a.current_action.index == 1:
-			#Explore
-			return self.get_explore_trigger(a.current_action.index-1)
-		print "MISSED"
 
-	def get_charge_trigger(self):
-		h="charge trigger:"
+	def get_battery_abf(self):
+		return "bat:"+str(self.battery.hash)+":"
 
-		h=h+self.battery.hash
+	def battery_abf_length(self):
+		return len("bat:"+str("bat:"+str(self.battery.hash)+":"))
 
-		return h
 
-	def get_explore_trigger(self,index):
-		h ="explore trigger:"
 
-		h=h+str(self.regions[index].hash)+":"
-
-		return h
-
-	def get_explore_abf(self):
-		h ="explore:"
-
+	def get_region_score_abf(self):
+		h = "rs:"
 		for i in self.regions:
-			h=h+str(i.hash)+":"
+			h=h+str(i.index)+"-"+str(i.hash)+":"
+		return h
 
+	def region_score_abf_length(self):
+		h = "rs:"
+		for i in self.regions:
+			h=h+str(i.index)+"-"+str(i.hash)+":"
+		return len(h)
+
+
+
+
+	def get_work_load_abf(self):
+		h= "wl:"
 		for i in self.work_load:
-			h=h+str(i.hash)+":"
-
-		h=h+str(Regions.get_region(self.location.loc[0],self.location.loc[1]))+":"
-		#h=h+str(self.battery.hash)+":"
-
-		
-
-
+			h=h+str(i.index)+"-"+str(i.hash)+":"
 		return h
 
-
+	def work_load_abf_length(self):
+		h= "wl:"
+		for i in self.work_load:
+			h=h+str(i.index)+"-"+str(i.hash)+":"
+		return len(h)
 		
-		
+
+	def get_complete_abf(self):		
+		return self.get_location_abf()+self.get_battery_abf()+self.get_region_score_abf()+self.get_work_load_abf()
+
+	def complete_abf_length(self):
+		return len(self.get_location_abf()+self.get_battery_abf()+self.get_region_score_abf()+self.get_work_load_abf())
 
 
-
-	def get_top_level_abf(self):
-		h="top:"
-
-		h=h+self.battery.hash + ":"
-		h=h+str(self.all_regions.hash)+":"
-		h=h+str(Regions.get_region_type(self.location.reg))
-		return h
-
-	def get_charge_abf(self):
-		h="charge:"
-
-		h=h+self.battery.hash
-
-		return h
 
 		
 

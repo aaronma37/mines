@@ -77,20 +77,18 @@ class Solver:
 			return 0.
 		
 		if last_action!=0 or A.battery.num>90:
-			a,roll = self.arg_max_ucb(A)
+			a = self.arg_max_ucb(A)
 		else:
 			if A.battery.num==0:
 				a=26
 			else:
 				a=0
 
+		state=self.Phi.get_max_level(A)
 
-		#pi_i=self.Pi.get(L,A,self.Phi,self.Psi)
-		phi_i=self.Phi.get_max_level(A)
-
-		self.N.append_to(phi_i,1.)
-		self.Na.append_to(phi_i,a,1.)
-		self.Q.append_to(phi_i,a,0.)
+		self.N.append_to(state,1.,self.Phi)
+		self.Na.append_to(state,a,1.,self.Phi)
+		self.Q.append_to(state,a,0.,self.Phi)
 
 		
 		#print pi_i,a,A.battery.num,A.location.loc
@@ -105,8 +103,7 @@ class Solver:
 
 
 		r += math.pow(Gamma,depth)*self.search(A,depth+1,a,s_,a_)
-
-		self.Q.append_to(phi_i,a,(r-self.Q.get_direct(phi_i,a))/self.Na.get_direct(phi_i,a))
+		self.Q.append_to_average(state,a,r,self.Phi,self.Na)
 
 		return r	
 
@@ -118,33 +115,43 @@ class Solver:
 
 	def arg_max_ucb(self,A):
 
-		#NOTE: MAKE THIS REFLECT LEVELS (UCB FROM BOTTOM UP)
-	
-		if self.Q.check(self.Phi.get_max_level(A)) is False:
-			return self.Pi.get(L_MAX,A,self.Phi,self.Psi),False
+		pi=self.Pi.get(-1,A,self.Phi,self.Psi)
 
-		k=range(Policies.action_index_max)	
-		shuffle(k)
-		#return k[0]
+		for l in range(L_MAX+1):
+			if self.Psi.check(l,pi) is False:
+				return pi
 
-		if self.Na.check(self.Phi.get(L_MAX,A),k[0]) is False:
 
-			return k[0],False
+			cluster = self.Psi.get_cluster(l,pi,A,self.Phi)
+			n = cluster.get_total_n()		
 
-		a=k[0]
-		max_num=self.ucb(A,k[0])
+			k = range(len(cluster.action_set))
+			shuffle(k)
+		
+			if cluster.n[k[0]] == 0.0:
+				return k[0]
 
-		for i in k:
-			if self.Na.check(self.Phi.get(L_MAX,A),i) is False:
-				return i,False
-			if self.ucb(A,i)>max_num:
+			a=k[0]
+			max_num = self.ucb_from_state(cluster.r[k[0]],n,cluster.n[k[0]])
 
-				max_num=self.ucb(A,i)
-				a = i
-		return a,True
+			for i in k:
+				if cluster.n[i] == 0.0:
+					return i
+
+				if self.ucb_from_state(cluster.r[i],n,cluster.n[i]) > max_num:
+					max_num=self.ucb_from_state(cluster.r[i],n,cluster.n[i])
+					a=i
+
+			pi = a
+
+		return a
+
 
 	def ucb(self,A,a):
 		return self.Q.get(A,self.Phi,a)+100.*math.sqrt(math.log(1+self.N.get(A,self.Phi))/(1+self.Na.get(A,self.Phi,a)))
+
+	def ucb_from_state(self,r,n,na):
+		return r+100.*math.sqrt(math.log(1+n)/(1+na))
 
 
 	def get_psi(self,filename):

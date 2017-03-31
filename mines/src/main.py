@@ -29,6 +29,10 @@ import Regions
 
 import POMDP_Values as v
 
+L_MAX=v.L_MAX
+
+
+
 load_q_flag = rospy.get_param("/load_q")
 write_q_flag = rospy.get_param("/write_q")
 write_psi_flag = rospy.get_param("/write_psi")
@@ -121,29 +125,37 @@ class Simulator:
 			l = line.split(",")
 			if l[0]=="Q" and len(l)>4:
 				size+=1
-				phi_i=l[1]
+		
 				try:
-					a_i=int(l[2])
-				except ValueError:
-					print "Value error trying to convert", l[2]					
+					l_i=int(l[1])
+				except ValueErorr:
+					print "Value error trying to convert", l[1]					
 					return
 
+				state=l[2]
+
 				try:
-					r=float(l[3])
+					a_i=int(l[3])
 				except ValueError:
 					print "Value error trying to convert", l[3]					
 					return
 
 				try:
-					n=float(l[4])
+					r=float(l[4])
 				except ValueError:
 					print "Value error trying to convert", l[4]					
 					return
 
+				try:
+					n=float(l[5])
+				except ValueError:
+					print "Value error trying to convert", l[5]					
+					return
 
-				self.Na.append_to(phi_i,a_i,n)
-				self.Q.append_to(phi_i,a_i,0.)
-				self.Q.append_to(phi_i,a_i,(r-self.Q.get_direct(phi_i,a_i))/self.Na.get_direct(phi_i,a_i))
+
+				self.Na.append_to_direct(l_i,state,a_i,n,self.Phi)
+				self.Q.append_to_direct(l_i,state,a_i,0.,self.Phi)
+				self.Q.append_to_average_direct(l_i,state,a_i,r,self.Phi,self.Na)
 
 		print "Successfully appended",fn, "with", size, "lines"
 
@@ -302,7 +314,7 @@ class Simulator:
 				#self.pub_to_buoys()
 				start = time.time()
 
-			if time.time()-start2 > 50:
+			if time.time()-start2 > 200:
 				self.reset_pub()
 				start2=time.time()
 

@@ -409,12 +409,20 @@ class Abstractions():
 			return 0.
 		else:
 			if self.location.inside_region is True:
-				r=1.
-				r=r*self.regions[region_num-1].hash
+				if self.regions[region_num-1].hash==3:
+					r=5.5
+				elif self.regions[region_num-1].hash==2:
+					r=4.5	
+				elif self.regions[region_num-1].hash==1:
+					r=3.5
+				else:
+					r=0.
+				#r=1.
+				#r=r*self.regions[region_num-1].hash
 
 
 				if self.work_load[region_num-1].hash > 0:
-					r=r/300.#(self.work_load[region_num-1].hash*self.work_load[region_num-1].hash*self.work_load[region_num-1].hash)
+					r=r/2.#(self.work_load[region_num-1].hash*self.work_load[region_num-1].hash*self.work_load[region_num-1].hash)
 					#print r, region_num-1, "HERE"
 			else:
 				r=0.
@@ -424,6 +432,7 @@ class Abstractions():
 		return r
 
 	def evolve_all(self,heuristics,action):
+		#print type(action),"action passed"
 		r=0
 
 		for j in range(20):
@@ -461,18 +470,18 @@ class Abstractions():
 
 
 	def get_location_abf(self):
-		return "loc:"+str(Regions.get_region(self.location.loc[0],self.location.loc[1]))+":"
+		return "loc:"+str(Regions.get_region(self.location.loc[0],self.location.loc[1]))+"~"
 
 	def location_abf_length(self):
-		return len("loc:"+str(Regions.get_region(self.location.loc[0],self.location.loc[1]))+":")
+		return len("loc:"+str(Regions.get_region(self.location.loc[0],self.location.loc[1]))+"~")
 		
 
 
 	def get_battery_abf(self):
-		return "bat:"+str(self.battery.hash)+":"
+		return "bat:"+str(self.battery.hash)+"~"
 
 	def battery_abf_length(self):
-		return len("bat:"+str("bat:"+str(self.battery.hash)+":"))
+		return len("bat:"+str("bat:"+str(self.battery.hash)+"~"))
 
 
 
@@ -480,12 +489,14 @@ class Abstractions():
 		h = "rs:"
 		for i in self.regions:
 			h=h+str(i.index)+"-"+str(i.hash)+":"
+		h = h + "~"
 		return h
 
 	def region_score_abf_length(self):
 		h = "rs:"
 		for i in self.regions:
 			h=h+str(i.index)+"-"+str(i.hash)+":"
+		
 		return len(h)
 
 
@@ -495,6 +506,7 @@ class Abstractions():
 		h= "wl:"
 		for i in self.work_load:
 			h=h+str(i.index)+"-"+str(i.hash)+":"
+		h=h+"~"
 		return h
 
 	def work_load_abf_length(self):
@@ -505,7 +517,7 @@ class Abstractions():
 		
 
 	def get_complete_abf(self):		
-		return self.get_location_abf()+self.get_battery_abf()+self.get_region_score_abf()+self.get_work_load_abf()
+		return self.get_location_abf()+self.get_region_score_abf()+self.get_work_load_abf()
 
 	def complete_abf_length(self):
 		return len(self.get_location_abf()+self.get_battery_abf()+self.get_region_score_abf()+self.get_work_load_abf())

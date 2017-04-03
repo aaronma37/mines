@@ -339,59 +339,7 @@ class Psi:
 					print "Value error trying to convert", l[2]					
 					continue
 
-				#self.check_and_append(L,pi_i)
-			
 
-		'''
-		for line in f:
-			l = line.split(",")
-			if l[0]=="L":
-				try:
-					L=int(l[1])
-				except ValueError:
-					print "Value error trying to convert", l[1]					
-					continue
-
-				self.psi[L]={}
-			elif l[0]=="pi":
-				try:
-					pi_i=int(l[1])
-				except ValueError:
-					print "Value error trying to convert", l[1]					
-					continue
-
-				self.check_and_append(L,pi_i)
-			elif l[0]=="k":
-				try:
-					k=int(l[1])
-				except ValueError:
-					print "Value error trying to convert", l[1]					
-					continue
-
-				index = self.check_and_append_k(L,pi_i,k)
-			elif l[0]=="action":
-
-				try:
-					self.psi[L][pi_i][index].r[int(l[1])]=float(l[2])
-				except ValueError:
-					print "Value error trying to convert", l[2]					
-					continue
-
-				try:
-					self.psi[L][pi_i][index].n[int(l[1])]=float(l[3])
-				except ValueError:
-					print "Value error trying to convert", l[2]					
-					continue
-
-
-
-
-			elif l[0]=="state":
-				self.psi[L][pi_i][index].states.add(l[1])
-
-		'''
-
-		#self.write_psi("/home/aaron/catkin_ws/src/mines/mines/src/checkpsi.txt")
 
 
 	def write_psi(self, fn):
@@ -426,6 +374,64 @@ class Psi:
 		print "finished writing psi to" ,fn
 
 class Q:
+	def __init__(self):
+		#print "initializing Q"
+		self.q={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)][a]->r
+
+	def get(self,A,phi,a):
+		return self.q[L][phi.get(L_MAX,A)][a]
+
+	def check(self,phi):
+		if self.q.get(phi) is None:
+			return False
+		return True
+	
+	def vals(self,A,phi):
+		return list(self.q[phi.get(L_MAX,A)].values())
+
+	def keys_(self,A,phi):
+		return list(self.q[phi.get(L_MAX,A)].keys())
+
+	def append_to_average(self,s,a,r,Phi,Na):
+			self.q[s][a]+=(r-self.q[s][a])/Na.na[s][a]
+
+	def append_to_average_direct(self,s,a,r,Phi,Na):
+		self.q[s][a]+=(r-self.q[s][a])/Na.na[s][a]
+
+	def append_to(self,s,a,r,Phi):
+			if self.q.get(s) is None:
+				self.q[s]={a:r}
+			elif self.q[s].get(a) is None:
+				self.q[s][a]=r
+			else:
+				self.q[s][a]+=r
+
+	def append_to_direct(self,s,a,r,Phi):
+		if self.q.get(s) is None:
+			self.q[s]={a:r}	
+		elif self.q[s].get(a) is None:
+			self.q[s][a]=r		
+		else:
+			self.q[s][a]+=r
+	
+
+	def get_direct(self,phi,a):
+		return self.q[phi][a]
+
+
+	def write_q(self,filename,Na):
+		file = open(filename,'w') 
+		start=time.time()
+		count=0
+		for k,q_1 in self.q.items():
+			file.write("\n")
+			for k2,v in self.q[k].items():	
+				file.write("Q"+","+str(k) + "," +  str(k2)  +","+ str(v) + "," + str(Na.na[k][k2]) + "," +  "\n")
+				count+=1
+		file.close()
+		print "Completed writing Q",time.time()-start,count
+
+class Q_Level:
 	def __init__(self):
 		#print "initializing Q"
 		self.q={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)][a]->r
@@ -519,6 +525,40 @@ class N:
 				self.n[l][s]+=r
 
 class Na:
+	def __init__(self):
+		#print "initializing Na"
+		self.na={}#[pi(L-1,A,Phi,Psi)][Phi(L,A)][a]->n
+
+	def get(self,A,phi,a):
+		return self.na[phi.get(L_MAX,A)][a]
+
+	def check(self,phi,i):
+		if self.na.get(phi) is None:
+			return False
+		elif self.na[phi].get(i) is None:
+			return False
+		return True
+
+	def append_to(self,s,a,r,Phi):
+			if self.na.get(s) is None:
+				self.na[s]={a:r}	
+			elif self.na[s].get(a) is None:
+				self.na[s][a]=r		
+			else:
+				self.na[s][a]+=r
+
+	def append_to_direct(self,state,a,r,Phi):
+		if self.na.get(s) is None:
+			self.na[s]={a:r}	
+		elif self.na[s].get(a) is None:
+			self.na[s][a]=r		
+		else:
+			self.na[s][a]+=r
+
+	def get_direct(self,phi,a):
+		return self.na[phi][a]
+
+class Na_Level:
 	def __init__(self):
 		#print "initializing Na"
 		self.na={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)][a]->n

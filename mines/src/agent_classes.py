@@ -19,7 +19,7 @@ class Agent:
 	def __init__(self,Mine_Data,map_size_):
 
 		self.solver = Solver(Mine_Data,map_size_) # get rid of
-
+		self.lvl=0
 		self.map_size=map_size_
 		self.x=self.map_size/2
 		self.y=self.map_size/2		
@@ -57,7 +57,7 @@ class Agent:
 	def predict_A(self):
 		self.new_A.evolve_all(self.solver.H,self)
 
-	def reset(self,s,data,fn):
+	def reset(self,s,data,fp,fn):
 		self.x=self.map_size/2
 		self.y=self.map_size/2
 		self.current_action=Policies.Policy(0)
@@ -66,19 +66,20 @@ class Agent:
 		self.battery=100
 		self.old_A.update_all(s,self)
 		self.new_A.update_all(s,self)
-		self.solver.write_file(data,self.steps,"/home/aaron/catkin_ws/src/mines/mines/src"+fn+".txt")
+		self.solver.write_file(fp+fn+".txt")
+		self.solver.write_performance(fp,data,self.steps)
 		self.available_flag=False
 		self.lvl=0
 
-	def restart(self):
+	def restart(self,fp):
 		self.steps=0.
 		self.solver.reset()
-		self.get_psi()
+		self.get_psi(fp)
 		self.available_flag=True
 		
 
-	def get_psi(self):
-		self.solver.get_psi('/home/aaron/catkin_ws/src/mines/mines/src/psi_main.txt')
+	def get_psi(self,fp):
+		self.solver.get_psi(fp+'/psi_main.txt')
 
 
 

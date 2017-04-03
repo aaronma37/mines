@@ -165,15 +165,14 @@ class Solver:
 	def update_psi(self):
 		self.Psi.update(self.Q,self.Na)
 
-	def write_file(self,data,steps,filename):
-		self.write_performance(data,steps)
+	def write_file(self,filename):
 		self.Q.write_q(filename,self.Na)
 
-	def write_performance(self,data,steps):
+	def write_performance(self,fp,data,steps):
 		self.great.append(data)
 		self.steps.append(steps)
 
-		file = open("/home/aaron/catkin_ws/src/mines/mines/src/performance.txt",'w') 
+		file = open(fp+'/performance.txt','w') 
 
 		for i in range(len(self.great)):
 			file.write(str(self.great[i]) + ", " + str(self.steps[i])+ ", " + str(self.great[i]/self.steps[i]) +"\n")

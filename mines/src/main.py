@@ -36,6 +36,8 @@ L_MAX=v.L_MAX
 load_q_flag = rospy.get_param("/load_q")
 write_q_flag = rospy.get_param("/write_q")
 write_psi_flag = rospy.get_param("/write_psi")
+f_path = rospy.get_param("/temp_file_path")
+
 rospy.init_node('main', anonymous=True)
 env_pub =rospy.Publisher('/environment_matrix', OccupancyGrid, queue_size=100)#CHANGE TO MATRIX
 
@@ -96,8 +98,10 @@ class Simulator:
 		self.s=Mine_Data(map_size)
 		self.s_old=Mine_Data(map_size)
 
-		self.Na=v.Na()
+		self.Na_Level=v.Na_Level()
+		self.Q_Level=v.Q_Level()
 		self.Q=v.Q()
+		self.Na=v.Na()
 		self.Phi=v.Phi()
 		self.Psi=v.Psi()
 		self.Pi=v.Pi()
@@ -108,16 +112,14 @@ class Simulator:
 			self.load_q()
 
 	def load_q(self):
-		self.load_file("/home/aaron/catkin_ws/src/mines/mines/src/q_main.txt")
+		self.load_file(f_path+"/q_main.txt")
 
 
 	def load_files(self):
 		for k,a in agent_dict.items():
-			self.load_file("/home/aaron/catkin_ws/src/mines/mines/src"+k+".txt")
+			self.load_file(f_path+k+".txt")
 
 	def load_file(self,fn):
-		print "trying to load", fn
-
 		f = open(fn,'r')
 		size=0
 		for line in f:
@@ -125,48 +127,45 @@ class Simulator:
 			l = line.split(",")
 			if l[0]=="Q" and len(l)>4:
 				size+=1
-		
+				state=l[1]
+
 				try:
-					l_i=int(l[1])
-				except ValueErorr:
-					print "Value error trying to convert", l[1]					
+					a_i=int(l[2])
+				except ValueError:
+					print "Value error trying to convert", l[2]					
 					return
 
-				state=l[2]
-
 				try:
-					a_i=int(l[3])
+					r=float(l[3])
 				except ValueError:
 					print "Value error trying to convert", l[3]					
 					return
 
 				try:
-					r=float(l[4])
+					n=float(l[4])
 				except ValueError:
 					print "Value error trying to convert", l[4]					
 					return
 
-				try:
-					n=float(l[5])
-				except ValueError:
-					print "Value error trying to convert", l[5]					
-					return
 
+				self.Na_Level.append_to(state,a_i,n,self.Phi)
+				self.Q_Level.append_to(state,a_i,0.,self.Phi)
+				self.Q_Level.append_to_average(state,a_i,r,self.Phi,self.Na_Level)
 
-				self.Na.append_to_direct(l_i,state,a_i,n,self.Phi)
-				self.Q.append_to_direct(l_i,state,a_i,0.,self.Phi)
-				self.Q.append_to_average_direct(l_i,state,a_i,r,self.Phi,self.Na)
+				self.Na.append_to(state,a_i,n,self.Phi)
+				self.Q.append_to(state,a_i,0.,self.Phi)
+				self.Q.append_to_average(state,a_i,r,self.Phi,self.Na)
 
 		print "Successfully appended",fn, "with", size, "lines"
 
 	def calculate_policy(self):
-		self.Psi.update(self.Pi,self.Phi,self.Q,self.Na)
+		self.Psi.update(self.Pi,self.Phi,self.Q_Level,self.Na_Level)
 		
 	def write_psi(self):
 		if write_q_flag is True:
-			self.Q.write_q('/home/aaron/catkin_ws/src/mines/mines/src/q_main.txt',self.Na)
+			self.Q.write_q(f_path+'/q_main.txt',self.Na)
 		if write_psi_flag is True:
-			self.Psi.write_psi('/home/aaron/catkin_ws/src/mines/mines/src/psi_main.txt')
+			self.Psi.write_psi(f_path+'/psi_main.txt')
 
 	def pose_cb(self,data):
 		if data.header.frame_id not in agent_dict:

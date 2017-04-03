@@ -1,7 +1,8 @@
 <launch>
-<param name="load_q" type="bool" value="True"/>
+<param name="load_q" type="bool" value="False"/>
 <param name="write_q" type="bool" value="True"/>
 <param name="write_psi" type="bool" value="True"/>
+<param name="temp_file_path" type="String" value="/home/aaron/mines_temp"/>
 
 
 <node pkg="mines" type="main.py" name="main" output="screen">

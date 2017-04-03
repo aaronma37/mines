@@ -19,6 +19,8 @@ from Heuristics import write_file
 
 ''' This is the ros file that runs an agent'''
 
+f_path = rospy.get_param("/temp_file_path")
+
 region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
 
 region_size=20
@@ -100,10 +102,10 @@ class Simulator:
 
 	def reset_fun(self,data):
 		s.reset()
-		a.reset(s,data.data,pose.header.frame_id)
+		a.reset(s,data.data,f_path,pose.header.frame_id)
 
 	def restart_cb(self,data):
-		a.restart()
+		a.restart(f_path)
 
 
 		#write_file(a.solver.H,pose.header.frame_id)

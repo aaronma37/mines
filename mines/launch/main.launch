@@ -1,5 +1,5 @@
 <launch>
-<param name="load_q" type="bool" value="False"/>
+<param name="load_q" type="bool" value="True"/>
 <param name="write_q" type="bool" value="True"/>
 <param name="write_psi" type="bool" value="True"/>
 

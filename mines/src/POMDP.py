@@ -108,13 +108,13 @@ class Solver:
 		return r	
 
 	def get_action(self,A):
-		return self.arg_max(A)	
+		return self.Pi.get_and_return_level(L_MAX,A,self.Phi,self.Psi)
 
 	def arg_max(self,A):
 		return self.Pi.get(L_MAX,A,self.Phi,self.Psi)	
 
 	def arg_max_ucb(self,A):
-
+		'''
 		pi=self.Pi.get(-1,A,self.Phi,self.Psi)
 
 		for l in range(L_MAX+1):
@@ -144,7 +144,12 @@ class Solver:
 
 			pi = a
 
+
 		return a
+		'''
+		k = range(27)
+		shuffle(k)
+		return k[0]
 
 
 	def ucb(self,A,a):

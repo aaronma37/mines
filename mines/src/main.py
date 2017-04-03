@@ -178,7 +178,7 @@ class Simulator:
 		agent_dict[data.header.frame_id].battery=int(data.pose.position.z)
 		agent_dict[data.header.frame_id].work=int(data.pose.orientation.x)
 		agent_dict[data.header.frame_id].time_away_from_network=int(data.pose.orientation.y)
-
+		agent_dict[data.header.frame_id].lvl=int(data.pose.orientation.z)
 		agent_dict[data.header.frame_id].measure(self.s,False)
 
 	def task_cb(self,data):

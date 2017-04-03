@@ -412,11 +412,11 @@ class Abstractions():
 				if self.regions[region_num-1].hash==3:
 					r=5.5
 				elif self.regions[region_num-1].hash==2:
-					r=4.5	
+					r=3.5	
 				elif self.regions[region_num-1].hash==1:
-					r=3.5
+					r=1.5
 				else:
-					r=0.
+					r=-1.
 				#r=1.
 				#r=r*self.regions[region_num-1].hash
 
@@ -425,7 +425,10 @@ class Abstractions():
 					r=r/2.#(self.work_load[region_num-1].hash*self.work_load[region_num-1].hash*self.work_load[region_num-1].hash)
 					#print r, region_num-1, "HERE"
 			else:
-				r=0.
+				if self.regions[region_num-1].hash > 0:
+					r=0.
+				else:
+					r=-1.
 
 
 			
@@ -467,6 +470,14 @@ class Abstractions():
 			
 
 		return r
+
+	def get_discrete_abf(self,i):
+		if i==0:
+			return str(Regions.get_region(self.location.loc[0],self.location.loc[1]))+"~"
+		elif i>0 and i<26:
+			return str(self.regions[i-1].hash)+"~"
+		elif i>25 and i<51:
+			return str(self.work_load[i-26].hash)+"~"
 
 
 	def get_location_abf(self):

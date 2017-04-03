@@ -32,8 +32,8 @@ def get_discrete_target(a,s,action):
 				if get_distance(a.x,a.y,i[0],i[1]) < m:
 					m=get_distance(a.x,a.y,i[0],i[1])
 					loc = i
-		if loc==(0,0):
-			print "none found"
+		#if loc==(50,50):
+			#print "none found"
 		return loc
 
 
@@ -94,8 +94,8 @@ class Policy:
 					if self.get_distance(a.x,a.y,i[0],i[1]) < m:
 						m=self.get_distance(a.x,a.y,i[0],i[1])
 						loc = i
-			if loc==(0,0):
-				print "none found"
+			#if loc==(0,0):
+			#	print "none found"
 			return loc
 
 						

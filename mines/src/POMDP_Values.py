@@ -2,10 +2,10 @@
 from random import shuffle
 from sets import Set
 from abstraction_classes import Abstractions
-
+import time
 As=Abstractions()
 
-L_MAX=2
+L_MAX=50
 
 
 class Pi:
@@ -25,6 +25,12 @@ class Pi:
 	def seed_algorithm_from_state(self,state):
 		return 26
 
+	def get_and_return_level(self,L,A,Phi,Psi):
+		if L == -1:
+			return self.seed_algorithm(A),L
+		else:
+			return Psi.get_with_level(L,A,self,Phi)	
+
 	def get(self,L,A,Phi,Psi):
 		if L == -1:
 			return self.seed_algorithm(A)
@@ -32,13 +38,17 @@ class Pi:
 			return Psi.get(L,A,self,Phi)
 
 	def get_from_state(self,L,state,Phi,Psi):
-		if L==-1:
+		if L<0:
 			return self.seed_algorithm_from_state(state)
-		else:
-			if Psi.check(L,self.get_from_state(L-1,Phi.get_from_state(L-1,state),Phi,Psi)) is True:
-				return Psi.get_from_state(Psi.psi[L][self.get_from_state(L-1,Phi.get_from_state(L-1,state),Phi,Psi)],state,self.get_from_state(L-1,Phi.get_from_state(L-1,state),Phi,Psi))
-			else:
-				return self.get_from_state(L-1,Phi.get_from_state(L-1,state),Phi,Psi)
+		else:	
+			return Psi.get_from_state(L,state,self,Phi)
+
+
+	def get_from_state_pure(self,L,state,Phi,Psi):
+		if L<0:
+			return self.seed_algorithm_from_state(state)
+		else:	
+			return Psi.get_from_state_pure(L,state,self,Phi)
 
 class Phi:
 	def __init__(self):
@@ -47,8 +57,25 @@ class Phi:
 		#Phi maps A->A*
 
 	def get_max_level(self,A):
-		return A.get_complete_abf()
+		return self.get(L_MAX,A)
+
+	def get(self,L,A):
+		h=""
+		for i in range(L+1):
+			h=h+ A.get_discrete_abf(i)
+		return h
+
+	def get_from_state(self,L,state):
+
+		s=state.split("~")
+		h=""
+		for i in range(L+1):
+			h=h+s[i]+"~"
+
+		return h
 	
+
+	'''
 	def get(self,L,A):
 		if L==0:
 			return A.get_location_abf()
@@ -62,6 +89,8 @@ class Phi:
 
 	'''
 
+	'''
+
 	def get(self,L,A):
 		if L==0:
 			return A.get_complete_abf()
@@ -69,6 +98,8 @@ class Phi:
 
 
 		return A.get_complete_abf()
+	'''
+
 	'''
 	def get_from_state(self,L,state):
 		s=state.split("~")
@@ -78,6 +109,9 @@ class Phi:
 			return s[0]+"~"+s[1]+"~"
 		elif L==2:
 			return s[0]+"~"+s[1]+"~"+s[2]+"~"
+
+	'''
+
 	'''
 
 	def get_from_state(self,L,state):
@@ -120,20 +154,38 @@ class Cluster:
 class Psi:
 	def __init__(self):
 		#print "initializing Psi"
+		#Get rid of dependence on Pi
 		self.psi={}#[L][pi(L-1,A,Phi,Psi)]-> cluster
+		self.point={}
 
 	def update(self,Pi,Phi,Q,Na):
 		self.psi={}
+		self.point={}
+		print "starting calculate psi"
+		start=time.time()
+		for l,q_1 in Q.q.items():
+			self.point[l]={}
+			for state,q_2 in q_1.items():
+				start1=time.time()
+				#pi=Pi.get_from_state_pure(l-1,state,Phi,self)
+				end1=time.time()
+				start2=time.time()
+				#self.check_and_append(l,pi)
+				v=list(q_2.values())
+				key=list(q_2.keys())
+				end2=time.time()
+				start3=time.time()
+				#k = self.splitter(self.psi[l][pi],key[v.index(max(v))],pi)
+				self.point[l][state]=key[v.index(max(v))]
+				end3=time.time()
+				start4=time.time()
+				#for action,v2 in q_2.items():
+				#	self.psi[l][pi][k].update(action,v2,Na.na[l][state][action],state)
+				end4=time.time()
+				#print "total", time.time()-start1,"s1",(end1-start1)/(time.time()-start1),"s2",(end2-start2)/(time.time()-start1),"s3",(end3-start3)/(time.time()-start1),"s4",(end4-start4)/(time.time()-start1)
 
-		for l,irrelevant in Q.q.items():
-			for state,v in Q.q[l].items():
-				pi=Pi.get_from_state(l-1,state,Phi,self)
-				self.check_and_append(l,pi)
-				v=list(Q.q[l][state].values())
-				key=list(Q.q[l][state].keys())
-				k = self.splitter(self.psi[l][pi],key[v.index(max(v))],pi)
-				for action,v2 in Q.q[l][state].items():
-					self.psi[l][pi][k].update(action,v2,Na.na[l][state][action],Phi.get_from_state(l,state))
+
+		print "finished calculated psi",time.time()-start
 
 	def splitter(self, cluster_list, m, pi):
 		for i in cluster_list:
@@ -146,13 +198,26 @@ class Psi:
 		return len(cluster_list)-1
 
 	def check(self,L,pi):
-		if self.psi.get(L) is None:
+		if self.point.get(L) is None:
 			#print "L NOT FOUND", L
 			return False
-		if self.psi[L].get(pi) is None:
+		if self.point[L].get(pi) is None:
 			#print "PI NOT FOUND", pi			
 			return False
 		return True
+
+	def check_state(self,L,state):
+		if self.psi.get(L) is None:
+			return False
+
+		for p in self.psi[L].values():
+			for i in p:
+				for s in i.states:
+					if state == s:
+						return True
+
+		return False		
+
 
 	def check_and_append(self,l,pi):
 		if self.psi.get(l) is None:
@@ -180,39 +245,104 @@ class Psi:
 
 
 	def get(self,L,A,Pi,Phi):
-		if self.check(L,Pi.get(L-1,A,Phi,self)) is False:
+		if self.point.get(L) is None:
 			return Pi.get(L-1,A,Phi,self)
 
-		PSI = self.psi[L][Pi.get(L-1,A,Phi,self)]
-		if len(PSI) < 1:
-			print "missing psi?"
-		for p in PSI:
-			if Phi.get(L,A) in p.states:
-				return p.a
+		if self.point[L].get(Phi.get(L,A)) is None:
+			return Pi.get(L-1,A,Phi,self)
+		else:
+			return self.point[L][Phi.get(L,A)]
 
-			#else:
-				#if L==2:
-					#print "states",p.states
-					#print "this one",L,Phi.get(L,A)
-	
+		#list_of_pis = self.psi[L].values()
+
+		#for cluster_list in list_of_pis:
+		#	for cluster in cluster_list:
+		#		if Phi.get(L,A) in cluster.states:
+		#			return cluster.a
+
 
 		return Pi.get(L-1,A,Phi,self)
-	
-	def get_from_state(self,cluster_list,phi,pi):
-		for i in cluster_list:
-			if phi in i.states:
-				return i.a
-		#print "state not found yet", phi
-		return pi
 
+	def get_with_level(self,L,A,Pi,Phi):
+		if self.point.get(L) is None:
+			return Pi.get_and_return_level(L-1,A,Phi,self)
+
+		if self.point[L].get(Phi.get(L,A)) is None:
+			return Pi.get_and_return_level(L-1,A,Phi,self)
+		else:
+			return self.point[L][Phi.get(L,A)],L
+
+		#list_of_pis = self.psi[L].values()
+
+		#for cluster_list in list_of_pis:
+		#	for cluster in cluster_list:
+		#		if Phi.get(L,A) in cluster.states:
+		#			return cluster.a,L
+
+		return Pi.get_and_return_level(L-1,A,Phi,self)
 	
-	def get_max(self,L,pi,phi):
-		return self.get_from_state(self.psi[L][pi],phi,pi)
+	def get_from_state(self,L,state,Pi,Phi):
+
+		if self.point.get(L) is None:
+			return Pi.get_from_state(L-1,A,Phi,self)
+
+		if self.point[L].get(state) is None:
+			return Pi.get_from_state_pure(L-1,state,Phi,self)
+		else:
+			return self.point[L][state]
+
+		#list_of_pis = self.psi[L].values()
+		#for cluster_list in list_of_pis:
+		#	for cluster in cluster_list:
+		#		if Phi.get_from_state(L,state) in cluster.states:
+		#			return cluster.a
+
+		return Pi.get_from_state(L-1,state,Phi,self)
+
+	def get_from_state_pure(self,L,state,Pi,Phi):
+
+		if self.point.get(L) is None:
+			return Pi.get_from_state_pure(L-1,state,Phi,self)
+
+		if self.point[L].get(state) is None:
+			return Pi.get_from_state_pure(L-1,state,Phi,self)
+		else:
+			return self.point[L][state]
+
+		#list_of_pis = self.psi[L].values()
+		#for cluster_list in list_of_pis:
+		#	for cluster in cluster_list:
+		#		if state in cluster.states:
+		#			return cluster.a
+
+		return Pi.get_from_state_pure(L-1,state,Phi,self)
 
 	def load(self,filename):
 		print "loading psi"
 		self.psi={}
 		f = open(filename,'r')
+
+		for line in f:
+			l = line.split(",")
+			if l[0]=="L":
+				try:
+					L=int(l[1])
+				except ValueError:
+					print "Value error trying to convert", l[1]					
+					continue
+
+				self.point[L]={}
+			elif l[0]=="state":
+				try:
+					self.point[L][l[1]]=int(l[2])
+				except ValueError:
+					print "Value error trying to convert", l[2]					
+					continue
+
+				#self.check_and_append(L,pi_i)
+			
+
+		'''
 		for line in f:
 			l = line.split(",")
 			if l[0]=="L":
@@ -259,7 +389,9 @@ class Psi:
 			elif l[0]=="state":
 				self.psi[L][pi_i][index].states.add(l[1])
 
-		self.write_psi("/home/aaron/catkin_ws/src/mines/mines/src/checkpsi.txt")
+		'''
+
+		#self.write_psi("/home/aaron/catkin_ws/src/mines/mines/src/checkpsi.txt")
 
 
 	def write_psi(self, fn):
@@ -268,7 +400,16 @@ class Psi:
 
 
 		print "writing psi to" , fn
-		for l,v in self.psi.items():
+
+		for l,q1 in self.point.items():
+			file.write("L" + "," + str(l) + "," + "\n")
+			for state,q2 in q1.items():
+				file.write("state," + str(state)+","+ str(q2) + ","+ "\n")
+
+
+
+		'''
+		for l,v in self.point.items():
 			file.write("L" + "," + str(l) + "," + "\n")
 			for pi,v2 in self.psi[l].items():
 				file.write("pi," + str(pi) + ","+ "\n")
@@ -279,6 +420,7 @@ class Psi:
 					for s in self.psi[l][pi][k].states:
 						file.write("state," + str(s) + "," + "\n")
 					file.write("\n")
+		'''
 
 		file.close()
 		print "finished writing psi to" ,fn
@@ -343,6 +485,8 @@ class Q:
 
 	def write_q(self,filename,Na):
 		file = open(filename,'w') 
+		print "Writing Q to", filename
+		start=time.time()
 		for k,v in self.q.items():
 			file.write("\n")
 			for k2,v2 in self.q[k].items():
@@ -351,6 +495,8 @@ class Q:
 					file.write("Q"+","+str(k) + "," +  str(k2)  + "," +  str(k3) +","+ str(v3) + "," + str(Na.na[k][k2][k3]) + "," +  "\n")
 
 		file.close()
+		print "Completed writing Q",time.time()-start
+		
 
 
 

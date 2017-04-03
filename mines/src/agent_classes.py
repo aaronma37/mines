@@ -68,6 +68,7 @@ class Agent:
 		self.new_A.update_all(s,self)
 		self.solver.write_file(data,self.steps,"/home/aaron/catkin_ws/src/mines/mines/src"+fn+".txt")
 		self.available_flag=False
+		self.lvl=0
 
 	def restart(self):
 		self.steps=0.
@@ -108,8 +109,9 @@ class Agent:
 
 	def decide(self,s):	
 		self.battery=100
-		self.current_action=Policies.Policy(self.solver.get_action(self.new_A))
-		print "Chose to " , self.current_action.index
+		a,l  = self.solver.get_action(self.new_A)
+		self.current_action=Policies.Policy(a)
+		#print "Chose to " , self.current_action.index, "at level", l
 		#self.battery=100
 		#self.current_action=Policies.Policy(self.solver.explore_ucb(0,self.new_A))
 		if self.current_action.index < 26 and self.current_action.index > 0:
@@ -118,6 +120,7 @@ class Agent:
 			self.work=-1
 		#action = self.current_action.get_next_action(self,s)
 		#self.execute(action,s)#NEED TO RESOLVE s
+		self.lvl=l
 
 	def move(self,s):
 		self.steps+=1.

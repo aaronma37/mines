@@ -340,6 +340,7 @@ def draw_all(s,agent_dict,map_size,buoy_dict,gui_data,step_num):
 		draw_text(1.2,-.025+ 1.1-count/4.,"Battery: " + str(a.battery))
 		draw_text(1.2,-.05+ 1.1-count/4.,"Action: " + str(a.work))
 		draw_text(1.2,-.075+ 1.1-count/4.,"Network state: " + str(a.time_away_from_network))
+		draw_text(1.2,-.1+ 1.1-count/4.,"State level: " + str(a.lvl))
 		count+=1
 
 

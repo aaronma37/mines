@@ -133,6 +133,7 @@ class Simulator:
 				pose.pose.position.z=a.battery
 				pose.pose.orientation.x=a.current_action.index-1
 				pose.pose.orientation.y=a.time_away_from_network
+				pose.pose.orientation.z=a.lvl
 				pose_pub.publish(pose)
 
 				a.step(si,ai,.5)

@@ -120,6 +120,7 @@ class Simulator:
 			self.load_file(f_path+k+".txt")
 
 	def load_file(self,fn):
+		#Modded for symmetry
 		f = open(fn,'r')
 		size=0
 		for line in f:
@@ -147,10 +148,16 @@ class Simulator:
 					print "Value error trying to convert", l[4]					
 					return
 
-
-				self.Na_Level.append_to(state,a_i,n,self.Phi)
-				self.Q_Level.append_to(state,a_i,0.,self.Phi)
-				self.Q_Level.append_to_average(state,a_i,r,self.Phi,self.Na_Level)
+				for rot in range(8):
+					rot_state=self.Phi.get_rotated_state(rot,state)
+					rot_action=self.Phi.R_action(rot,a_i)
+					if rot_action is None:
+						print "rot_action is None", rot,a_i
+					for L in range(L_MAX+1):
+						mod_state=self.Phi.get_from_state(L,rot_state)
+						self.Na_Level.append_to_direct(L,mod_state,rot_action,n,self.Phi)
+						self.Q_Level.append_to_direct(L,mod_state,rot_action,0.,self.Phi)
+						self.Q_Level.append_to_average_direct(L,mod_state,rot_action,r,self.Phi,self.Na_Level)
 
 				self.Na.append_to(state,a_i,n,self.Phi)
 				self.Q.append_to(state,a_i,0.,self.Phi)
@@ -166,6 +173,7 @@ class Simulator:
 			self.Q.write_q(f_path+'/q_main.txt',self.Na)
 		if write_psi_flag is True:
 			self.Psi.write_psi(f_path+'/psi_main.txt')
+
 
 	def pose_cb(self,data):
 		if data.header.frame_id not in agent_dict:

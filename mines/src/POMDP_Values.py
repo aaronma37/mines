@@ -26,10 +26,26 @@ class Pi:
 		return 26
 
 	def get_and_return_level(self,L,A,Phi,Psi):
+		state=Phi.get(L,A)
+
+		rotated_action=[]
+		level=[]
+		for rot in range(8):
+			rot_state=Phi.get_rotated_state(rot,state)
+			a,l=self.get_and_return_level_2(L,rot_state,Phi,Psi)
+			rotated_action.append(a)
+			level.append(l)
+
+		best_index = level.index(max(level))	
+		#print rotated_action,level
+		return Phi.unrotate_action(best_index,rotated_action[best_index]),level[best_index]
+
+	def get_and_return_level_2(self,L,s,Phi,Psi):
 		if L == -1:
-			return self.seed_algorithm(A),L
+			return self.seed_algorithm(s),L
 		else:
-			return Psi.get_with_level(L,A,self,Phi)	
+			s = Phi.get_from_state(L,s)
+			return Psi.get_with_level(L,s,self,Phi)
 
 	def get(self,L,A,Phi,Psi):
 		if L == -1:
@@ -55,6 +71,9 @@ class Phi:
 		'''init'''
 		#print "initializing Phi"
 		#Phi maps A->A*
+		self.forward_rot_vals={}
+		self.backward_rot_vals={}
+		self.generate_rotations()
 
 	def get_max_level(self,A):
 		return self.get(L_MAX,A)
@@ -73,53 +92,200 @@ class Phi:
 			h=h+s[i]+"~"
 
 		return h
+
+	def get_rotated_state(self,r_index,state):
+		
+		s = state.split("~")
+		h = str(self.R(r_index,int(s[0])))+"~"
+
+		for i in range(L_MAX+1):
+			if i >0 and i < 26:	
+				h = h + s[self.R(r_index,i-1)+1]+"~"
+			elif i > 25:
+				h = h + s[self.R(r_index,i-26)+26]+"~"
+			
+		return h
+
+	def generate_rotations(self):
+
+		for r_index in range(8):
+			self.forward_rot_vals[r_index]={}
+			self.backward_rot_vals[r_index]={}
+
+			for i in range(25):
+				if r_index==0:
+					self.forward_rot_vals[r_index][i]=i
+
+				if r_index==1:
+					self.forward_rot_vals[r_index][i]=self.get_mirror(i)
+				elif r_index==2:
+					self.forward_rot_vals[r_index][i]=self.get_rot(i)
+				elif r_index==3:
+					self.forward_rot_vals[r_index][i]=self.get_mirror(self.get_rot(i))
+				elif r_index==4:
+					self.forward_rot_vals[r_index][i]=self.get_rot(self.get_rot(i))
+				elif r_index==5:
+					self.forward_rot_vals[r_index][i]=self.get_mirror(self.get_rot(self.get_rot(i)))
+				elif r_index==6:
+					self.forward_rot_vals[r_index][i]=self.get_rot(self.get_rot(self.get_rot(i)))
+				elif r_index==7:
+					self.forward_rot_vals[r_index][i]=self.get_mirror(self.get_rot(self.get_rot(self.get_rot(i))))
+
+				if r_index==0:
+					self.backward_rot_vals[r_index][i] = i
+
+				if r_index==1:
+					self.backward_rot_vals[r_index][i] = self.get_mirror(i)
+				elif r_index==2:
+					self.backward_rot_vals[r_index][i] = self.get_rot(self.get_rot(self.get_rot(i)))
+				elif r_index==3:
+					self.backward_rot_vals[r_index][i] = self.get_rot(self.get_rot(self.get_rot(self.get_mirror(i))))
+				elif r_index==4:
+					self.backward_rot_vals[r_index][i] = self.get_rot(self.get_rot(i))
+				elif r_index==5:
+					self.backward_rot_vals[r_index][i] = self.get_rot(self.get_rot(self.get_mirror(i)))
+				elif r_index==6:
+					self.backward_rot_vals[r_index][i] = self.get_rot(i)
+				elif r_index==7:
+					self.backward_rot_vals[r_index][i] = self.get_rot(self.get_mirror(i))
+
+	def R(self,r_index,i):
+		return self.forward_rot_vals[r_index][i]
+		#order none,m,r,rm,rr,rrm,rrr,rrrm
+		'''
+		if r_index==0:
+			return i
+
+		if r_index==1:
+			return self.get_mirror(i)
+		elif r_index==2:
+			return self.get_rot(i)
+		elif r_index==3:
+			return self.get_mirror(self.get_rot(i))
+		elif r_index==4:
+			return self.get_rot(self.get_rot(i))
+		elif r_index==5:
+			return self.get_mirror(self.get_rot(self.get_rot(i)))
+		elif r_index==6:
+			return self.get_rot(self.get_rot(self.get_rot(i)))
+		elif r_index==7:
+			return self.get_mirror(self.get_rot(self.get_rot(self.get_rot(i))))
+		'''
+
+	def R_backwards(self,r_index,i):
+		return self.backward_rot_vals[r_index][i]
+		'''
+		#order none,m,r,rm,rr,rrm,rrr,rrrm
+		if r_index==0:
+			return i
+
+		if r_index==1:
+			return self.get_mirror(i)
+		elif r_index==2:
+			return self.get_rot(self.get_rot(self.get_rot(i)))
+		elif r_index==3:
+			return self.get_rot(self.get_rot(self.get_rot(self.get_mirror(i))))
+		elif r_index==4:
+			return self.get_rot(self.get_rot(i))
+		elif r_index==5:
+			return self.get_rot(self.get_rot(self.get_mirror(i)))
+		elif r_index==6:
+			return self.get_rot(i)
+		elif r_index==7:
+			return self.get_rot(self.get_mirror(i))
+		'''
+
+	def R_action(self,r_index,i):
+		if i==0 or i == 26:
+			return i
+		return self.R(r_index,i-1)+1
+
+	def unrotate_action(self,r_index,i):
+		if i==0 or i == 26:
+			return i
+		return self.R_backwards(r_index,i-1)+1
+
+
+	def get_rot(self,i):
+		if i==0:
+			return 4
+		if i==1:
+			return 21
+		if i==2:
+			return 22
+		if i==3:
+			return 23
+		if i==4:
+			return 24
+		if i==5:
+			return 3
+		if i==6:
+			return 2
+		if i==7:
+			return 1
+		if i==8:
+			return 0
+		if i==9:
+			return 17
+		if i==10:
+			return 13
+		if i==11:
+			return 9
+		if i==12:
+			return 5
+		if i==13:
+			return 18
+		if i==14:
+			return 14
+		if i==15:
+			return 10
+		if i==16:
+			return 6
+		if i==17:
+			return 19
+		if i==18:
+			return 15
+		if i==19:
+			return 11
+		if i==20:
+			return 7
+		if i==21:
+			return 20
+		if i==22:
+			return 16
+		if i==23:
+			return 12
+		if i==24:
+			return 8
+
+	def get_mirror(self,i):
+
+		if i==1:
+			return 5
+		elif i==5:
+			return 1
+		elif i ==3:
+			return 21
+		elif i==21:
+			return 3
+		elif i==23:
+			return 20
+		elif i==20:
+			return 23
+		elif i==12:
+			return 7
+		elif i==7:
+			return 12
+		else:
+			return i
+
+
+
+
+
+			
+
 	
-
-	'''
-	def get(self,L,A):
-		if L==0:
-			return A.get_location_abf()
-		elif L==1:
-			return A.get_location_abf()+A.get_region_score_abf()
-		elif L==2:
-			return A.get_complete_abf()
-
-
-		return A.get_complete_abf()
-
-	'''
-
-	'''
-
-	def get(self,L,A):
-		if L==0:
-			return A.get_complete_abf()
-
-
-
-		return A.get_complete_abf()
-	'''
-
-	'''
-	def get_from_state(self,L,state):
-		s=state.split("~")
-		if L==0:
-			return s[0]+"~"
-		elif L==1:
-			return s[0]+"~"+s[1]+"~"
-		elif L==2:
-			return s[0]+"~"+s[1]+"~"+s[2]+"~"
-
-	'''
-
-	'''
-
-	def get_from_state(self,L,state):
-		s=state.split("~")
-		if L==0:
-			return s[0]+"~"+s[1]+"~"+s[2]+"~"
-	'''
-				
 		
 
 class Cluster:
@@ -166,23 +332,13 @@ class Psi:
 		for l,q_1 in Q.q.items():
 			self.point[l]={}
 			for state,q_2 in q_1.items():
-				start1=time.time()
-				#pi=Pi.get_from_state_pure(l-1,state,Phi,self)
-				end1=time.time()
-				start2=time.time()
-				#self.check_and_append(l,pi)
+				#start1=time.time()
 				v=list(q_2.values())
 				key=list(q_2.keys())
-				end2=time.time()
-				start3=time.time()
-				#k = self.splitter(self.psi[l][pi],key[v.index(max(v))],pi)
+				#end2=time.time()
 				self.point[l][state]=key[v.index(max(v))]
-				end3=time.time()
-				start4=time.time()
-				#for action,v2 in q_2.items():
-				#	self.psi[l][pi][k].update(action,v2,Na.na[l][state][action],state)
-				end4=time.time()
-				#print "total", time.time()-start1,"s1",(end1-start1)/(time.time()-start1),"s2",(end2-start2)/(time.time()-start1),"s3",(end3-start3)/(time.time()-start1),"s4",(end4-start4)/(time.time()-start1)
+
+				#print "total", time.time()-start1,"s2",(end2-start1)/(time.time()-start1),"s3",(end3-start3)/(time.time()-start1)
 
 
 		print "finished calculated psi",time.time()-start
@@ -263,14 +419,14 @@ class Psi:
 
 		return Pi.get(L-1,A,Phi,self)
 
-	def get_with_level(self,L,A,Pi,Phi):
+	def get_with_level(self,L,s,Pi,Phi):
 		if self.point.get(L) is None:
-			return Pi.get_and_return_level(L-1,A,Phi,self)
+			return Pi.get_and_return_level_2(L-1,s,Phi,self)
 
-		if self.point[L].get(Phi.get(L,A)) is None:
-			return Pi.get_and_return_level(L-1,A,Phi,self)
+		if self.point[L].get(s) is None:
+			return Pi.get_and_return_level_2(L-1,s,Phi,self)
 		else:
-			return self.point[L][Phi.get(L,A)],L
+			return self.point[L][s],L
 
 		#list_of_pis = self.psi[L].values()
 
@@ -320,6 +476,7 @@ class Psi:
 	def load(self,filename):
 		print "loading psi"
 		self.psi={}
+		start=time.time()
 		f = open(filename,'r')
 
 		for line in f:
@@ -338,6 +495,8 @@ class Psi:
 				except ValueError:
 					print "Value error trying to convert", l[2]					
 					continue
+
+		print "finished loading psi", time.time()-start
 
 
 
@@ -457,8 +616,7 @@ class Q_Level:
 			s = Phi.get_from_state(l,state)
 			self.q[l][s][a]+=(r-self.q[l][s][a])/Na.na[l][s][a]
 
-	def append_to_average_direct(self,l,state,a,r,Phi,Na):
-		s = Phi.get_from_state(l,state)
+	def append_to_average_direct(self,l,s,a,r,Phi,Na):
 		self.q[l][s][a]+=(r-self.q[l][s][a])/Na.na[l][s][a]
 
 	def append_to(self,state,a,r,Phi):
@@ -473,8 +631,7 @@ class Q_Level:
 			else:
 				self.q[l][s][a]+=r
 
-	def append_to_direct(self,l,state,a,r,Phi):
-		s = Phi.get_from_state(l,state)
+	def append_to_direct(self,l,s,a,r,Phi):
 		if self.q.get(l) is None:
 			self.q[l]={s:{a:r}}	
 		elif self.q[l].get(s) is None:
@@ -587,8 +744,7 @@ class Na_Level:
 			else:
 				self.na[l][s][a]+=r
 
-	def append_to_direct(self,l,state,a,r,Phi):
-		s = Phi.get_from_state(l,state)
+	def append_to_direct(self,l,s,a,r,Phi):
 		if self.na.get(l) is None:
 			self.na[l]={s:{a:r}}	
 		elif self.na[l].get(s) is None:

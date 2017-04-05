@@ -85,7 +85,6 @@ class Solver:
 				a=0
 
 		state=self.Phi.get_max_level(A)
-
 		self.N.append_to(state,1.,self.Phi)
 		self.Na.append_to(state,a,1.,self.Phi)
 		self.Q.append_to(state,a,0.,self.Phi)

@@ -74,6 +74,9 @@ class Phi:
 		self.forward_rot_vals={}
 		self.backward_rot_vals={}
 		self.generate_rotations()
+		self.state_order={}
+		self.loc_order={}
+		self.generate_order_state()
 
 	def get_max_level(self,A):
 		return self.get(L_MAX,A)
@@ -81,8 +84,20 @@ class Phi:
 	def get(self,L,A):
 		h=""
 		for i in range(L+1):
-			h=h+ A.get_discrete_abf(i)
+			h=h+ A.get_discrete_abf(self.state_order[i])
 		return h
+
+	def generate_order_state(self):
+		self.state_order[0]=0
+		c=1
+		for i in range(L_MAX/2):
+			self.state_order[c]=i+1
+			self.loc_order[c]=i
+			c+=1
+			self.state_order[c]=i+26
+			self.loc_order[c]=i
+			c+=1
+
 
 	def get_from_state(self,L,state):
 
@@ -98,11 +113,13 @@ class Phi:
 		s = state.split("~")
 		h = str(self.R(r_index,int(s[0])))+"~"
 
-		for i in range(L_MAX+1):
-			if i >0 and i < 26:	
-				h = h + s[self.R(r_index,i-1)+1]+"~"
-			elif i > 25:
-				h = h + s[self.R(r_index,i-26)+26]+"~"
+		for i in range(1,L_MAX+1):
+
+			if (i % 2 == 0): #even 
+				h = h + s[self.state_order[2*self.R(r_index,self.loc_order[i])+2]]+"~"
+			else: #odd
+				h = h + s[self.state_order[2*self.R(r_index,self.loc_order[i])+1]]+"~"
+
 			
 		return h
 
@@ -329,6 +346,7 @@ class Psi:
 		self.point={}
 		print "starting calculate psi"
 		start=time.time()
+
 		for l,q_1 in Q.q.items():
 			self.point[l]={}
 			for state,q_2 in q_1.items():
@@ -342,6 +360,7 @@ class Psi:
 
 
 		print "finished calculated psi",time.time()-start
+		return time.time()-start
 
 	def splitter(self, cluster_list, m, pi):
 		for i in cluster_list:

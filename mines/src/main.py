@@ -107,6 +107,7 @@ class Simulator:
 		self.Pi=v.Pi()
 		self.send_to=0
 		self.agent_num=0
+		self.time_to_wait=0
 
 		if load_q_flag is True:
 			self.load_q()
@@ -153,7 +154,7 @@ class Simulator:
 					rot_action=self.Phi.R_action(rot,a_i)
 					if rot_action is None:
 						print "rot_action is None", rot,a_i
-					for L in range(L_MAX+1):
+					for L in range(40+1):#MOOOOOOOOOOO
 						mod_state=self.Phi.get_from_state(L,rot_state)
 						self.Na_Level.append_to_direct(L,mod_state,rot_action,n,self.Phi)
 						self.Q_Level.append_to_direct(L,mod_state,rot_action,0.,self.Phi)
@@ -166,7 +167,7 @@ class Simulator:
 		print "Successfully appended",fn, "with", size, "lines"
 
 	def calculate_policy(self):
-		self.Psi.update(self.Pi,self.Phi,self.Q_Level,self.Na_Level)
+		self.time_to_wait=self.Psi.update(self.Pi,self.Phi,self.Q_Level,self.Na_Level)
 		
 	def write_psi(self):
 		if write_q_flag is True:
@@ -281,6 +282,8 @@ class Simulator:
 		self.s.reset()	
 
 		restart_publisher.publish(restart_)
+		time.sleep(self.time_to_wait)
+
 
 	def pub_to_buoys(self):
 		sb.calculate_region_score(agent_dict)

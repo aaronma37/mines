@@ -67,7 +67,7 @@ class button:
 
 def action(action_index,s,gd,main):
 	if action_index == RESET:
-		main()
+		main(True)
 		s.reset()
 		time.sleep(.05)
 	elif action_index==HIGHLIGHT:

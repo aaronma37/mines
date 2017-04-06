@@ -32,7 +32,7 @@ import POMDP_Values as v
 L_MAX=v.L_MAX
 
 
-
+a_step_time = rospy.get_param("/agent_step_time")
 load_q_flag = rospy.get_param("/load_q")
 write_q_flag = rospy.get_param("/write_q")
 write_psi_flag = rospy.get_param("/write_psi")
@@ -108,6 +108,11 @@ class Simulator:
 		self.send_to=0
 		self.agent_num=0
 		self.time_to_wait=0
+		self.sim_count=0
+		self.num_eval=1
+		self.sim_time=50
+		self.total_sims=200
+		self.cull=20
 
 		if load_q_flag is True:
 			self.load_q()
@@ -154,7 +159,7 @@ class Simulator:
 					rot_action=self.Phi.R_action(rot,a_i)
 					if rot_action is None:
 						print "rot_action is None", rot,a_i
-					for L in range(30+1):#MOOOOOOOOOOO
+					for L in range(self.cull+1):#MOOOOOOOOOOO
 						mod_state=self.Phi.get_from_state(L,rot_state)
 						self.Na_Level.append_to_direct(L,mod_state,rot_action,n,self.Phi)
 						self.Q_Level.append_to_direct(L,mod_state,rot_action,0.,self.Phi)
@@ -267,18 +272,18 @@ class Simulator:
 			o2.header.frame_id=list(agent_dict.keys())[self.send_to]
 			agent_occ.publish(o2)
 
-	def reset_pub(self):
+	def reset_pub(self,recalculate_policy_flag):
 		for i in range(25):
 			o2.data[i]=0
-		reset_.data=self.s.get_reward()
-		print self.s.get_reward(), "H"
+		reset_.data=self.s.get_reward()-self.s.init_reward
+		print self.s.get_reward()-self.s.init_reward, "H"
 		self.s.reset()
 		reset_publisher.publish(reset_)
 		time.sleep(2)
-
-		self.load_files()
-		self.calculate_policy()
-		self.write_psi()
+		if recalculate_policy_flag is True:
+			self.load_files()
+			self.calculate_policy()
+			self.write_psi()
 		self.s.reset()	
 
 		restart_publisher.publish(restart_)
@@ -305,7 +310,7 @@ class Simulator:
 		start2= time.time()
 		asynch_timer=time.time()
 		self.s.reset()
-		count=0
+		self.sim_count=0
 		while not rospy.is_shutdown():
 		
 			draw.render_once(self.s,agent_dict,map_size,buoy_dict,gd,self.reset_pub,time.time()-start2)
@@ -315,7 +320,7 @@ class Simulator:
 			agents=list(agent_dict.keys())
 			self.agent_num = len(agents)
 			if self.agent_num > 0:
-				if (time.time() - asynch_timer) > (20./self.agent_num):
+				if (time.time() - asynch_timer) > (20.*a_step_time/self.agent_num):
 					asynch_timer=time.time()
 					self.pub2()
 
@@ -325,11 +330,14 @@ class Simulator:
 				#self.pub_to_buoys()
 				start = time.time()
 
-			if time.time()-start2 > 200:
-				count+=1
-				if count > 50:
+			if time.time()-start2 > self.sim_time:
+				self.sim_count+=1
+				if self.sim_count > self.total_sims:
 					return
-				self.reset_pub()
+				if self.sim_count%self.num_eval==0 or self.sim_count==1:
+					self.reset_pub(True)
+				else:
+					self.reset_pub(False)
 				start2=time.time()
 
 

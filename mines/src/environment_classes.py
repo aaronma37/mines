@@ -30,6 +30,7 @@ class Mine_Data:
 		self.occupied = []
 		self.NOT_SEEN=0
 		self.SEEN=1
+		self.init_reward
 
 		for i in range(25):
 			self.occupied.append(0)
@@ -64,7 +65,7 @@ class Mine_Data:
 
 		self.pre_num_unknown_locations=self.map_size*self.map_size
 		self.seen=np.random.randint(1, size=(self.map_size,self.map_size))
-		'''
+		
 		for i in range(25):
 			k= random.randint(0, 3)
 			if k == 3:
@@ -80,10 +81,9 @@ class Mine_Data:
 				if random.random() < chance:
 					self.seen[region[0]][region[1]]=1
 				
-
+		
 		self.pre_num_unknown_locations-=self.seen.sum()
-		print self.pre_num_unknown_locations
-		'''
+		self.init_reward=self.seen.sum()
 
 	def move(self):
 		self.temp_seen=self.seen.copy()

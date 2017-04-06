@@ -172,9 +172,10 @@ class Solver:
 		self.steps.append(steps)
 
 		file = open(fp+'/performance.txt','w') 
-
 		for i in range(len(self.great)):
-			file.write(str(self.great[i]/self.steps[i]) +"\n")
-
+			if self.steps[i] > 0:
+				file.write(str(self.great[i]/self.steps[i]) +"\n")
+			else:
+				file.write(str(0) +"\n")
 		file.close()
 

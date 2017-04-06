@@ -174,7 +174,7 @@ class Solver:
 		file = open(fp+'/performance.txt','w') 
 
 		for i in range(len(self.great)):
-			file.write(str(self.great[i]) + ", " + str(self.steps[i])+ ", " + str(self.great[i]/self.steps[i]) +"\n")
+			file.write(str(self.great[i]/self.steps[i]) +"\n")
 
 		file.close()
 

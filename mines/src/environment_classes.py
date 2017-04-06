@@ -5,7 +5,7 @@ from random import randint
 import random
 import numpy as np
 import math
-
+import Regions
 
 
 def get_norm_size(s):
@@ -61,9 +61,29 @@ class Mine_Data:
 						break
 
 	def reset(self):
-		self.seen.fill(0)
-		self.pre_num_unknown_locations=self.map_size*self.map_size
 
+		self.pre_num_unknown_locations=self.map_size*self.map_size
+		self.seen=np.random.randint(1, size=(self.map_size,self.map_size))
+		'''
+		for i in range(25):
+			k= random.randint(0, 3)
+			if k == 3:
+				chance=1.
+			elif k==2:
+				chance=.66
+			elif k==1:
+				chance=.33	
+			else:
+				chance=0.
+
+			for region in Regions.region_list[i]:
+				if random.random() < chance:
+					self.seen[region[0]][region[1]]=1
+				
+
+		self.pre_num_unknown_locations-=self.seen.sum()
+		print self.pre_num_unknown_locations
+		'''
 
 	def move(self):
 		self.temp_seen=self.seen.copy()

@@ -154,7 +154,7 @@ class Simulator:
 					rot_action=self.Phi.R_action(rot,a_i)
 					if rot_action is None:
 						print "rot_action is None", rot,a_i
-					for L in range(40+1):#MOOOOOOOOOOO
+					for L in range(30+1):#MOOOOOOOOOOO
 						mod_state=self.Phi.get_from_state(L,rot_state)
 						self.Na_Level.append_to_direct(L,mod_state,rot_action,n,self.Phi)
 						self.Q_Level.append_to_direct(L,mod_state,rot_action,0.,self.Phi)
@@ -305,6 +305,7 @@ class Simulator:
 		start2= time.time()
 		asynch_timer=time.time()
 		self.s.reset()
+		count=0
 		while not rospy.is_shutdown():
 		
 			draw.render_once(self.s,agent_dict,map_size,buoy_dict,gd,self.reset_pub,time.time()-start2)
@@ -325,8 +326,12 @@ class Simulator:
 				start = time.time()
 
 			if time.time()-start2 > 200:
+				count+=1
+				if count > 50:
+					return
 				self.reset_pub()
 				start2=time.time()
+
 
 ###MAIN
 def main(args):

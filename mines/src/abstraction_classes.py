@@ -414,7 +414,7 @@ class Abstractions():
 				elif self.regions[region_num-1].hash==2:
 					r=3.5	
 				elif self.regions[region_num-1].hash==1:
-					r=1.5
+					r=.2
 				else:
 					r=-1.
 				#r=1.
@@ -532,6 +532,9 @@ class Abstractions():
 
 	def complete_abf_length(self):
 		return len(self.get_location_abf()+self.get_battery_abf()+self.get_region_score_abf()+self.get_work_load_abf())
+
+	def get_base(self):
+		return Regions.get_region(self.location.loc[0],self.location.loc[1])
 
 
 

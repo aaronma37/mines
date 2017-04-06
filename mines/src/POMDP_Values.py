@@ -30,19 +30,36 @@ class Pi:
 
 		rotated_action=[]
 		level=[]
+		score=[]
 		for rot in range(8):
 			rot_state=Phi.get_rotated_state(rot,state)
-			a,l=self.get_and_return_level_2(L,rot_state,Phi,Psi)
+			a,l,s=self.get_and_return_level_2(L,rot_state,Phi,Psi)
 			rotated_action.append(a)
 			level.append(l)
+			score.append(s)
 
-		best_index = level.index(max(level))	
-		#print rotated_action,level
+		ml=-2
+		mv=-1
+		ind=-1
+
+		for i in range(8):
+			if level[i]>ml:
+				ind=i
+				ml=level[i]
+				mv=score[i]
+			elif level[i]==ml:
+				if score[i]>mv:
+					ind=i
+					ml=level[i]
+					mv=score[i]	
+
+		best_index = ind
+		print rotated_action,level,score,best_index
 		return Phi.unrotate_action(best_index,rotated_action[best_index]),level[best_index]
 
 	def get_and_return_level_2(self,L,s,Phi,Psi):
 		if L == -1:
-			return self.seed_algorithm(s),L
+			return self.seed_algorithm(s),L,0
 		else:
 			s = Phi.get_from_state(L,s)
 			return Psi.get_with_level(L,s,self,Phi)
@@ -83,20 +100,121 @@ class Phi:
 
 	def get(self,L,A):
 		h=""
+		base=A.get_base()
 		for i in range(L+1):
-			h=h+ A.get_discrete_abf(self.state_order[i])
+			h=h+ A.get_discrete_abf(self.state_order[base][i])
 		return h
 
 	def generate_order_state(self):
-		self.state_order[0]=0
-		c=1
-		for i in range(L_MAX/2):
-			self.state_order[c]=i+1
-			self.loc_order[c]=i
-			c+=1
-			self.state_order[c]=i+26
-			self.loc_order[c]=i
-			c+=1
+
+		link={}
+		for i in range(25):
+			self.state_order[i]={}
+			self.loc_order[i]={}
+			link[i]=[]
+
+
+		link[0]=[0,5,1,6,9,2,7,10,13,3,8,11,14,17,4,12,15,18,21,16,19,22,20,23,24]
+
+		link[1]=[1,0,5,9,13,2,6,10,14,18,17,3,7,11,15,19,23,22,21,4,8,12,16,20,24]
+
+		link[5]=[5,6,10,9,1,0,7,11,15,14,13,2,8,12,16,20,19,18,17,3,24,23,22,21,4]
+
+		link[6]=[6,7,11,10,9,5,8,12,16,15,14,13,2,1,0,20,19,18,17,3,24,23,22,21,4]
+
+		link[9]=[9,10,14,13,2,1,0,5,6,7,11,15,19,18,17,3,8,12,16,20,24,23,22,21,4]
+
+		link[10]=[10,11,15,14,13,9,5,6,7,8,12,16,20,19,18,17,3,2,1,0,24,23,22,21,4]
+
+		link[14]=[14,15,19,18,17,13,9,10,11,12,16,20,24,23,22,21,4,3,2,1,0,5,6,7,8]
+
+		# link 2 is 6 with r_index=2 (1 rotation)
+
+		for i in range(25):
+			link[2].append(self.R(2,link[6][i]))
+
+		# link 3 is 5 with r_index=2
+		for i in range(25):
+			link[3].append(self.R(2,link[5][i]))
+
+		# link 4 is 0 with r_index=2
+		for i in range(25):
+			link[4].append(self.R(2,link[0][i]))
+
+		# link 7 is 1 with r_index=6
+		for i in range(25):
+			link[7].append(self.R(6,link[1][i]))
+
+		# link 8 is 0 with r_index=6
+		for i in range(25):
+			link[8].append(self.R(6,link[0][i]))
+
+		# link 11 is 9 with r_index=6
+		for i in range(25):
+			link[11].append(self.R(6,link[9][i]))
+
+		# link 12 is 5 with r_index=6
+		for i in range(25):
+			link[12].append(self.R(6,link[5][i]))
+
+		# link 13 is 10 with r_index=2
+		for i in range(25):
+			link[13].append(self.R(2,link[10][i]))
+
+		# link 15 is 10 with r_index=6
+		for i in range(25):
+			link[15].append(self.R(6,link[10][i]))
+
+		# link 16 is 6 with r_index=6
+		for i in range(25):
+			link[16].append(self.R(6,link[6][i]))
+
+		# link 17 is 9 with r_index=2
+		for i in range(25):
+			link[17].append(self.R(2,link[9][i]))
+
+		# link 18 is 10 with r_index=4
+		for i in range(25):
+			link[18].append(self.R(4,link[10][i]))
+
+		# link 19 is 9 with r_index=4
+		for i in range(25):
+			link[19].append(self.R(4,link[9][i]))
+
+		# link 20 is 1 with r_index=4
+		for i in range(25):
+			link[20].append(self.R(4,link[1][i]))
+
+		# link 21 is 1 with r_index=2
+		for i in range(25):
+			link[21].append(self.R(2,link[1][i]))
+
+		# link 22 is 6 with r_index=4
+		for i in range(25):
+			link[22].append(self.R(4,link[6][i]))
+
+		# link 23 is 5 with r_index=4
+		for i in range(25):
+			link[23].append(self.R(4,link[5][i]))
+
+		# link 24 is 0 with r_index=4
+		for i in range(25):
+			link[24].append(self.R(4,link[0][i]))
+
+		self.state_order[0][0]=0
+		
+
+		for k in range(25):
+			self.state_order[k][0]=0
+			c=1
+			for i in range(L_MAX/2):
+
+				self.state_order[k][c]=link[k][i]+1
+				self.loc_order[k][c]=link[k][i]
+				c+=1
+				self.state_order[k][c]=link[k][i]+26
+				self.loc_order[k][c]=link[k][i]
+				c+=1
 
 
 	def get_from_state(self,L,state):
@@ -111,16 +229,26 @@ class Phi:
 	def get_rotated_state(self,r_index,state):
 		
 		s = state.split("~")
+		base=int(s[0])
 		h = str(self.R(r_index,int(s[0])))+"~"
 
-		for i in range(1,L_MAX+1):
-
+		#sort it
+		sorted_region={}
+		sorted_wl={}
+		for i in range(1,51):
 			if (i % 2 == 0): #even 
-				h = h + s[self.state_order[2*self.R(r_index,self.loc_order[i])+2]]+"~"
-			else: #odd
-				h = h + s[self.state_order[2*self.R(r_index,self.loc_order[i])+1]]+"~"
+				sorted_wl[self.loc_order[base][i]]=s[i]
+			else:
+				sorted_region[self.loc_order[base][i]]=s[i]
 
-			
+
+		for i in range(1,L_MAX+1):
+			region_index=self.R(r_index,self.loc_order[base][i])
+			if (i % 2 == 0): #even 
+				h = h + str(sorted_wl[region_index])+"~"
+			else:
+				h = h + str(sorted_region[region_index])+"~"
+
 		return h
 
 	def generate_rotations(self):
@@ -340,21 +468,25 @@ class Psi:
 		#Get rid of dependence on Pi
 		self.psi={}#[L][pi(L-1,A,Phi,Psi)]-> cluster
 		self.point={}
+		self.score={}
 
 	def update(self,Pi,Phi,Q,Na):
 		self.psi={}
 		self.point={}
+		self.score={}
 		print "starting calculate psi"
 		start=time.time()
 
 		for l,q_1 in Q.q.items():
 			self.point[l]={}
+			self.score[l]={}
 			for state,q_2 in q_1.items():
 				#start1=time.time()
 				v=list(q_2.values())
 				key=list(q_2.keys())
 				#end2=time.time()
 				self.point[l][state]=key[v.index(max(v))]
+				self.score[l][state]=max(v)
 
 				#print "total", time.time()-start1,"s2",(end2-start1)/(time.time()-start1),"s3",(end3-start3)/(time.time()-start1)
 
@@ -445,7 +577,7 @@ class Psi:
 		if self.point[L].get(s) is None:
 			return Pi.get_and_return_level_2(L-1,s,Phi,self)
 		else:
-			return self.point[L][s],L
+			return self.point[L][s],L,self.score[L][s]
 
 		#list_of_pis = self.psi[L].values()
 
@@ -508,9 +640,11 @@ class Psi:
 					continue
 
 				self.point[L]={}
+				self.score[L]={}
 			elif l[0]=="state":
 				try:
 					self.point[L][l[1]]=int(l[2])
+					self.score[L][l[1]]=float(l[3])
 				except ValueError:
 					print "Value error trying to convert", l[2]					
 					continue
@@ -530,7 +664,7 @@ class Psi:
 		for l,q1 in self.point.items():
 			file.write("L" + "," + str(l) + "," + "\n")
 			for state,q2 in q1.items():
-				file.write("state," + str(state)+","+ str(q2) + ","+ "\n")
+				file.write("state," + str(state)+","+ str(q2) + ","+  str(self.score[l][state]) + ","+"\n")
 
 
 

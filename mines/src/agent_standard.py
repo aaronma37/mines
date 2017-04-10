@@ -138,7 +138,7 @@ class Simulator:
 				pose.pose.orientation.z=a.lvl
 				pose_pub.publish(pose)
 
-				a.step(si,ai,.5)
+				a.step(si,ai,.05)
 				#s.imprint(si)
 
 
@@ -147,7 +147,7 @@ class Simulator:
 				#	a.predict_A()
 					#predict si
 
-			to_wait = start-time.time() + 1.
+			to_wait = start-time.time() + .1
 		
 
 

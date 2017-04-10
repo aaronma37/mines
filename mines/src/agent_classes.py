@@ -81,16 +81,8 @@ class Agent:
 	def get_psi(self,fp):
 		self.solver.get_psi(fp+'/psi_main.txt')
 
-
-
-
-
 	def death(self):
 		print "dead"
-		#self.x=randint(0,self.map_size-1)
-		#self.y=randint(0,self.map_size-1)
-		#self.battery=75
-
 
 	def imprint(self, u):
 		u.x=self.x
@@ -102,31 +94,40 @@ class Agent:
 
 
 
-	def step(self,s,a_,time_to_work):	
-		self.solver.OnlinePlanning(self,s,a_,time_to_work)
+	def step(self,s,time_to_work):	
+		self.calculate_A(s)
+		self.solver.OnlinePlanning(self.new_A,time_to_work)
 
 	def calculate_A(self,s):
 		self.new_A.update_all(s,self)
 
 	def decide(self,s):	
-		self.battery=100
-		a,l  = self.solver.get_action(self.new_A)
-		self.current_action=Policies.Policy(a)
-		#print "Chose to " , self.current_action.index, "at level", l
 		#self.battery=100
-		#self.current_action=Policies.Policy(self.solver.explore_ucb(0,self.new_A))
+		a  = self.solver.get_action(self.new_A)	
+		if a == 26:
+			print "ERROR",26
+		self.current_action=Policies.Policy(a)
+
 		if self.current_action.index < 26 and self.current_action.index > 0:
 			self.work=self.current_action.index-1
 		else:
 			self.work=-1
 		#action = self.current_action.get_next_action(self,s)
 		#self.execute(action,s)#NEED TO RESOLVE s
-		self.lvl=l
+		self.lvl=0
 
 	def move(self,s):
 		self.steps+=1.
-		action = self.current_action.get_next_action(self,s)
-		self.execute(action,s)#NEED TO RESOLVE s
+		if self.battery  > 1:
+			action = self.current_action.get_next_action(self,s)
+			self.execute(action,s)#NEED TO RESOLVE s
+		self.battery-=.25
+	
+		#if self.battery <20:
+		#	self.battery=20
+		if self.new_A.location.region==14:
+			self.battery=100
+		
 
 
 

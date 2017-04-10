@@ -111,7 +111,7 @@ class Simulator:
 		self.sim_count=0
 		self.num_eval=1
 		self.sim_time=50
-		self.total_sims=200
+		self.total_sims=500
 		self.cull=20
 
 		if load_q_flag is True:
@@ -124,6 +124,8 @@ class Simulator:
 	def load_files(self):
 		for k,a in agent_dict.items():
 			self.load_file(f_path+k+".txt")
+			return
+
 
 	def load_file(self,fn):
 		#Modded for symmetry
@@ -154,25 +156,37 @@ class Simulator:
 					print "Value error trying to convert", l[4]					
 					return
 
+				'''
 				for rot in range(8):
 					rot_state=self.Phi.get_rotated_state(rot,state)
+
 					rot_action=self.Phi.R_action(rot,a_i)
+					#print state, rot, rot_state, a_i, rot_action
 					if rot_action is None:
 						print "rot_action is None", rot,a_i
 					for L in range(self.cull+1):#MOOOOOOOOOOO
-						mod_state=self.Phi.get_from_state(L,rot_state)
-						self.Na_Level.append_to_direct(L,mod_state,rot_action,n,self.Phi)
-						self.Q_Level.append_to_direct(L,mod_state,rot_action,0.,self.Phi)
-						self.Q_Level.append_to_average_direct(L,mod_state,rot_action,r,self.Phi,self.Na_Level)
-
+						if rot_action >0 and rot_action<26:
+							if self.Phi.avail_action_space[self.Phi.get_base_from_str(rot_state)].index(rot_action-1)< (L-1)/2 + 1: 
+								mod_state=self.Phi.get_from_state(L,rot_state)
+								self.Na_Level.append_to_direct(L,mod_state,rot_action,n,self.Phi)
+								self.Q_Level.append_to_direct(L,mod_state,rot_action,0.,self.Phi)
+								self.Q_Level.append_to_average_direct(L,mod_state,rot_action,r,self.Phi,self.Na_Level)
+						else:
+							mod_state=self.Phi.get_from_state(L,rot_state)
+							self.Na_Level.append_to_direct(L,mod_state,rot_action,n,self.Phi)
+							self.Q_Level.append_to_direct(L,mod_state,rot_action,0.,self.Phi)
+							self.Q_Level.append_to_average_direct(L,mod_state,rot_action,r,self.Phi,self.Na_Level)
+				'''
 				self.Na.append_to(state,a_i,n,self.Phi)
 				self.Q.append_to(state,a_i,0.,self.Phi)
 				self.Q.append_to_average(state,a_i,r,self.Phi,self.Na)
 
+		#self.Q_Level.write_q(f_path+'/qq.txt',self.Na_Level)
+		f.close()
 		print "Successfully appended",fn, "with", size, "lines"
 
 	def calculate_policy(self):
-		self.time_to_wait=self.Psi.update(self.Pi,self.Phi,self.Q_Level,self.Na_Level)
+		self.time_to_wait=self.Psi.update(self.Pi,self.Phi,self.Q,self.Na)
 		
 	def write_psi(self):
 		if write_q_flag is True:
@@ -306,13 +320,14 @@ class Simulator:
 
 
 	def run(self):
+
 		start = time.time()
 		start2= time.time()
 		asynch_timer=time.time()
 		self.s.reset()
 		self.sim_count=0
+
 		while not rospy.is_shutdown():
-		
 			draw.render_once(self.s,agent_dict,map_size,buoy_dict,gd,self.reset_pub,time.time()-start2)
 			#if time.time()-start > 100:
 				#s.reset()
@@ -320,7 +335,7 @@ class Simulator:
 			agents=list(agent_dict.keys())
 			self.agent_num = len(agents)
 			if self.agent_num > 0:
-				if (time.time() - asynch_timer) > (20.*a_step_time/self.agent_num):
+				if (time.time() - asynch_timer) > (5.*a_step_time/self.agent_num):
 					asynch_timer=time.time()
 					self.pub2()
 

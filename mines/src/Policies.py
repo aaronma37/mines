@@ -86,7 +86,10 @@ class Policy:
 			return (s.middle[0],s.middle[1])
 		elif self.index <26:
 			m=1000
-			loc=(0,0)
+			if self.index==15:
+				loc=(50,50)
+			else:
+				loc=(a.x,a.y)
 			l = Regions.region_list[self.index-1]
 			shuffle(l)
 			for i in l:

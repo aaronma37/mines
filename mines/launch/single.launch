@@ -1,0 +1,15 @@
+<launch>
+<param name="agent_step_time" type="double" value=".1"/>
+<param name="load_q" type="bool" value="False"/>
+<param name="write_q" type="bool" value="True"/>
+<param name="write_psi" type="bool" value="True"/>
+<param name="temp_file_path" type="String" value="/home/aaron/mines_temp"/>
+
+
+<node pkg="mines" type="main.py" name="main" output="screen">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="a1" output="screen">
+</node>
+
+</launch>

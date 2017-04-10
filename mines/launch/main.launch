@@ -1,5 +1,5 @@
 <launch>
-<param name="agent_step_time" type="double" value=".5"/>
+<param name="agent_step_time" type="double" value=".1"/>
 <param name="load_q" type="bool" value="False"/>
 <param name="write_q" type="bool" value="True"/>
 <param name="write_psi" type="bool" value="True"/>
@@ -9,48 +9,29 @@
 <node pkg="mines" type="main.py" name="main" output="screen">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="1" output="screen">
+<node pkg="mines" type="agent_standard.py" name="a1" output="screen">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="2" output="screen">
+<node pkg="mines" type="agent_standard.py" name="a2" output="screen">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="3" output="screen">
+<node pkg="mines" type="agent_standard.py" name="a3" output="screen">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="4" output="screen">
+<node pkg="mines" type="agent_standard.py" name="a4" output="screen">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="5" output="screen">
+<node pkg="mines" type="agent_standard.py" name="a5" output="screen">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="6" output="screen">
+<node pkg="mines" type="agent_standard.py" name="a6" output="screen">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="7" output="screen">
+<node pkg="mines" type="agent_standard.py" name="a7" output="screen">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="8" output="screen">
+<node pkg="mines" type="agent_standard.py" name="a8" output="screen">
 </node>
-
-<node pkg="mines" type="agent_standard.py" name="11" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="12" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="13" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="14" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="15" output="screen">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="16" output="screen">
-</node>
-
 
 
 </launch>

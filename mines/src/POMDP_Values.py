@@ -3,6 +3,9 @@ from random import shuffle
 from sets import Set
 from abstraction_classes import Abstractions
 import time
+import math
+import random
+import Regions
 As=Abstractions()
 
 L_MAX=50
@@ -25,37 +28,31 @@ class Pi:
 	def seed_algorithm_from_state(self,state):
 		return 26
 
-	def get_and_return_level(self,L,A,Phi,Psi):
-		state=Phi.get(L,A)
+	def get_and_return_level(self,A,Psi,Phi):
+		action = []
+		reward = []
+		states_=[]
 
-		rotated_action=[]
-		level=[]
-		score=[]
-		for rot in range(8):
-			rot_state=Phi.get_rotated_state(rot,state)
-			a,l,s=self.get_and_return_level_2(L,rot_state,Phi,Psi)
-			rotated_action.append(a)
-			level.append(l)
-			score.append(s)
+		for i in range(1000):
+			s=Phi.get_from_vision(A,i)+'.'+Phi.get_b(A) +'.' + Phi.get_base(A,i)
+			a,l,r = Psi.get_with_level(0,s,self,Phi)
+			action.append(a)
+			reward.append(r)
+			states_.append(s)
 
-		ml=-2
-		mv=-1
-		ind=-1
+		best_index=reward.index(max(reward))
+		print "chose", states_[best_index],max(reward)
+		base=A.get_base()
+		if action[best_index] == 0:
+			return base+1
+		else:
+			if Phi.get_loc_from_vision(Phi.visions[best_index][1],base) is None:
+				return base+1
+			else:
+				return 	Phi.get_loc_from_vision(Phi.visions[best_index][1],base)+1
 
-		for i in range(8):
-			if level[i]>ml:
-				ind=i
-				ml=level[i]
-				mv=score[i]
-			elif level[i]==ml:
-				if score[i]>mv:
-					ind=i
-					ml=level[i]
-					mv=score[i]	
 
-		best_index = ind
-		print rotated_action,level,score,best_index
-		return Phi.unrotate_action(best_index,rotated_action[best_index]),level[best_index]
+
 
 	def get_and_return_level_2(self,L,s,Phi,Psi):
 		if L == -1:
@@ -86,381 +83,75 @@ class Pi:
 class Phi:
 	def __init__(self):
 		'''init'''
-		#print "initializing Phi"
-		#Phi maps A->A*
-		self.forward_rot_vals={}
-		self.backward_rot_vals={}
-		self.generate_rotations()
-		self.state_order={}
-		self.loc_order={}
-		self.generate_order_state()
+		self.state_size=8
+		self.num_visions=1000		
+		self.visions={}
+		self.gen_ord_state()
+	
+	def gen_ord_state(self):
+		for i in range(self.num_visions):
+			self.visions[i]=[]
+			for j in range(self.state_size):
+				red_x=0
+				red_y=0
+				if j==0:
+					self.visions[i].append((0,0))
+				else:
+					while 1==1:
+						ran_x = random.randint(-1, 1)
+						ran_y = random.randint(-1, 1)
+						xy=(self.visions[i][j-1][0]+ran_x,self.visions[i][j-1][1]+ran_y)
+						if xy not in self.visions[i]:
+							self.visions[i].append(xy)
+							break
 
-	def get_max_level(self,A):
-		return self.get(L_MAX,A)
 
-	def get(self,L,A):
+
+	def get_from_vision(self,A,i):
+		vision=self.visions[i]
 		h=""
 		base=A.get_base()
-		for i in range(L+1):
-			h=h+ A.get_discrete_abf(self.state_order[base][i])
+		for i in range(self.state_size):
+			if self.get_loc_from_vision(vision[i],base) is None:
+				h=h+str(0)+"~"
+			else:
+				h=h+str(A.regions[self.get_loc_from_vision(vision[i],base)].hash)+"~"
 		return h
 
-	def generate_order_state(self):
 
-		link={}
-		for i in range(25):
-			self.state_order[i]={}
-			self.loc_order[i]={}
-			link[i]=[]
+	def get_loc_from_vision(self,vision,region):
+		xy=Regions.region[region]
+		x=xy[0]
+		y=xy[1]
+		reg = Regions.get_region(x+vision[0]*20,y+vision[1]*20)
+		return reg
 
-
-		link[0]=[0,5,1,6,9,2,7,10,13,3,8,11,14,17,4,12,15,18,21,16,19,22,20,23,24]
-
-		link[1]=[1,0,5,9,13,2,6,10,14,18,17,3,7,11,15,19,23,22,21,4,8,12,16,20,24]
-
-		link[5]=[5,6,10,9,1,0,7,11,15,14,13,2,8,12,16,20,19,18,17,3,24,23,22,21,4]
-
-		link[6]=[6,7,11,10,9,5,8,12,16,15,14,13,2,1,0,20,19,18,17,3,24,23,22,21,4]
-
-		link[9]=[9,10,14,13,2,1,0,5,6,7,11,15,19,18,17,3,8,12,16,20,24,23,22,21,4]
-
-		link[10]=[10,11,15,14,13,9,5,6,7,8,12,16,20,19,18,17,3,2,1,0,24,23,22,21,4]
-
-		link[14]=[14,15,19,18,17,13,9,10,11,12,16,20,24,23,22,21,4,3,2,1,0,5,6,7,8]
-
-		# link 2 is 6 with r_index=2 (1 rotation)
-
-		for i in range(25):
-			link[2].append(self.R(2,link[6][i]))
-
-		# link 3 is 5 with r_index=2
-		for i in range(25):
-			link[3].append(self.R(2,link[5][i]))
-
-		# link 4 is 0 with r_index=2
-		for i in range(25):
-			link[4].append(self.R(2,link[0][i]))
-
-		# link 7 is 1 with r_index=6
-		for i in range(25):
-			link[7].append(self.R(6,link[1][i]))
-
-		# link 8 is 0 with r_index=6
-		for i in range(25):
-			link[8].append(self.R(6,link[0][i]))
-
-		# link 11 is 9 with r_index=6
-		for i in range(25):
-			link[11].append(self.R(6,link[9][i]))
-
-		# link 12 is 5 with r_index=6
-		for i in range(25):
-			link[12].append(self.R(6,link[5][i]))
-
-		# link 13 is 10 with r_index=2
-		for i in range(25):
-			link[13].append(self.R(2,link[10][i]))
-
-		# link 15 is 10 with r_index=6
-		for i in range(25):
-			link[15].append(self.R(6,link[10][i]))
-
-		# link 16 is 6 with r_index=6
-		for i in range(25):
-			link[16].append(self.R(6,link[6][i]))
-
-		# link 17 is 9 with r_index=2
-		for i in range(25):
-			link[17].append(self.R(2,link[9][i]))
-
-		# link 18 is 10 with r_index=4
-		for i in range(25):
-			link[18].append(self.R(4,link[10][i]))
-
-		# link 19 is 9 with r_index=4
-		for i in range(25):
-			link[19].append(self.R(4,link[9][i]))
-
-		# link 20 is 1 with r_index=4
-		for i in range(25):
-			link[20].append(self.R(4,link[1][i]))
-
-		# link 21 is 1 with r_index=2
-		for i in range(25):
-			link[21].append(self.R(2,link[1][i]))
-
-		# link 22 is 6 with r_index=4
-		for i in range(25):
-			link[22].append(self.R(4,link[6][i]))
-
-		# link 23 is 5 with r_index=4
-		for i in range(25):
-			link[23].append(self.R(4,link[5][i]))
-
-		# link 24 is 0 with r_index=4
-		for i in range(25):
-			link[24].append(self.R(4,link[0][i]))
-
-		self.state_order[0][0]=0
-		
-
-		for k in range(25):
-			self.state_order[k][0]=0
-			c=1
-			for i in range(L_MAX/2):
-
-				self.state_order[k][c]=link[k][i]+1
-				self.loc_order[k][c]=link[k][i]
-				c+=1
-				self.state_order[k][c]=link[k][i]+26
-				self.loc_order[k][c]=link[k][i]
-				c+=1
-
-
-	def get_from_state(self,L,state):
-
-		s=state.split("~")
+	def get_b(self,A):
+		n=A.battery.num
 		h=""
-		for i in range(L+1):
-			h=h+s[i]+"~"
+		for i in range(self.state_size):
+			if n>50:			
+				h=h+str(0)+"~"
+			else:
+				h=h+str(1)+"~"
+			n-=5
 
 		return h
 
-	def get_rotated_state(self,r_index,state):
-		
-		s = state.split("~")
-		base=int(s[0])
-		h = str(self.R(r_index,int(s[0])))+"~"
-
-		#sort it
-		sorted_region={}
-		sorted_wl={}
-		for i in range(1,51):
-			if (i % 2 == 0): #even 
-				sorted_wl[self.loc_order[base][i]]=s[i]
+	def get_base(self,A,seed):
+		vision=self.visions[seed	]
+		h=""
+		base=A.get_base()
+		for i in range(self.state_size):
+			if self.get_loc_from_vision(vision[i],base) is None:
+				h=h+str(0)+"~"
 			else:
-				sorted_region[self.loc_order[base][i]]=s[i]
-
-
-		for i in range(1,L_MAX+1):
-			region_index=self.R(r_index,self.loc_order[base][i])
-			if (i % 2 == 0): #even 
-				h = h + str(sorted_wl[region_index])+"~"
-			else:
-				h = h + str(sorted_region[region_index])+"~"
-
+				if self.get_loc_from_vision(vision[i],base) == 14: 
+					h=h+str(1)+"~"
+				else:
+					h=h+str(0)+"~"
 		return h
 
-	def generate_rotations(self):
-
-		for r_index in range(8):
-			self.forward_rot_vals[r_index]={}
-			self.backward_rot_vals[r_index]={}
-
-			for i in range(25):
-				if r_index==0:
-					self.forward_rot_vals[r_index][i]=i
-
-				if r_index==1:
-					self.forward_rot_vals[r_index][i]=self.get_mirror(i)
-				elif r_index==2:
-					self.forward_rot_vals[r_index][i]=self.get_rot(i)
-				elif r_index==3:
-					self.forward_rot_vals[r_index][i]=self.get_mirror(self.get_rot(i))
-				elif r_index==4:
-					self.forward_rot_vals[r_index][i]=self.get_rot(self.get_rot(i))
-				elif r_index==5:
-					self.forward_rot_vals[r_index][i]=self.get_mirror(self.get_rot(self.get_rot(i)))
-				elif r_index==6:
-					self.forward_rot_vals[r_index][i]=self.get_rot(self.get_rot(self.get_rot(i)))
-				elif r_index==7:
-					self.forward_rot_vals[r_index][i]=self.get_mirror(self.get_rot(self.get_rot(self.get_rot(i))))
-
-				if r_index==0:
-					self.backward_rot_vals[r_index][i] = i
-
-				if r_index==1:
-					self.backward_rot_vals[r_index][i] = self.get_mirror(i)
-				elif r_index==2:
-					self.backward_rot_vals[r_index][i] = self.get_rot(self.get_rot(self.get_rot(i)))
-				elif r_index==3:
-					self.backward_rot_vals[r_index][i] = self.get_rot(self.get_rot(self.get_rot(self.get_mirror(i))))
-				elif r_index==4:
-					self.backward_rot_vals[r_index][i] = self.get_rot(self.get_rot(i))
-				elif r_index==5:
-					self.backward_rot_vals[r_index][i] = self.get_rot(self.get_rot(self.get_mirror(i)))
-				elif r_index==6:
-					self.backward_rot_vals[r_index][i] = self.get_rot(i)
-				elif r_index==7:
-					self.backward_rot_vals[r_index][i] = self.get_rot(self.get_mirror(i))
-
-	def R(self,r_index,i):
-		return self.forward_rot_vals[r_index][i]
-		#order none,m,r,rm,rr,rrm,rrr,rrrm
-		'''
-		if r_index==0:
-			return i
-
-		if r_index==1:
-			return self.get_mirror(i)
-		elif r_index==2:
-			return self.get_rot(i)
-		elif r_index==3:
-			return self.get_mirror(self.get_rot(i))
-		elif r_index==4:
-			return self.get_rot(self.get_rot(i))
-		elif r_index==5:
-			return self.get_mirror(self.get_rot(self.get_rot(i)))
-		elif r_index==6:
-			return self.get_rot(self.get_rot(self.get_rot(i)))
-		elif r_index==7:
-			return self.get_mirror(self.get_rot(self.get_rot(self.get_rot(i))))
-		'''
-
-	def R_backwards(self,r_index,i):
-		return self.backward_rot_vals[r_index][i]
-		'''
-		#order none,m,r,rm,rr,rrm,rrr,rrrm
-		if r_index==0:
-			return i
-
-		if r_index==1:
-			return self.get_mirror(i)
-		elif r_index==2:
-			return self.get_rot(self.get_rot(self.get_rot(i)))
-		elif r_index==3:
-			return self.get_rot(self.get_rot(self.get_rot(self.get_mirror(i))))
-		elif r_index==4:
-			return self.get_rot(self.get_rot(i))
-		elif r_index==5:
-			return self.get_rot(self.get_rot(self.get_mirror(i)))
-		elif r_index==6:
-			return self.get_rot(i)
-		elif r_index==7:
-			return self.get_rot(self.get_mirror(i))
-		'''
-
-	def R_action(self,r_index,i):
-		if i==0 or i == 26:
-			return i
-		return self.R(r_index,i-1)+1
-
-	def unrotate_action(self,r_index,i):
-		if i==0 or i == 26:
-			return i
-		return self.R_backwards(r_index,i-1)+1
-
-
-	def get_rot(self,i):
-		if i==0:
-			return 4
-		if i==1:
-			return 21
-		if i==2:
-			return 22
-		if i==3:
-			return 23
-		if i==4:
-			return 24
-		if i==5:
-			return 3
-		if i==6:
-			return 2
-		if i==7:
-			return 1
-		if i==8:
-			return 0
-		if i==9:
-			return 17
-		if i==10:
-			return 13
-		if i==11:
-			return 9
-		if i==12:
-			return 5
-		if i==13:
-			return 18
-		if i==14:
-			return 14
-		if i==15:
-			return 10
-		if i==16:
-			return 6
-		if i==17:
-			return 19
-		if i==18:
-			return 15
-		if i==19:
-			return 11
-		if i==20:
-			return 7
-		if i==21:
-			return 20
-		if i==22:
-			return 16
-		if i==23:
-			return 12
-		if i==24:
-			return 8
-
-	def get_mirror(self,i):
-
-		if i==1:
-			return 5
-		elif i==5:
-			return 1
-		elif i ==3:
-			return 21
-		elif i==21:
-			return 3
-		elif i==23:
-			return 20
-		elif i==20:
-			return 23
-		elif i==12:
-			return 7
-		elif i==7:
-			return 12
-		else:
-			return i
-
-
-
-
-
-			
-
-	
-		
-
-class Cluster:
-	def __init__(self,a,default):
-		self.a=a #a is static
-		self.action_set=[]
-		self.r=[]
-		self.n=[]
-		for i in range(27):
-			self.action_set.append(i)
-			self.r.append(0.)
-			self.n.append(0.)
-
-		self.default=default
-
-		self.states=Set([])
-
-	def update(self,action,r,n,state):
-		self.states.add(state)
-		self.n[action]+=n
-		self.r[action]+=(r-self.r[action])/self.n[action]
-		#if action==0:
-			#print self.n[0],self.r[0]
-
-	def get_total_n(self):
-		n=0.0
-		for i in self.n:
-			n+=i
-		return n	
-			
 
 class Psi:
 	def __init__(self):
@@ -477,18 +168,21 @@ class Psi:
 		print "starting calculate psi"
 		start=time.time()
 
-		for l,q_1 in Q.q.items():
-			self.point[l]={}
-			self.score[l]={}
-			for state,q_2 in q_1.items():
-				#start1=time.time()
-				v=list(q_2.values())
-				key=list(q_2.keys())
-				#end2=time.time()
-				self.point[l][state]=key[v.index(max(v))]
-				self.score[l][state]=max(v)
+		l=0
 
-				#print "total", time.time()-start1,"s2",(end2-start1)/(time.time()-start1),"s3",(end3-start3)/(time.time()-start1)
+		self.point[l]={}
+		self.score[l]={}
+		for state,q_2 in Q.q.items():
+			#start1=time.time()
+
+			v=list(q_2.values())
+			key=list(q_2.keys())
+			#end2=time.time()
+			#print Q.q[l][state][key[v.index(max(v))]],Q.var[l][state][key[v.index(max(v))]],Q.ldb[l][state][key[v.index(max(v))]],Q.lcb[l][state][key[v.index(max(v))]]
+			self.point[l][state]=key[v.index(max(v))]
+			self.score[l][state]=max(v)
+
+			#print "total", time.time()-start1,"s2",(end2-start1)/(time.time()-start1),"s3",(end3-start3)/(time.time()-start1)
 
 
 		print "finished calculated psi",time.time()-start
@@ -572,10 +266,10 @@ class Psi:
 
 	def get_with_level(self,L,s,Pi,Phi):
 		if self.point.get(L) is None:
-			return Pi.get_and_return_level_2(L-1,s,Phi,self)
+			return 0,L,-1000.
 
 		if self.point[L].get(s) is None:
-			return Pi.get_and_return_level_2(L-1,s,Phi,self)
+			return 0,L,-1000.
 		else:
 			return self.point[L][s],L,self.score[L][s]
 
@@ -721,10 +415,13 @@ class Q:
 	def append_to_direct(self,s,a,r,Phi):
 		if self.q.get(s) is None:
 			self.q[s]={a:r}	
+
 		elif self.q[s].get(a) is None:
-			self.q[s][a]=r		
+			self.q[s][a]=r
+
 		else:
 			self.q[s][a]+=r
+
 	
 
 	def get_direct(self,phi,a):
@@ -747,6 +444,9 @@ class Q_Level:
 	def __init__(self):
 		#print "initializing Q"
 		self.q={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)][a]->r
+		self.var={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)][a]->r
+		self.lcb={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)][a]->r
+		self.ldb={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)][a]->r
 
 	def get(self,L,A,phi,a):
 		return self.q[L][phi.get(L_MAX,A)][a]
@@ -770,7 +470,18 @@ class Q_Level:
 			self.q[l][s][a]+=(r-self.q[l][s][a])/Na.na[l][s][a]
 
 	def append_to_average_direct(self,l,s,a,r,Phi,Na):
-		self.q[l][s][a]+=(r-self.q[l][s][a])/Na.na[l][s][a]
+		N=Na.na[l][s][a]
+		om=self.q[l][s][a]
+		self.q[l][s][a]+=(r-om)/N
+		if N>1:
+			self.var[l][s][a]=((N-2)*self.var[l][s][a]+(r-self.q[l][s][a])*(r-om))/(N-1)
+			self.lcb[l][s][a]=self.q[l][s][a]-1.96*self.var[l][s][a]/math.sqrt(N)
+			self.ldb[l][s][a]=self.q[l][s][a]-self.var[l][s][a]
+
+		else:
+			self.var[l][s][a]=0.
+			self.lcb[l][s][a]=self.q[l][s][a]
+			self.ldb[l][s][a]=self.q[l][s][a]
 
 	def append_to(self,state,a,r,Phi):
 		for l in range(L_MAX+1):
@@ -785,15 +496,31 @@ class Q_Level:
 				self.q[l][s][a]+=r
 
 	def append_to_direct(self,l,s,a,r,Phi):
+
+
+
 		if self.q.get(l) is None:
 			self.q[l]={s:{a:r}}	
+			self.var[l]={s:{a:0.}}
+			self.lcb[l]={s:{a:0.}}	
+			self.ldb[l]={s:{a:0.}}			
 		elif self.q[l].get(s) is None:
-			self.q[l][s]={a:r}	
+			self.q[l][s]={a:r}
+			self.var[l][s]={a:0.}	
+			self.lcb[l][s]={a:0.}
+			self.ldb[l][s]={a:0.}
+
 		elif self.q[l][s].get(a) is None:
-			self.q[l][s][a]=r		
+			self.q[l][s][a]=r	
+			self.var[l][s][a]=0.
+			self.lcb[l][s][a]=0.
+			self.ldb[l][s][a]=0.										
 		else:
 			self.q[l][s][a]+=r
-	
+
+
+
+
 
 	def get_direct(self,L,phi,a):
 		return self.q[L][phi][a]
@@ -824,15 +551,13 @@ class N:
 	def get(self,L,A,phi):
 		return self.n[L][phi.get(L_MAX,A)]
 
-	def append_to(self,state,r,Phi):
-		for l in range(L_MAX+1):
-			s = Phi.get_from_state(l,state)
-			if self.n.get(l) is None:
-				self.n[l]={s:r}	
-			if self.n[l].get(s) is None:
-				self.n[l][s]=r	
+	def append_to(self,s,r,Phi):
+			if self.n.get(L_MAX) is None:
+				self.n[L_MAX]={s:r}	
+			if self.n[L_MAX].get(s) is None:
+				self.n[L_MAX][s]=r	
 			else:
-				self.n[l][s]+=r
+				self.n[L_MAX][s]+=r
 
 class Na:
 	def __init__(self):

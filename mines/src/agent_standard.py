@@ -119,7 +119,7 @@ class Simulator:
 			start=time.time()
 			if a.available_flag is True:
 				if self.update_flag is True:
-					a.update_heuristics(s_old,s)
+				#	a.update_heuristics(s_old,s)
 					self.update_flag=False
 				if self.reset_flag is True:
 					self.reset_fun(self.reset_data)
@@ -138,7 +138,7 @@ class Simulator:
 				pose.pose.orientation.z=a.lvl
 				pose_pub.publish(pose)
 
-				a.step(si,ai,a_step_time/5.)
+				a.step(si,a_step_time/2.)
 				#s.imprint(si)
 
 
@@ -166,7 +166,7 @@ class Simulator:
 
 ###MAIN
 def main(args):
-
+	time.sleep(1)
 
 	sim = Simulator()
 	environment_sub =rospy.Subscriber('/environment_matrix', OccupancyGrid , sim.s_cb)#CHANGE TO MATRIX

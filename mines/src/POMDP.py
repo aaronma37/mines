@@ -13,7 +13,7 @@ import time
 import Policies
 from random import shuffle
 import POMDP_Values as v
-
+import abstraction_classes
 L_MAX=v.L_MAX
 
 H=5
@@ -30,13 +30,14 @@ class Solver:
 		self.Pi=v.Pi()
 		self.great=[]
 		self.steps=[]
-
+		self.T={}
 
 
 		self.H=heuristic()
 		#Heuristics.load_file(self.H,'testfile_d.txt')
 		self.A=Abstractions()
 		self.environment_data=E(e_args)
+		self.mini_ab=abstraction_classes.mini_ab()
 		#self.get_psi('/home/aaron/catkin_ws/src/mines/mines/src/psi_main.txt')
 
 	def reset(self):
@@ -48,107 +49,50 @@ class Solver:
 		self.Pi=v.Pi()
 		self.H=heuristic()
 		self.A=Abstractions()
+		self.T={}
 
 
-	def OnlinePlanning(self,agent_,s,a_,time_to_work):
+	def OnlinePlanning(self,A,time_to_work):
 		start = time.time()
 		end = start
-		agent_.imprint(a_)
-		x=agent_.x
-		y=agent_.y
-		s.imprint(self.environment_data)
-		
+		cc=0
 		while end - start < time_to_work:
-			agent_.imprint(a_)
-			s.imprint(self.environment_data)
-			self.action_counter=0
-			#print "start"
-			self.A.update_all(self.environment_data,a_)
-			#print self.A.get_explore_abf()
-			self.search(self.A,0,26,self.environment_data,a_)
+			seed=randint(0,999)
+			self.mini_ab.allocate(self.Phi.get_from_vision(A,seed),self.Phi.get_b(A),self.Phi.get_base(A,seed))
+			self.search(self.mini_ab.str,self.mini_ab.b,self.mini_ab.base,self.mini_ab,0)
 			end = time.time()
+			cc+=1
 
 
-	def search(self,A,depth,last_action,s_,a_):
 
-		A.update_all(s_,a_)
-
-		if depth>H:
+	def search(self,s,b,ba,generator,depth):
+		if depth>=H:
 			return 0.
-		
-		if last_action!=0 or A.battery.num>90:
-			a = self.arg_max_ucb(A)
-		else:
-			if A.battery.num==0:
-				a=26
-			else:
-				a=0
 
-		state=self.Phi.get_max_level(A)
-		self.N.append_to(state,1.,self.Phi)
-		self.Na.append_to(state,a,1.,self.Phi)
-		self.Q.append_to(state,a,0.,self.Phi)
-
-		
-		#print pi_i,a,A.battery.num,A.location.loc
-
-		r = A.evolve_all(self.H,a)
-		#if a_.work_load[14]>1 and a == 15:
-		#	print r, "ere", A.work_load[14].hash
-			#r=.01
-		for j in range(20):
-			action_step=Policies.get_discrete_action(a_,s_,a)
-			a_.execute(action_step,s_)
+		a = self.arg_max_ucb()
+		save_state = s+'.'+b+'.'+ba
+		self.N.append_to(save_state,1.,self.Phi)
+		self.Na.append_to(save_state,a,1.,self.Phi)
+		self.Q.append_to(save_state,a,0.,self.Phi)
 
 
-		r += math.pow(Gamma,depth)*self.search(A,depth+1,a,s_,a_)
-		self.Q.append_to_average(state,a,r,self.Phi,self.Na)
+		s,b,ba,r = generator.evolve(a,s,b,ba)
+		r += math.pow(Gamma,depth)*self.search(s,b,ba,generator,depth+1)
 
+		self.Q.append_to_average(save_state,a,r,self.Phi,self.Na)
 		return r	
 
 	def get_action(self,A):
-		return self.Pi.get_and_return_level(L_MAX,A,self.Phi,self.Psi)
+		return self.Pi.get_and_return_level(A,self.Psi,self.Phi)
 
 	def arg_max(self,A):
 		return self.Pi.get(L_MAX,A,self.Phi,self.Psi)	
 
-	def arg_max_ucb(self,A):
-		'''
-		pi=self.Pi.get(-1,A,self.Phi,self.Psi)
+	def rollout(self,A):
+		return A.get_max_reward_funct()
 
-		for l in range(L_MAX+1):
-			if self.Psi.check(l,pi) is False:
-				return pi
-
-
-			cluster = self.Psi.get_cluster(l,pi,A,self.Phi)
-			n = cluster.get_total_n()		
-
-			k = range(len(cluster.action_set))
-			shuffle(k)
-		
-			if cluster.n[k[0]] == 0.0:
-				return k[0]
-
-			a=k[0]
-			max_num = self.ucb_from_state(cluster.r[k[0]],n,cluster.n[k[0]])
-
-			for i in k:
-				if cluster.n[i] == 0.0:
-					return i
-
-				if self.ucb_from_state(cluster.r[i],n,cluster.n[i]) > max_num:
-					max_num=self.ucb_from_state(cluster.r[i],n,cluster.n[i])
-					a=i
-
-			pi = a
-
-
-		return a
-		'''
-		k = range(27)
-		shuffle(k)
-		return k[0]
+	def arg_max_ucb(self):
+		return randint(0,1)
 
 
 	def ucb(self,A,a):

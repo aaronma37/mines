@@ -65,41 +65,74 @@ def get_discrete_action(a,s,action):
 		return (next_x,next_y)
 
 class Policy:
-	def __init__(self,index):
+	def __init__(self,index,next,agent_poll_time):
 		self.index=index
-		self.time=10
-
-	def check_trigger(self):
-		if self.time > 0:
-			return False
-		return True
+		self.next=next
+		self.time=agent_poll_time
+		self.max_time=agent_poll_time
+		self.last_motion=(0,0)
 	
 	def get_distance(self,x,y,x2,y2):
 		return max(math.fabs(x-x2),math.fabs(y-y2))
-
-	def set_trigger(self,A,a):
-		#depreciated
-		self.trigger=self.get_trigger_definition(A,a)
 
 	def get_target(self,a,s):
 		if self.index==0:
 			return (s.middle[0],s.middle[1])
 		elif self.index <26:
+			
 			m=1000
 			if self.index==15:
 				loc=(50,50)
 			else:
 				loc=(a.x,a.y)
+
 			l = Regions.region_list[self.index-1]
+			l2 = Regions.region_list[self.next-1]
 			shuffle(l)
+			shuffle(l2)
+
+
+			short_next=(a.x,a.y)
+			m2=1000
+		
+
+			for i in l2:
+				if s.seen[i[0]][i[1]]==s.NOT_SEEN:
+					if self.get_distance(a.x,a.y,i[0],i[1]) < m2:
+						m2=self.get_distance(a.x,a.y,i[0],i[1])
+						short_next = i
+
 			for i in l:
 				if s.seen[i[0]][i[1]]==s.NOT_SEEN:
-					if self.get_distance(a.x,a.y,i[0],i[1]) < m:
-						m=self.get_distance(a.x,a.y,i[0],i[1])
-						loc = i
-			#if loc==(0,0):
-			#	print "none found"
+					if self.time < 5.:
+						if 10*self.get_distance(a.x,a.y,i[0],i[1])*self.time/self.max_time + self.get_distance(short_next[0],short_next[1],i[0],i[1])*(self.max_time-self.time)/self.max_time < m and self.allowable_motions(self.last_motion,(a.x-i[0],a.y-i[1])) is True:	
+							m=self.get_distance(a.x,a.y,i[0],i[1])
+							loc = i
+					else:
+						if self.get_distance(a.x,a.y,i[0],i[1])*self.time/self.max_time < m and self.allowable_motions(self.last_motion,(a.x-i[0],a.y-i[1])) is True:	
+							m=self.get_distance(a.x,a.y,i[0],i[1])
+							loc = i
+
+			self.last_motion = a.x-loc[0],a.y-loc[1]
+
 			return loc
+
+	def allowable_motions(self,prev,motion):
+		if prev == (0,0):
+			return True
+		if prev[0] == -1:
+			if motion[0] == 1:
+				return False
+		elif prev[0] == 1:
+			if motion[0] == -1:
+				return False
+		if prev[1] == -1:
+			if motion[1] == 1:
+				return False
+		elif prev[1] == 1:
+			if motion[1] == -1:
+				return False
+		return True
 
 						
 	def get_next_action(self,a,s):

@@ -58,32 +58,32 @@ class Solver:
 		cc=0
 		while end - start < time_to_work:
 			seed=randint(0,999)
-			self.mini_ab.allocate(self.Phi.get_from_vision(A,seed),self.Phi.get_b(A),self.Phi.get_base(A,seed))
-			self.search(self.mini_ab.str,self.mini_ab.b,self.mini_ab.base,self.mini_ab,0)
+			state=self.Phi.get_state(A,seed)
+			self.search(state,0)
 			end = time.time()
 			cc+=1
 
 
 
-	def search(self,s,b,ba,generator,depth):
+	def search(self,state,depth):
 		if depth>=H:
 			return 0.
 
 		a = self.arg_max_ucb()
-		save_state = s+'.'+b+'.'+ba
+		save_state = state
 		self.N.append_to(save_state,1.,self.Phi)
 		self.Na.append_to(save_state,a,1.,self.Phi)
 		self.Q.append_to(save_state,a,0.,self.Phi)
 
-
-		s,b,ba,r = generator.evolve(a,s,b,ba)
-		r += math.pow(Gamma,depth)*self.search(s,b,ba,generator,depth+1)
+		r = self.Phi.get_reward(state,a)
+		state = self.Phi.evolve(state,a)
+		r += Gamma*self.search(state,depth+1)
 
 		self.Q.append_to_average(save_state,a,r,self.Phi,self.Na)
 		return r	
 
-	def get_action(self,A):
-		return self.Pi.get_and_return_level(A,self.Psi,self.Phi)
+	def get_action(self,A,next_expected_action):
+		return self.Pi.get_and_return_level(A,self.Psi,self.Phi,next_expected_action)
 
 	def arg_max(self,A):
 		return self.Pi.get(L_MAX,A,self.Phi,self.Psi)	
@@ -92,8 +92,11 @@ class Solver:
 		return A.get_max_reward_funct()
 
 	def arg_max_ucb(self):
-		return randint(0,1)
-
+		i = randint(0,1)
+		if i == 0:
+			return "charge"
+		elif i==1:
+			return "explore"
 
 	def ucb(self,A,a):
 		return self.Q.get(A,self.Phi,a)+100.*math.sqrt(math.log(1+self.N.get(A,self.Phi))/(1+self.Na.get(A,self.Phi,a)))

@@ -7,6 +7,7 @@ import math
 import random
 import Regions
 As=Abstractions()
+import Objective
 
 L_MAX=50
 
@@ -28,28 +29,35 @@ class Pi:
 	def seed_algorithm_from_state(self,state):
 		return 26
 
-	def get_and_return_level(self,A,Psi,Phi):
+	def get_and_return_level(self,A,Psi,Phi,last_expected_action):
 		action = []
 		reward = []
 		states_=[]
+		base=A.get_base()
 
 		for i in range(1000):
-			s=Phi.get_from_vision(A,i)+'.'+Phi.get_b(A) +'.' + Phi.get_base(A,i)
+			s=Phi.get_state(A,i)
 			a,l,r = Psi.get_with_level(0,s,self,Phi)
+			if Phi.get_loc_from_vision(Phi.visions[i][0],base) is not None:
+				if Phi.get_loc_from_vision(Phi.visions[i][0],base)+1 != last_expected_action:
+					r=r/2.	
+			else:	
+				r=r/2.
 			action.append(a)
 			reward.append(r)
 			states_.append(s)
 
 		best_index=reward.index(max(reward))
-		print "chose", states_[best_index],max(reward)
+		print "chose", states_[best_index],max(reward),action[best_index]
 		base=A.get_base()
-		if action[best_index] == 0:
-			return base+1
+
+		if Phi.get_loc_from_vision(Phi.visions[best_index][0],base) is None:
+			return base+1,base+1
 		else:
 			if Phi.get_loc_from_vision(Phi.visions[best_index][1],base) is None:
-				return base+1
+				return 	Phi.get_loc_from_vision(Phi.visions[best_index][0],base)+1,Phi.get_loc_from_vision(Phi.visions[best_index][0],base)+1
 			else:
-				return 	Phi.get_loc_from_vision(Phi.visions[best_index][1],base)+1
+				return 	Phi.get_loc_from_vision(Phi.visions[best_index][0],base)+1,Phi.get_loc_from_vision(Phi.visions[best_index][1],base)+1
 
 
 
@@ -83,40 +91,27 @@ class Pi:
 class Phi:
 	def __init__(self):
 		'''init'''
-		self.state_size=8
+		self.state_size=6
 		self.num_visions=1000		
 		self.visions={}
 		self.gen_ord_state()
+		self.alpha=[.5,.5]
+		self.obj=Objective.Objective_Handler()
 	
 	def gen_ord_state(self):
+
 		for i in range(self.num_visions):
+			prev=(0,0)
 			self.visions[i]=[]
 			for j in range(self.state_size):
 				red_x=0
 				red_y=0
-				if j==0:
-					self.visions[i].append((0,0))
-				else:
-					while 1==1:
-						ran_x = random.randint(-1, 1)
-						ran_y = random.randint(-1, 1)
-						xy=(self.visions[i][j-1][0]+ran_x,self.visions[i][j-1][1]+ran_y)
-						if xy not in self.visions[i]:
-							self.visions[i].append(xy)
-							break
-
-
-
-	def get_from_vision(self,A,i):
-		vision=self.visions[i]
-		h=""
-		base=A.get_base()
-		for i in range(self.state_size):
-			if self.get_loc_from_vision(vision[i],base) is None:
-				h=h+str(0)+"~"
-			else:
-				h=h+str(A.regions[self.get_loc_from_vision(vision[i],base)].hash)+"~"
-		return h
+				ran_x = random.randint(-1, 1)
+				ran_y = random.randint(-1, 1)
+				xy=(prev[0]+ran_x,prev[1]+ran_y)
+				prev=xy
+				self.visions[i].append(xy)
+		
 
 
 	def get_loc_from_vision(self,vision,region):
@@ -126,31 +121,16 @@ class Phi:
 		reg = Regions.get_region(x+vision[0]*20,y+vision[1]*20)
 		return reg
 
-	def get_b(self,A):
-		n=A.battery.num
-		h=""
-		for i in range(self.state_size):
-			if n>50:			
-				h=h+str(0)+"~"
-			else:
-				h=h+str(1)+"~"
-			n-=5
+	def get_state(self,A,seed):
+		return self.obj.get_state(A,self,seed)
 
-		return h
+	def get_reward(self,s,a):
+		return self.obj.get_reward(s,a)
 
-	def get_base(self,A,seed):
-		vision=self.visions[seed	]
-		h=""
-		base=A.get_base()
-		for i in range(self.state_size):
-			if self.get_loc_from_vision(vision[i],base) is None:
-				h=h+str(0)+"~"
-			else:
-				if self.get_loc_from_vision(vision[i],base) == 14: 
-					h=h+str(1)+"~"
-				else:
-					h=h+str(0)+"~"
-		return h
+	def evolve(self,s,a):
+		return self.obj.evolve(s,a)
+
+
 
 
 class Psi:
@@ -325,7 +305,7 @@ class Psi:
 		f = open(filename,'r')
 
 		for line in f:
-			l = line.split(",")
+			l = line.split(">")
 			if l[0]=="L":
 				try:
 					L=int(l[1])
@@ -337,7 +317,7 @@ class Psi:
 				self.score[L]={}
 			elif l[0]=="state":
 				try:
-					self.point[L][l[1]]=int(l[2])
+					self.point[L][l[1]]=l[2]
 					self.score[L][l[1]]=float(l[3])
 				except ValueError:
 					print "Value error trying to convert", l[2]					
@@ -356,9 +336,9 @@ class Psi:
 		print "writing psi to" , fn
 
 		for l,q1 in self.point.items():
-			file.write("L" + "," + str(l) + "," + "\n")
+			file.write("L" + ">" + str(l) + ">" + "\n")
 			for state,q2 in q1.items():
-				file.write("state," + str(state)+","+ str(q2) + ","+  str(self.score[l][state]) + ","+"\n")
+				file.write("state>" + str(state)+">"+ str(q2) + ">"+  str(self.score[l][state]) + ">"+"\n")
 
 
 
@@ -435,7 +415,7 @@ class Q:
 		for k,q_1 in self.q.items():
 			file.write("\n")
 			for k2,v in self.q[k].items():	
-				file.write("Q"+","+str(k) + "," +  str(k2)  +","+ str(v) + "," + str(Na.na[k][k2]) + "," +  "\n")
+				file.write("Q"+">"+str(k) + ">" +  str(k2)  +">"+ str(v) + ">" + str(Na.na[k][k2]) + ">" +  "\n")
 				count+=1
 		file.close()
 		print "Completed writing Q",time.time()-start,count

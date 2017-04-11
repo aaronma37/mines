@@ -16,7 +16,7 @@ import Policies
 class Agent: 
 
 
-	def __init__(self,Mine_Data,map_size_):
+	def __init__(self,Mine_Data,map_size_,agent_poll_time):
 
 		self.solver = Solver(Mine_Data,map_size_) # get rid of
 		self.lvl=0
@@ -31,9 +31,11 @@ class Agent:
 		self.work_load=[]
 		self.work=0
 		self.last_reward=0.
-		self.current_action=Policies.Policy(0)
+		self.poll_time=agent_poll_time
+		self.current_action=Policies.Policy(0,0,self.poll_time)
 		self.steps=0.
 		self.available_flag=True
+
 		for i in range(len(Regions.region)):
 			self.work_load.append(0)
 
@@ -60,7 +62,7 @@ class Agent:
 	def reset(self,s,data,fp,fn):
 		self.x=self.map_size/2
 		self.y=self.map_size/2
-		self.current_action=Policies.Policy(0)
+		self.current_action=Policies.Policy(0,0,self.poll_time)
 		self.old_A=Abstractions()
 		self.new_A=Abstractions()
 		self.battery=100
@@ -103,10 +105,10 @@ class Agent:
 
 	def decide(self,s):	
 		#self.battery=100
-		a  = self.solver.get_action(self.new_A)	
+		a,an  = self.solver.get_action(self.new_A,self.current_action.next)	
 		if a == 26:
 			print "ERROR",26
-		self.current_action=Policies.Policy(a)
+		self.current_action=Policies.Policy(a,an,self.poll_time)
 
 		if self.current_action.index < 26 and self.current_action.index > 0:
 			self.work=self.current_action.index-1

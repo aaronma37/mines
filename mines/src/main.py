@@ -31,7 +31,7 @@ import POMDP_Values as v
 
 L_MAX=v.L_MAX
 
-
+agent_poll_time = rospy.get_param("/agent_poll_time")
 a_step_time = rospy.get_param("/agent_step_time")
 load_q_flag = rospy.get_param("/load_q")
 write_q_flag = rospy.get_param("/write_q")
@@ -133,13 +133,13 @@ class Simulator:
 		size=0
 		for line in f:
 
-			l = line.split(",")
+			l = line.split(">")
 			if l[0]=="Q" and len(l)>4:
 				size+=1
 				state=l[1]
 
 				try:
-					a_i=int(l[2])
+					a_i=l[2]
 				except ValueError:
 					print "Value error trying to convert", l[2]					
 					return
@@ -197,7 +197,7 @@ class Simulator:
 
 	def pose_cb(self,data):
 		if data.header.frame_id not in agent_dict:
-			agent_dict[data.header.frame_id]=Agent(Mine_Data,map_size)
+			agent_dict[data.header.frame_id]=Agent(Mine_Data,map_size,agent_poll_time)
 	 
 
 		agent_dict[data.header.frame_id].x=int(data.pose.position.x)
@@ -210,7 +210,7 @@ class Simulator:
 
 	def task_cb(self,data):
 		if data.header.frame_id not in agent_dict:
-			agent_dict[data.header.frame_id]=Agent(Mine_Data,map_size)
+			agent_dict[data.header.frame_id]=Agent(Mine_Data,map_size,agent_poll_time)
 
 		agent_dict[data.header.frame_id].work=int(data.pose.position.x)
 
@@ -335,7 +335,7 @@ class Simulator:
 			agents=list(agent_dict.keys())
 			self.agent_num = len(agents)
 			if self.agent_num > 0:
-				if (time.time() - asynch_timer) > (5.*a_step_time/self.agent_num):
+				if (time.time() - asynch_timer) > (agent_poll_time*a_step_time/self.agent_num):
 					asynch_timer=time.time()
 					self.pub2()
 

@@ -28,8 +28,9 @@ region_size=20
 
 map_size=100
 agent_poll_time = rospy.get_param("/agent_poll_time")
+multi_agent_model = rospy.get_param("/multi_agent_model")
 a_step_time = rospy.get_param("/agent_step_time")
-a = Agent(Mine_Data,map_size,agent_poll_time)
+a = Agent(agent_poll_time)
 #ai= Agent(Mine_Data,map_size)
 s=Mine_Data(map_size)
 si=Mine_Data(map_size)

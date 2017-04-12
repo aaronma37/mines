@@ -8,7 +8,6 @@ from sets import Set
 from geometry_msgs.msg import PoseStamped
 import numpy as np
 from abstraction_classes import Abstractions
-from Heuristics import update_H
 import Regions
 from POMDP import Solver
 import time
@@ -16,22 +15,24 @@ import Policies
 class Agent: 
 
 
-	def __init__(self,Mine_Data,map_size_,agent_poll_time):
+	def __init__(self,agent_poll_time):
 
-		self.solver = Solver(Mine_Data,map_size_) # get rid of
+		self.solver = Solver() # get rid of
 		self.lvl=0
-		self.map_size=map_size_
-		self.x=self.map_size/2
-		self.y=self.map_size/2		
+
+		self.x=50
+		self.y=50
+	
 		self.ON=0
 		self.measurement_space=[]
-		self.alpha=[.9,.1,0]
-		#self.reset()
+
 		self.battery=100
 		self.work_load=[]
 		self.work=0
+
 		self.last_reward=0.
 		self.poll_time=agent_poll_time
+
 		self.current_action=Policies.Policy(0,0,self.poll_time)
 		self.steps=0.
 		self.available_flag=True
@@ -47,11 +48,8 @@ class Agent:
 	def update_heuristics(self,old_s,new_s):
 		self.old_A.update_all(old_s,self)
 		self.new_A.update_all(new_s,self)	
-#
-		#print "cc: ", self.new_A.get_lower_level_abf(self)
-		#print new_s.get_reward()-old_s.get_reward(), "reward",new_s.get_reward(),old_s.get_reward()
-		update_H(self.solver.H,self.old_A,self.new_A,self,self.last_reward)#THIS R IS A BANDAID
-		#print self.solver.H.R[self.policy_set.TA.identification][self.old_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index], self.solver.H.N[self.policy_set.TA.identification][self.old_A.get_lower_level_abf(self)][self.policy_set.TA.LA.index]
+		#update_H(self.solver.H,self.old_A,self.new_A,self,self.last_reward)#THIS R IS A BANDAID
+
 
 
 
@@ -60,8 +58,8 @@ class Agent:
 		self.new_A.evolve_all(self.solver.H,self)
 
 	def reset(self,s,data,fp,fn):
-		self.x=self.map_size/2
-		self.y=self.map_size/2
+		self.x=50
+		self.y=50
 		self.current_action=Policies.Policy(0,0,self.poll_time)
 		self.old_A=Abstractions()
 		self.new_A=Abstractions()
@@ -185,23 +183,6 @@ class Agent:
 
 	def get_transition(self,action,x,y,middle):
 		self.time_away_from_network+=1		
-		if self.x > self.map_size/2 - 10 and self.x < self.map_size/2 + 11:
-			if self.y > self.map_size/2 - 10 and self.y < self.map_size/2 + 11:
-				self.time_away_from_network=0
-		
-
-
-		#if action != (0,0):
-		#	self.add_battery(-.25)
-		#	if self.battery <1:
-		#		return (x,y)
-		#else:
-		#	if (x,y)==middle:
-		#		self.add_battery(5)
-			#else:
-				#self.add_battery(1)	
-
-
 		return (x+action[0],y+action[1])
 
 

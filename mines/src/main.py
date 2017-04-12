@@ -197,7 +197,7 @@ class Simulator:
 
 	def pose_cb(self,data):
 		if data.header.frame_id not in agent_dict:
-			agent_dict[data.header.frame_id]=Agent(Mine_Data,map_size,agent_poll_time)
+			agent_dict[data.header.frame_id]=Agent(agent_poll_time)
 	 
 
 		agent_dict[data.header.frame_id].x=int(data.pose.position.x)
@@ -210,7 +210,7 @@ class Simulator:
 
 	def task_cb(self,data):
 		if data.header.frame_id not in agent_dict:
-			agent_dict[data.header.frame_id]=Agent(Mine_Data,map_size,agent_poll_time)
+			agent_dict[data.header.frame_id]=Agent(agent_poll_time)
 
 		agent_dict[data.header.frame_id].work=int(data.pose.position.x)
 

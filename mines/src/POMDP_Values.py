@@ -124,11 +124,21 @@ class Phi:
 	def get_state(self,A,seed):
 		return self.obj.get_state(A,self,seed)
 
+	def get_events(self,A,seed):
+		vision = self.visions[seed]
+		base=A.get_base()
+		trajectory=[] #by dimension and region
+
+		for i in range(self.state_size):
+			trajectory.append(self.get_loc_from_vision(vision[i],base))
+
+		return Objective.Events(trajectory,A)
+
 	def get_reward(self,s,a):
 		return self.obj.get_reward(s,a)
 
-	def evolve(self,s,a):
-		return self.obj.evolve(s,a)
+	def evolve(self,s,a,E):
+		return self.obj.evolve(s,a,E)
 
 
 

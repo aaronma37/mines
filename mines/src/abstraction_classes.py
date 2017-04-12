@@ -216,7 +216,9 @@ class Abstractions():
 			self.work_load.append(WorkLoad(i))
 		self.location=Location()
 		self.battery=Battery()
-
+	
+		self.explore_events={}#[region][time]
+		
 
 	def imprint(self,a):
 		for i in range(len(self.regions)):

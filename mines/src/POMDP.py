@@ -7,13 +7,13 @@ import numpy as np
 import math
 from abstraction_classes import Abstractions
 from Heuristics import heuristic
-import Heuristics
 from sets import Set
 import time
 import Policies
 from random import shuffle
 import POMDP_Values as v
 import abstraction_classes
+import Objective
 L_MAX=v.L_MAX
 
 H=5
@@ -21,7 +21,7 @@ Gamma=.5
 
 class Solver: 
 
-	def __init__(self,E,e_args):
+	def __init__(self):
 		self.N=v.N()
 		self.Na=v.Na()
 		self.Q=v.Q()
@@ -30,15 +30,7 @@ class Solver:
 		self.Pi=v.Pi()
 		self.great=[]
 		self.steps=[]
-		self.T={}
-
-
-		self.H=heuristic()
-		#Heuristics.load_file(self.H,'testfile_d.txt')
 		self.A=Abstractions()
-		self.environment_data=E(e_args)
-		self.mini_ab=abstraction_classes.mini_ab()
-		#self.get_psi('/home/aaron/catkin_ws/src/mines/mines/src/psi_main.txt')
 
 	def reset(self):
 		self.N=v.N()
@@ -55,19 +47,24 @@ class Solver:
 	def OnlinePlanning(self,A,time_to_work):
 		start = time.time()
 		end = start
-		cc=0
 		while end - start < time_to_work:
 			seed=randint(0,999)
 			state=self.Phi.get_state(A,seed)
-			self.search(state,0)
+			E=self.Phi.get_events(A,seed)
+
+			self.search(state,E,0)
 			end = time.time()
-			cc+=1
 
 
 
-	def search(self,state,depth):
+
+	def search(self,state,events,depth):
 		if depth>=H:
 			return 0.
+
+		E=Objective.Events(0,0)
+		events.imprint(E)
+
 
 		a = self.arg_max_ucb()
 		save_state = state
@@ -75,9 +72,11 @@ class Solver:
 		self.Na.append_to(save_state,a,1.,self.Phi)
 		self.Q.append_to(save_state,a,0.,self.Phi)
 
+		
 		r = self.Phi.get_reward(state,a)
-		state = self.Phi.evolve(state,a)
-		r += Gamma*self.search(state,depth+1)
+		E.ammend(a)
+		state,E = self.Phi.evolve(state,a,E)
+		r += Gamma*self.search(state,E,depth+1)
 
 		self.Q.append_to_average(save_state,a,r,self.Phi,self.Na)
 		return r	

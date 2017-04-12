@@ -1,4 +1,5 @@
 <launch>
+<param name="multi_agent_model" type="string" value="pure"/>
 <param name="agent_poll_time" type="double" value="20"/>
 <param name="agent_step_time" type="double" value=".1"/>
 <param name="load_q" type="bool" value="False"/>

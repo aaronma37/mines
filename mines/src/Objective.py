@@ -49,16 +49,19 @@ class Battery():
 
 		battery_string=battery_string[:-1]
 		charger_string=charger_string[:-1]
-
 		
-		if a is "charge" and charger_string[0] == 1:
-			for i in battery_string:
-				i="0"
+		if a is "charge" and int(charger_string[0]) == 1:
+			for i in range(len(battery_string)):
+				battery_string[i] = "0"
+
+
+
 		else:
 			battery_string=battery_string[1:]
 			battery_string.append(battery_string[-1])
 		
-		
+
+
 		charger_string=charger_string[1:]
 		charger_string.append("-1")
 
@@ -68,7 +71,6 @@ class Battery():
 		h=h+';'
 		for l in charger_string:
 			h=h+l+"~"
-		
 
 		return h
 
@@ -81,8 +83,11 @@ class Battery():
 		battery_string=battery_string[:-1]
 		charger_string=charger_string[:-1]
 
-		if int(battery_string[0])==1 and int(charger_string[0]) == 1 and a is "charge":  
-			return 1000
+		if int(battery_string[0])==0:
+			return 5000
+
+	#	if int(battery_string[0])==1 and int(charger_string[0]) == 1 and a is "charge":  
+	#		return 1000
 		
 		return 0
 

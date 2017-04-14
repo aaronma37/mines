@@ -62,6 +62,8 @@ class Solver:
 		if depth>=H:
 			return 0.
 
+
+
 		E=Objective.Events(0,0)
 		events.imprint(E)
 
@@ -74,11 +76,14 @@ class Solver:
 
 		
 		r = self.Phi.get_reward(state,a)
+
 		E.ammend(a)
 		state,E = self.Phi.evolve(state,a,E)
+
 		r += Gamma*self.search(state,E,depth+1)
 
 		self.Q.append_to_average(save_state,a,r,self.Phi,self.Na)
+
 		return r	
 
 	def get_action(self,A,next_expected_action):

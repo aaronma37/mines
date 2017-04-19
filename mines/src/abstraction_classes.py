@@ -8,7 +8,7 @@ from sets import Set
 from geometry_msgs.msg import PoseStamped
 import numpy as np
 import Regions
-
+import Events
 
 def a2l(a):
 	return a-1
@@ -218,7 +218,7 @@ class Abstractions():
 		self.battery=Battery()
 	
 		self.explore_events={}#[region][time]
-		
+		self.E=Events.Event("default",0)
 
 	def imprint(self,a):
 		for i in range(len(self.regions)):
@@ -241,6 +241,10 @@ class Abstractions():
 
 		self.location.update(a)
 		self.battery.num=a.battery
+
+		self.E=a.Exploration_Event
+
+
 
 	def get_max_reward_funct(self):
 		r=[]

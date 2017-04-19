@@ -7,18 +7,13 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   rospy
   nav_msgs
+  message_generation
 )
 
 
 
 #catkin_python_setup()
 
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES polyhedral_terrains_demo
-#  CATKIN_DEPENDS roscpp rospy std_msgs
-#  DEPENDS system_lib
-)
 
 ###########
 ## Build ##
@@ -32,16 +27,32 @@ include_directories(
 )
 
 
-
+add_message_files(
+	FILES
+	event_list.msg
+	event_time.msg
+	event_region.msg
+	event.msg
+	trajectory.msg)
+                                        #PoseWithName.msg
 
 #add_message_files( DIRECTORY msg FILES  pathData.msg )
                                         #PoseWithName.msg
 
-#generate_messages(
-#  DEPENDENCIES
-#  std_msgs
+generate_messages(
+  DEPENDENCIES
+  std_msgs
 #  geometry_msgs
-#)
+)
+
+
+catkin_package(
+#  INCLUDE_DIRS include
+#  LIBRARIES polyhedral_terrains_demo
+#  CATKIN_DEPENDS roscpp rospy std_msgs
+#  DEPENDS system_lib
+   CATKIN_DEPENDS message_runtime
+)
 
 
 
@@ -61,26 +72,11 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
     src/agent_standard.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
-  catkin_install_python(PROGRAMS
-    src/mobile_buoy_standard.py
-    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  )
+
   catkin_install_python(PROGRAMS
     src/draw.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
-
-  catkin_install_python(PROGRAMS
-    src/agent_standard_pre_trainer.py
-    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  )
-
-  catkin_install_python(PROGRAMS
-    src/main_pre_trainer.py
-    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  )
-
-
 
 
 

@@ -15,6 +15,10 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import OccupancyGrid
 from std_msgs.msg import Int32MultiArray
+from mines.msg import event
+from mines.msg import event_region
+from mines.msg import event_time
+from mines.msg import trajectory
 
 from std_msgs.msg import Int32
 from agent_classes import Agent
@@ -31,6 +35,7 @@ import POMDP_Values as v
 
 L_MAX=v.L_MAX
 
+event_time_horizon = rospy.get_param("/event_time_horizon")
 agent_poll_time = rospy.get_param("/agent_poll_time")
 a_step_time = rospy.get_param("/agent_step_time")
 load_q_flag = rospy.get_param("/load_q")
@@ -41,12 +46,9 @@ f_path = rospy.get_param("/temp_file_path")
 rospy.init_node('main', anonymous=True)
 env_pub =rospy.Publisher('/environment_matrix', OccupancyGrid, queue_size=100)#CHANGE TO MATRIX
 
-agent_occ =rospy.Publisher('/work_load', OccupancyGrid, queue_size=100)#CHANGE TO MATRIX
-score_pub =rospy.Publisher('/buoy_scores', Int32MultiArray, queue_size=100)#CHANGE TO MATRIX
-worker_pub =rospy.Publisher('/buoy_targets', Int32MultiArray, queue_size=100)#CHANGE TO MATRIX
 reset_publisher = rospy.Publisher('/reset', Int32, queue_size=100)#CHANGE TO MATRIX
 restart_publisher = rospy.Publisher('/restart', Int32, queue_size=100)#CHANGE TO MATRIX
-
+request_action_pub = rospy.Publisher('/request_action', event, queue_size=100)#CHANGE TO MATRIX
 
 region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
 
@@ -62,9 +64,16 @@ sb=Mobile_Buoy_Environment(map_size)
 agent_dict = {}# {Agent Identity:Agent}
 buoy_dict = {}
 o = OccupancyGrid()
-o2= OccupancyGrid()
-o3= Int32MultiArray()
-o4= Int32MultiArray()
+
+
+Exploration_Event=event()
+for region in range(len(Regions.region)):
+	Exploration_Event.region.append(event_region())
+	for t in range(event_time_horizon):
+		Exploration_Event.region[region].time.append(event_time())
+
+
+
 reset_ = Int32()
 reset_.data = 0
 
@@ -86,9 +95,7 @@ for i in range(map_size):
 	for j in range(map_size):
 		o.data.append(0)
 
-for i in range(len(region)):
-		o2.data.append(0)
-		o3.data.append(0)
+
 
 
 
@@ -124,7 +131,7 @@ class Simulator:
 	def load_files(self):
 		for k,a in agent_dict.items():
 			self.load_file(f_path+k+".txt")
-			return
+
 
 
 	def load_file(self,fn):
@@ -156,27 +163,7 @@ class Simulator:
 					print "Value error trying to convert", l[4]					
 					return
 
-				'''
-				for rot in range(8):
-					rot_state=self.Phi.get_rotated_state(rot,state)
 
-					rot_action=self.Phi.R_action(rot,a_i)
-					#print state, rot, rot_state, a_i, rot_action
-					if rot_action is None:
-						print "rot_action is None", rot,a_i
-					for L in range(self.cull+1):#MOOOOOOOOOOO
-						if rot_action >0 and rot_action<26:
-							if self.Phi.avail_action_space[self.Phi.get_base_from_str(rot_state)].index(rot_action-1)< (L-1)/2 + 1: 
-								mod_state=self.Phi.get_from_state(L,rot_state)
-								self.Na_Level.append_to_direct(L,mod_state,rot_action,n,self.Phi)
-								self.Q_Level.append_to_direct(L,mod_state,rot_action,0.,self.Phi)
-								self.Q_Level.append_to_average_direct(L,mod_state,rot_action,r,self.Phi,self.Na_Level)
-						else:
-							mod_state=self.Phi.get_from_state(L,rot_state)
-							self.Na_Level.append_to_direct(L,mod_state,rot_action,n,self.Phi)
-							self.Q_Level.append_to_direct(L,mod_state,rot_action,0.,self.Phi)
-							self.Q_Level.append_to_average_direct(L,mod_state,rot_action,r,self.Phi,self.Na_Level)
-				'''
 				self.Na.append_to(state,a_i,n,self.Phi)
 				self.Q.append_to(state,a_i,0.,self.Phi)
 				self.Q.append_to_average(state,a_i,r,self.Phi,self.Na)
@@ -197,7 +184,7 @@ class Simulator:
 
 	def pose_cb(self,data):
 		if data.header.frame_id not in agent_dict:
-			agent_dict[data.header.frame_id]=Agent(agent_poll_time)
+			agent_dict[data.header.frame_id]=Agent(agent_poll_time,event_time_horizon,data.header.frame_id)
 	 
 
 		agent_dict[data.header.frame_id].x=int(data.pose.position.x)
@@ -208,26 +195,33 @@ class Simulator:
 		agent_dict[data.header.frame_id].lvl=int(data.pose.orientation.z)
 		agent_dict[data.header.frame_id].measure(self.s,False)
 
-	def task_cb(self,data):
-		if data.header.frame_id not in agent_dict:
-			agent_dict[data.header.frame_id]=Agent(agent_poll_time)
+	def trajectory_cb(self,data):
+		if data.frame_id not in agent_dict:
+			agent_dict[data.header.frame_id]=Agent(agent_poll_time,event_time_horizon,data.frame_id)
 
-		agent_dict[data.header.frame_id].work=int(data.pose.position.x)
+		agent_dict[data.frame_id].trajectory.action_trajectory=data.action_trajectory
+		agent_dict[data.frame_id].trajectory.region_trajectory=data.region_trajectory
 
 		self.send_to+=1
 
 		if self.send_to + 1 > len(list(agent_dict.values())):
 			self.send_to=0
 	
+		self.append_events(data)
 
-	def buoy_cb(self,data):
-		if data.header.frame_id not in buoy_dict:
-			buoy_dict[data.header.frame_id]=Agent_buoy(Mine_Data,map_size)
+	def append_events(self,trajectory):
+		for t in range(len(trajectory.action_trajectory)):
+			Exploration_Event.region[trajectory.region_trajectory[t]].time[t].event.append(trajectory.action_trajectory[t])
 
+	def update_events(self):
+		Exploration_Event.region=[]
+		for r in range(len(Regions.region)):
+			Exploration_Event.region.append(event_region())
+			for t in range(event_time_horizon):
+				Exploration_Event.region[r].time.append(event_time())
+		for a in agent_dict.values():
+			self.append_events(a.trajectory)
 
-		buoy_dict[data.header.frame_id].x=int(data.pose.position.x)
-		buoy_dict[data.header.frame_id].y=int(data.pose.position.y)
-		buoy_dict[data.header.frame_id].current_action=buoy_dict[data.header.frame_id].policy_set[int(data.pose.orientation.x)]
 
 	def pub(self):
 	
@@ -260,35 +254,18 @@ class Simulator:
 			env_pub.publish(o)
 
 
-	def calculate_work_load(self):
-	
-		for i in range(len(Regions.region)):
-			o2.data[i]=0
-
-		for k,a in agent_dict.items():
-			#o2.data[Regions.get_region(a.x,a.y)]=o2.data[Regions.get_region(a.x,a.y)]+1
-			if  a.work >-1 and a.work <25:
-				o2.data[a.work]+=1
-
-	
-			
-
 	def pub2(self):
 
 
 		if self.agent_num > 0:
-	
-			#s.calculate_occupied(agent_dict,region,region_size)
 
-			o2.header.frame_id=list(agent_dict.keys())[self.send_to]
-			agent_dict[o2.header.frame_id].work=26
-			self.calculate_work_load()
-			o2.header.frame_id=list(agent_dict.keys())[self.send_to]
-			agent_occ.publish(o2)
+			Exploration_Event.requested_agent=list(agent_dict.keys())[self.send_to]
+			agent_dict[Exploration_Event.requested_agent].clear_trajectory()
+			self.update_events()
+			request_action_pub.publish(Exploration_Event)
 
 	def reset_pub(self,recalculate_policy_flag):
-		for i in range(25):
-			o2.data[i]=0
+
 		reset_.data=self.s.get_reward()-self.s.init_reward
 		print self.s.get_reward()-self.s.init_reward, "H"
 		self.s.reset()
@@ -304,19 +281,7 @@ class Simulator:
 		time.sleep(self.time_to_wait)
 
 
-	def pub_to_buoys(self):
-		sb.calculate_region_score(agent_dict)
-		for i in range(len(region)):
-			o3.data[i]=sb.score[i]
 
-
-		score_pub.publish(o3)
-		o4.data=[]
-		for k,b in buoy_dict.items():
-			o4.data.append(int(b.current_action.index))
-
-		worker_pub.publish(o4)
-	
 
 
 	def run(self):
@@ -361,15 +326,11 @@ def main(args):
 
 	sim=Simulator()
 	posesub =rospy.Subscriber('/pose', PoseStamped, sim.pose_cb)#CHANGE TO MATRIX
-	mb_sub =rospy.Subscriber('/mobile_buoy', PoseStamped, sim.buoy_cb)#CHANGE TO MATRIX
-	task_sub =rospy.Subscriber('/task', PoseStamped, sim.task_cb)#CHANGE TO MATRIX
-#	draw.init(s,agent_dict,map_size)
-#	draw.start()
+	agent_trajectory_sub =rospy.Subscriber('/trajectory', trajectory, sim.trajectory_cb)#CHANGE TO MATRIX
+
 
 	try:
-		
-		#p = Process(target=root.mainloop, args=())
-		#p.start()		
+	
 		sim.run()
 		rospy.spin()
 

@@ -12,10 +12,14 @@ import Regions
 from POMDP import Solver
 import time
 import Policies
+import Events
+from mines.msg import trajectory
+
+
 class Agent: 
 
 
-	def __init__(self,agent_poll_time):
+	def __init__(self,agent_poll_time,event_time_horizon,identification):
 
 		self.solver = Solver() # get rid of
 		self.lvl=0
@@ -33,9 +37,13 @@ class Agent:
 		self.last_reward=0.
 		self.poll_time=agent_poll_time
 
-		self.current_action=Policies.Policy(0,0,self.poll_time)
+		self.current_action=Policies.Policy(0,0,self.poll_time,0,0)
 		self.steps=0.
 		self.available_flag=True
+		self.trajectory=trajectory()
+		self.trajectory.frame_id=identification
+		self.event_time_horizon=event_time_horizon
+		self.Exploration_Event=Events.Event("Exploration",event_time_horizon)
 
 		for i in range(len(Regions.region)):
 			self.work_load.append(0)
@@ -44,6 +52,17 @@ class Agent:
 		self.new_A=Abstractions()
 
 		self.time_away_from_network=0
+
+	def clear_trajectory(self):
+		self.trajectory.region_trajectory=[]
+		self.trajectory.action_trajectory=[]
+
+	def clear_events(self):
+		self.Exploration_Event.clear()
+		
+	def update_events(self,e):
+		self.Exploration_Event.update(e)
+
 		
 	def update_heuristics(self,old_s,new_s):
 		self.old_A.update_all(old_s,self)
@@ -60,7 +79,7 @@ class Agent:
 	def reset(self,s,data,fp,fn):
 		self.x=50
 		self.y=50
-		self.current_action=Policies.Policy(0,0,self.poll_time)
+		self.current_action=Policies.Policy(0,0,self.poll_time,0,0)
 		self.old_A=Abstractions()
 		self.new_A=Abstractions()
 		self.battery=100
@@ -75,8 +94,12 @@ class Agent:
 		self.steps=0.
 		self.solver.reset()
 		self.get_psi(fp)
+		self.set_aggregate_q(fp)
+
 		self.available_flag=True
 		
+	def set_aggregate_q(self,fp):
+		self.solver.set_aggregate_q(fp+'/q_main.txt')
 
 	def get_psi(self,fp):
 		self.solver.get_psi(fp+'/psi_main.txt')
@@ -102,11 +125,18 @@ class Agent:
 		self.new_A.update_all(s,self)
 
 	def decide(self,s):	
-		#self.battery=100
-		a,an  = self.solver.get_action(self.new_A,self.current_action.next)	
+
+		a,an,x_traj,a_traj  = self.solver.get_action(self.new_A,self.current_action.next,self.event_time_horizon)	
+		self.trajectory.region_trajectory=x_traj
+		self.trajectory.action_trajectory=a_traj
+					
 		if a == 26:
 			print "ERROR",26
-		self.current_action=Policies.Policy(a,an,self.poll_time)
+
+		if a_traj[0]=="charge":
+			self.current_action=Policies.Policy(x_traj[0]+1,x_traj[1]+1,self.poll_time,a_traj[0],(50,50))
+		else:
+			self.current_action=Policies.Policy(x_traj[0]+1,x_traj[1]+1,self.poll_time,a_traj[0],None)
 
 		if self.current_action.index < 26 and self.current_action.index > 0:
 			self.work=self.current_action.index-1

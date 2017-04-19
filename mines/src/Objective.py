@@ -172,7 +172,7 @@ class Events():
 		if trajectory is 0 and A is 0:
 			self.region_linked=[]
 			self.state_size=0
-			self.E=self.get_E(0,0)
+			self.E=[]
 			return
 
 		self.region_linked=[]
@@ -184,15 +184,21 @@ class Events():
 				if trajectory[i] == trajectory[j]:
 					self.region_linked[i].append(j)
 					
-		self.E=self.get_E(A,self.state_size)
+		self.E=self.get_E(A,trajectory,self.state_size)
 
-	def get_E(self,A,state_size):
+	def get_E(self,A,trajectory,state_size):
 		E=[]
 
 		for i in range(state_size):
 			E.append([])
 			for j in range(state_size):
 				E[i].append([])
+				if A.E.data.get(i) is not None:
+					if A.E.data[i].get(j) is not None:
+						for e in A.E.data[i][j]:
+							E[i][j].append(e)
+
+		
 
 		return E
 

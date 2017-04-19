@@ -8,7 +8,7 @@ import random
 import Regions
 As=Abstractions()
 import Objective
-
+import Policies
 L_MAX=50
 
 
@@ -29,13 +29,15 @@ class Pi:
 	def seed_algorithm_from_state(self,state):
 		return 26
 
-	def get_and_return_level(self,A,Psi,Phi,last_expected_action):
+	def get_and_return_level(self,A,Psi,Phi,last_expected_action,event_time_horizon):
 		action = []
 		reward = []
 		states_=[]
 		base=A.get_base()
-
+		Phi.set_alpha([.5,.5])
+	
 		for i in range(1000):
+			Phi.set_alpha([.5,.5])
 			s=Phi.get_state(A,i)
 			a,l,r = Psi.get_with_level(0,s,self,Phi)
 			if Phi.get_loc_from_vision(Phi.visions[i][0],base) is not None:
@@ -47,17 +49,31 @@ class Pi:
 			reward.append(r)
 			states_.append(s)
 
+
+
 		best_index=reward.index(max(reward))
 		print "chose", states_[best_index],max(reward),action[best_index]
 		base=A.get_base()
 
+		x_trajectory=[]
+
+		for i in range(event_time_horizon):
+			if Phi.get_loc_from_vision(Phi.visions[best_index][i],base) is None:
+				x_trajectory.append(base)
+			else:
+				x_trajectory.append(Phi.get_loc_from_vision(Phi.visions[best_index][i],base))
+
+
+
+
+
 		if Phi.get_loc_from_vision(Phi.visions[best_index][0],base) is None:
-			return base+1,base+1
+			return base+1,base+1,x_trajectory,best_index
 		else:
 			if Phi.get_loc_from_vision(Phi.visions[best_index][1],base) is None:
-				return 	Phi.get_loc_from_vision(Phi.visions[best_index][0],base)+1,Phi.get_loc_from_vision(Phi.visions[best_index][0],base)+1
+				return 	Phi.get_loc_from_vision(Phi.visions[best_index][0],base)+1,Phi.get_loc_from_vision(Phi.visions[best_index][0],base)+1,x_trajectory,best_index
 			else:
-				return 	Phi.get_loc_from_vision(Phi.visions[best_index][0],base)+1,Phi.get_loc_from_vision(Phi.visions[best_index][1],base)+1
+				return 	Phi.get_loc_from_vision(Phi.visions[best_index][0],base)+1,Phi.get_loc_from_vision(Phi.visions[best_index][1],base)+1,x_trajectory,best_index
 
 
 
@@ -97,7 +113,27 @@ class Phi:
 		self.gen_ord_state()
 		self.alpha=[.5,.5]
 		self.obj=Objective.Objective_Handler()
-	
+		self.alpha_list=[]
+		self.alpha_list.append((1.,0.))
+		self.alpha_list.append((.5,.5))
+		self.alpha_list.append((.4,.6))
+		self.alpha_list.append((.3,.7))
+		self.alpha_list.append((.2,.8))
+		self.alpha_list.append((.1,.9))
+		self.alpha_list.append((0.,1.))
+		self.alpha_list.append((.6,.4))
+		self.alpha_list.append((.7,.3))
+		self.alpha_list.append((.8,.2))
+		self.alpha_list.append((.9,.1))
+
+	def set_alpha(self,alpha):
+		self.alpha=alpha
+
+	def set_random_alpha(self):
+		i=random.random()
+		self.alpha[0]=round(i, 1)
+		self.alpha[1]=1-round(i, 1)
+
 	def gen_ord_state(self):
 
 		for i in range(self.num_visions):
@@ -115,6 +151,8 @@ class Phi:
 
 
 	def get_loc_from_vision(self,vision,region):
+		if region is None:
+			return None
 		xy=Regions.region[region]
 		x=xy[0]
 		y=xy[1]
@@ -150,11 +188,15 @@ class Psi:
 		self.psi={}#[L][pi(L-1,A,Phi,Psi)]-> cluster
 		self.point={}
 		self.score={}
+		self.Q={}
+		self.N={}
+		self.Na={}
 
 	def update(self,Pi,Phi,Q,Na):
 		self.psi={}
 		self.point={}
 		self.score={}
+
 		print "starting calculate psi"
 		start=time.time()
 
@@ -162,17 +204,15 @@ class Psi:
 
 		self.point[l]={}
 		self.score[l]={}
-		for state,q_2 in Q.q.items():
-			#start1=time.time()
 
+
+
+		for state,q_2 in Q.q.items():
 			v=list(q_2.values())
 			key=list(q_2.keys())
-			#end2=time.time()
-			#print Q.q[l][state][key[v.index(max(v))]],Q.var[l][state][key[v.index(max(v))]],Q.ldb[l][state][key[v.index(max(v))]],Q.lcb[l][state][key[v.index(max(v))]]
+
 			self.point[l][state]=key[v.index(max(v))]
 			self.score[l][state]=max(v)
-
-			#print "total", time.time()-start1,"s2",(end2-start1)/(time.time()-start1),"s3",(end3-start3)/(time.time()-start1)
 
 
 		print "finished calculated psi",time.time()-start
@@ -256,10 +296,10 @@ class Psi:
 
 	def get_with_level(self,L,s,Pi,Phi):
 		if self.point.get(L) is None:
-			return 0,L,-1000.
+			return "explore",L,-1000.
 
 		if self.point[L].get(s) is None:
-			return 0,L,-1000.
+			return "explore",L,-1000.
 		else:
 			return self.point[L][s],L,self.score[L][s]
 
@@ -377,6 +417,12 @@ class Q:
 	def get(self,A,phi,a):
 		return self.q[L][phi.get(L_MAX,A)][a]
 
+	def get_bypass(self,state,a):
+		if self.q[state].get(a) is None:
+			return 0.
+		else:
+			return self.q[state][a]
+
 	def check(self,phi):
 		if self.q.get(phi) is None:
 			return False
@@ -412,7 +458,52 @@ class Q:
 		else:
 			self.q[s][a]+=r
 
-	
+	def load_file(self,fn,Na,N,Phi):
+		#ONLY FOR AGGREGATE!
+
+		self.q={}
+		Na.na={}
+		N.n={}
+
+		f = open(fn,'r')
+		size=0
+		for line in f:
+
+			l = line.split(">")
+			if l[0]=="Q" and len(l)>4:
+				size+=1
+				state=l[1]
+
+				try:
+					a_i=l[2]
+				except ValueError:
+					print "Value error trying to convert", l[2]					
+					return
+
+				try:
+					r=float(l[3])
+				except ValueError:
+					print "Value error trying to convert", l[3]					
+					return
+
+				try:
+					n=float(l[4])
+				except ValueError:
+					print "Value error trying to convert", l[4]					
+					return
+
+
+				Na.append_to(state,a_i,n,Phi)
+				N.append_to(state,n,Phi)
+				self.append_to(state,a_i,0.,Phi)
+				self.append_to_average(state,a_i,r,Phi,Na)
+
+
+		f.close()
+		print "Successfully appended",fn, "with", size, "lines"
+
+
+
 
 	def get_direct(self,phi,a):
 		return self.q[phi][a]
@@ -539,15 +630,14 @@ class N:
 		self.n={}#[L][pi(L-1,A,Phi,Psi)][Phi(L,A)]->n
 
 	def get(self,L,A,phi):
-		return self.n[L][phi.get(L_MAX,A)]
+		return self.n[phi.get(L_MAX,A)]
 
 	def append_to(self,s,r,Phi):
-			if self.n.get(L_MAX) is None:
-				self.n[L_MAX]={s:r}	
-			if self.n[L_MAX].get(s) is None:
-				self.n[L_MAX][s]=r	
+
+			if self.n.get(s) is None:
+				self.n[s]=r	
 			else:
-				self.n[L_MAX][s]+=r
+				self.n[s]+=r
 
 class Na:
 	def __init__(self):

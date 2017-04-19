@@ -12,6 +12,12 @@ from random import shuffle
 action_index_max=27
 action_list=[]
 
+action_library=[]
+
+action_library.append('explore')
+action_library.append('charge')
+
+
 
 for i in range(action_index_max):
 	action_list.append(i)
@@ -65,8 +71,10 @@ def get_discrete_action(a,s,action):
 		return (next_x,next_y)
 
 class Policy:
-	def __init__(self,index,next,agent_poll_time):
+	def __init__(self,index,next,agent_poll_time,index_type,point):
 		self.index=index
+		self.index_type=index_type #explore, go to point, etc.#
+		self.point=point
 		self.next=next
 		self.time=agent_poll_time
 		self.max_time=agent_poll_time
@@ -76,6 +84,13 @@ class Policy:
 		return max(math.fabs(x-x2),math.fabs(y-y2))
 
 	def get_target(self,a,s):
+		
+		if self.index_type=="charge":
+			if self.point is not None:
+				return self.point
+			else:
+				return Regions.region[next]
+
 		if self.index==0:
 			return (s.middle[0],s.middle[1])
 		elif self.index <26:

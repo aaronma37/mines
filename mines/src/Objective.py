@@ -8,6 +8,76 @@ import random
 import Regions
 As=Abstractions()
 
+class Service():
+	def __init__(self):
+		'''nothing'''
+	
+	def get_state(self,A,Phi,seed):
+
+		h=""
+
+		vision=Phi.visions[seed]
+		base=A.get_base()
+		
+		for i in range(Phi.state_size):
+			if base is None:
+				h=h+str(0)+"~"
+			elif Phi.get_loc_from_vision(vision[i],base) is None:
+				h=h+str(0)+"~"
+			else:
+				if Phi.get_loc_from_vision(vision[i],base) in A.mines.regions: 
+					h=h+str(1)+"~"
+				else:
+					h=h+str(0)+"~"
+		return h
+		
+	def evolve(self,state_string,E,a):
+		mine_string = state_string.split("~")
+		mine_string=mine_string[:-1]
+		#E>dimension>time>actions
+	
+		for i in range(len(E.E)):
+			for a in E.E[i][0]:
+				mine_string[i]=self.Pr(mine_string[i],a)
+			
+
+
+		mine_string=mine_string[1:]
+		mine_string.append("-1")
+
+
+		h=""
+		for l in mine_string:
+			h=h+l+"~"
+
+		return h
+
+
+	def get_reward(self,state_string,a):
+		mine_string = state_string.split("~")
+		mine_string=mine_string[:-1]
+
+		ex=int(mine_string[0])
+
+		if a is "mine":
+			if ex==1:
+				return 1000.
+			else:
+				return 0.
+		else:
+			return 0.
+
+
+	def Pr(self, state_index, action):
+		state_index=int(state_index)
+		r = random.random()
+		if action != "mine" or state_index<1:
+			return str(state_index) 
+		if r < 1.:
+			return str(state_index-1)
+		return str(state_index)
+
+
 class Battery():
 	def __init__(self):
 		'''nothing'''
@@ -34,7 +104,7 @@ class Battery():
 			elif Phi.get_loc_from_vision(vision[i],base) is None:
 				h=h+str(0)+"~"
 			else:
-				if Phi.get_loc_from_vision(vision[i],base) == 14: 
+				if Phi.get_loc_from_vision(vision[i],base) in A.charging_docks.regions: 
 					h=h+str(1)+"~"
 				else:
 					h=h+str(0)+"~"
@@ -240,6 +310,7 @@ class Objective_Handler():
 		self.objectives=[]
 		self.objectives.append(Battery())
 		self.objectives.append(Exploration())
+		self.objectives.append(Service())
 
 	def get_state(self,A,Phi,seed):
 		h=''
@@ -303,7 +374,12 @@ class Objective_Handler():
 		objective_string = state_string[1:]
 
 		r=0.
+		if len(alpha_string)<3:
+			print alpha_string,"d"
+		alpha_string[2]
 
+		self.objectives[2]
+		objective_string[2]
 		for i in range(len(self.objectives)):
 			r+=float(alpha_string[i])*self.objectives[i].get_reward(objective_string[i],a)
 

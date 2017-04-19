@@ -37,7 +37,8 @@ class Agent:
 		self.last_reward=0.
 		self.poll_time=agent_poll_time
 
-		self.current_action=Policies.Policy(0,0,self.poll_time,0,0)
+		self.current_action=Policies.Policy(0,0,self.poll_time,0,(50,50))
+		self.display_action="None"
 		self.steps=0.
 		self.available_flag=True
 		self.trajectory=trajectory()
@@ -79,7 +80,7 @@ class Agent:
 	def reset(self,s,data,fp,fn):
 		self.x=50
 		self.y=50
-		self.current_action=Policies.Policy(0,0,self.poll_time,0,0)
+		self.current_action=Policies.Policy(0,0,self.poll_time,0,(50,50))
 		self.old_A=Abstractions()
 		self.new_A=Abstractions()
 		self.battery=100
@@ -130,13 +131,47 @@ class Agent:
 		self.trajectory.region_trajectory=x_traj
 		self.trajectory.action_trajectory=a_traj
 					
+		self.display_action=a_traj[0]
 		if a == 26:
 			print "ERROR",26
 
 		if a_traj[0]=="charge":
-			self.current_action=Policies.Policy(x_traj[0]+1,x_traj[1]+1,self.poll_time,a_traj[0],(50,50))
+			try:
+				charge_index=self.new_A.charging_docks.regions.index(x_traj[0])
+				coordinates = self.new_A.charging_docks.coordinates[charge_index]
+			except ValueError:
+				try:
+					charge_index=self.new_A.charging_docks.regions.index(x_traj[1])
+					coordinates = self.new_A.charging_docks.coordinates[charge_index]
+				except ValueError:
+					charge_index=None
+					coordinates = Regions.region[x_traj[0]]
+				
+
+
+
+			print charge_index,coordinates
+			self.current_action=Policies.Policy(x_traj[0]+1,x_traj[1]+1,self.poll_time,a_traj[0],coordinates)
+		elif a_traj[0]=="mine":
+			try:
+				charge_index=self.new_A.mines.regions.index(x_traj[0])
+				coordinates = self.new_A.mines.coordinates[charge_index]
+			except ValueError:
+				try:
+					charge_index=self.new_A.mines.regions.index(x_traj[1])
+					coordinates = self.new_A.mines.coordinates[charge_index]
+				except ValueError:
+					charge_index=None
+					coordinates = Regions.region[x_traj[0]]
+				
+
+
+
+			print charge_index,coordinates
+			self.current_action=Policies.Policy(x_traj[0]+1,x_traj[1]+1,self.poll_time,a_traj[0],coordinates)
+
 		else:
-			self.current_action=Policies.Policy(x_traj[0]+1,x_traj[1]+1,self.poll_time,a_traj[0],None)
+			self.current_action=Policies.Policy(x_traj[0]+1,x_traj[1]+1,self.poll_time,a_traj[0],Regions.region[x_traj[0]])
 
 		if self.current_action.index < 26 and self.current_action.index > 0:
 			self.work=self.current_action.index-1
@@ -152,14 +187,12 @@ class Agent:
 			action = self.current_action.get_next_action(self,s)
 			self.execute(action,s)#NEED TO RESOLVE s
 		self.battery-=.25
-	
-		#if self.battery <20:
-		#	self.battery=20
-		if self.new_A.location.region==14:
+		self.check_docking()
+
+	def check_docking(self):
+		if self.current_action.index_type=="charge" and Regions.get_region(self.x,self.y) in self.new_A.charging_docks.regions:
 			self.battery=100
-		
-
-
+	
 
 	def execute(self,action_,environment_data_):
 		(x,y) = self.get_transition(action_,self.x,self.y,environment_data_.middle)
@@ -210,6 +243,13 @@ class Agent:
 			for j in range(-1,2):
 				if self.work == Regions.get_region(self.x+i,self.y+j):
 					mine_data_.measure_loc((self.x+i,self.y+j),imaginary)
+
+	def mine(self,e,imaginary):
+		if self.display_action == "mine":
+			for mine in e.mines:
+				if self.x==mine.coordinates[0] and self.y==mine.coordinates[1]:
+					e.mines.remove(mine)
+					return
 
 	def get_transition(self,action,x,y,middle):
 		self.time_away_from_network+=1		

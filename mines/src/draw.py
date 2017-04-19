@@ -30,7 +30,7 @@ import os
 import sys
 
 map_size=100
-s=Mine_Data(map_size)
+s=Mine_Data(map_size,0)
 agent_dict={}
 RESET=0
 HIGHLIGHT=1
@@ -139,6 +139,8 @@ images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/arrow.p
 images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/uuv1.png"))
 images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/reset.png"))
 images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/green_box.png"))
+images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/yellow_box.png"))
+images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/mine.png"))
 #images =  [loadImage (os.path.dirname(os.path.abspath(__file__)) + "/object.png")]
 #images.append(loadImage (os.path.dirname(os.path.abspath(__file__)) + "/uuv.png"))
 #images.append(loadImage (os.path.dirname(os.path.abspath(__file__)) + "/arrow.png"))
@@ -315,8 +317,8 @@ def draw_all(s,agent_dict,map_size,buoy_dict,gui_data,step_num):
 		glColor3f(.3, .3, 0)
 		draw_basic(get_sqr_loc(agent_dict[gui_data.hl].x,map_size),get_sqr_loc(agent_dict[gui_data.hl].y,map_size),get_norm_size(map_size)*2,get_norm_size(map_size)*2,-.1)
 
-	setupTexture(5)
-	draw(get_sqr_loc(map_size/2,map_size), get_sqr_loc(map_size/2,map_size), get_norm_size(map_size)*20,get_norm_size(map_size)*20,1, 1,0,-.1,map_size/10.)
+	#setupTexture(5)
+	#draw(get_sqr_loc(map_size/2,map_size), get_sqr_loc(map_size/2,map_size), get_norm_size(map_size)*20,get_norm_size(map_size)*20,1, 1,0,-.1,map_size/10.)
 
 	## AGENTS
 
@@ -351,25 +353,35 @@ def draw_all(s,agent_dict,map_size,buoy_dict,gui_data,step_num):
 	
 	#end_draw()
 
+	## CHARGING STATION
+
+	setupTexture(6)
+	for charging_docks in s.charging_docks:
+		draw(get_sqr_loc(charging_docks.coordinates[0],map_size), get_sqr_loc(charging_docks.coordinates[1],map_size), get_norm_size(map_size)*charging_docks.size,get_norm_size(map_size)*charging_docks.size,1, 1,0,-.1,map_size/10.)
+
+	setupTexture(7)
+	for mine in s.mines:
+		draw(get_sqr_loc(mine.coordinates[0],map_size), get_sqr_loc(mine.coordinates[1],map_size), get_norm_size(map_size)*mine.size,get_norm_size(map_size)*mine.size,1, 1,0,-.1,map_size/10.)
+
 	## BUOYS
 
-	setupTexture(5)
+	#setupTexture(5)
 
-	for k,a in buoy_dict.items():
-		draw(get_sqr_loc(a.x,map_size), get_sqr_loc(a.y,map_size), get_norm_size(map_size)*20,get_norm_size(map_size)*20,1, 1,0,-.1,map_size/10.)
+	#for k,a in buoy_dict.items():
+	#	draw(get_sqr_loc(a.x,map_size), get_sqr_loc(a.y,map_size), get_norm_size(map_size)*20,get_norm_size(map_size)*20,1, 1,0,-.1,map_size/10.)
 
 	## BUOY STATUS
-	setupTexture(3)
-	count=0
-	for k,a in buoy_dict.items():
-		draw(1.7, 1.-count/4., .1,.1,1, 1,3,-.1,map_size/10.)
-		count+=1
+	#setupTexture(3)
+	#count=0
+	#for k,a in buoy_dict.items():
+	#	draw(1.7, 1.-count/4., .1,.1,1, 1,3,-.1,map_size/10.)
+	#	count+=1
 
-	count=0
-	for k,a in buoy_dict.items():
-		draw_text(1.7, 1.1-count/4.,"Agent: " + str(k))
-		draw_text(1.7,-.05+ 1.1-count/4.,"Action: " + str(a.current_action))
-		count+=1
+	#count=0
+	#for k,a in buoy_dict.items():
+	#	draw_text(1.7, 1.1-count/4.,"Agent: " + str(k))
+	#	draw_text(1.7,-.05+ 1.1-count/4.,"Action: " + str(a.current_action))
+	#	count+=1
 
 	draw_text(0, 1.1,"step: " + str(step_num))
 

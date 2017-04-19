@@ -33,7 +33,9 @@ add_message_files(
 	event_time.msg
 	event_region.msg
 	event.msg
-	trajectory.msg)
+	trajectory.msg
+	map_info.msg
+	uuv_data.msg)
                                         #PoseWithName.msg
 
 #add_message_files( DIRECTORY msg FILES  pathData.msg )

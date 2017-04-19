@@ -20,7 +20,8 @@ from Heuristics import write_file
 from mines.msg import event
 from mines.msg import event_region
 from mines.msg import event_time
-
+from mines.msg import map_info
+from mines.msg import uuv_data
 
 ''' This is the ros file that runs an agent'''
 
@@ -39,22 +40,22 @@ a_step_time = rospy.get_param("/agent_step_time")
 
 
 
-s=Mine_Data(map_size)
-si=Mine_Data(map_size)
+s=Mine_Data(map_size,0)
+si=Mine_Data(map_size,0)
 
-s_old=Mine_Data(map_size)
+s_old=Mine_Data(map_size,0)
 
-pose= PoseStamped()
+
 task= PoseStamped()
 
 
 rospy.init_node('Agent', anonymous=True)
 a = Agent(agent_poll_time,event_time_horizon,rospy.get_name())
-pose.header.frame_id= rospy.get_name()
+
 task.header.frame_id= rospy.get_name()
 
 
-pose_pub = rospy.Publisher('/pose',PoseStamped,queue_size=1)
+pose_pub = rospy.Publisher('/pose',uuv_data,queue_size=1)
 
 trajectory_pub = rospy.Publisher('/trajectory',trajectory,queue_size=100)
 alpha_pub = rospy.Publisher('/alpha',OccupancyGrid,queue_size=1)
@@ -63,28 +64,34 @@ alpha = OccupancyGrid()
 
 alpha.header.frame_id= rospy.get_name()
 # need to modify to get sold and snew
-
+UUV_Data= uuv_data()
+UUV_Data.frame_id= rospy.get_name()
 
 class Simulator:
 	def __init__(self):
 		self.update_flag=False
 		self.reset_flag=False
 
-	def s_cb(self,grid):
+	def environment_cb(self,e):
 		a.time_away_from_network=0
-		for i in range(map_size):
-			for j in range(map_size):
-				s.seen[i][j]=grid.data[i*map_size+j]
-
-		s.pre_num_unknown_locations = grid.info.origin.orientation.x
-
 
 		for i in range(map_size):
 			for j in range(map_size):
-				s_old.seen[i][j]=int(grid.data[i*map_size+j+map_size*map_size])
+				s.seen[i][j]=e.grid[i*map_size+j]
 
-		s_old.pre_num_unknown_locations = grid.info.origin.orientation.y
+		s.pre_num_unknown_locations = e.new_exploration_reward
+		s.update_charging_dock_locations(e.charging_dock_x,e.charging_dock_y)
+		s.update_mine_locations(e.mines_x,e.mines_y)
+
+		for i in range(map_size):
+			for j in range(map_size):
+				s_old.seen[i][j]=int(e.grid[i*map_size+j+map_size*map_size])
+
+		s_old.pre_num_unknown_locations = e.old_exploration_reward
+
 		self.update_flag=True
+
+		
 		
 
 	def action_request_cb(self,Event):
@@ -116,7 +123,7 @@ class Simulator:
 
 	def reset_fun(self,data):
 		s.reset()
-		a.reset(s,data.data,f_path,pose.header.frame_id)
+		a.reset(s,data.data,f_path,UUV_Data.frame_id)
 
 	def restart_cb(self,data):
 		a.restart(f_path)
@@ -143,13 +150,13 @@ class Simulator:
 				a.calculate_A(si)
 				a.move(s)
 
-				pose.pose.position.x=a.x
-				pose.pose.position.y=a.y
-				pose.pose.position.z=a.battery
-				pose.pose.orientation.x=a.current_action.index-1
-				pose.pose.orientation.y=a.time_away_from_network
-				pose.pose.orientation.z=a.lvl
-				pose_pub.publish(pose)
+				UUV_Data.x=a.x
+				UUV_Data.y=a.y
+				UUV_Data.battery=int(a.battery)
+				UUV_Data.work=a.current_action.index-1
+				UUV_Data.time_away_from_network=a.time_away_from_network
+				UUV_Data.display_action=a.display_action
+				pose_pub.publish(UUV_Data)
 
 
 				a.step(si,a_step_time/2.)
@@ -183,7 +190,7 @@ def main(args):
 	time.sleep(1)
 
 	sim = Simulator()
-	environment_sub =rospy.Subscriber('/environment_matrix', OccupancyGrid , sim.s_cb)#CHANGE TO MATRIX
+	environment_sub =rospy.Subscriber('/environment_matrix', map_info , sim.environment_cb)#CHANGE TO MATRIX
 
 	request_sub =rospy.Subscriber('/request_action', event , sim.action_request_cb)#CHANGE TO MATRIX
 	reset_sub =rospy.Subscriber('/reset', Int32 , sim.reset_cb)#CHANGE TO MATRIX

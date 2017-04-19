@@ -14,15 +14,34 @@ def get_norm_size(s):
 def get_sqr_loc(x,s):
 	return 2.*x/s-1.
 
+class Charging_Dock:
+	def __init__(self, location):
+		self.coordinates=location
+		self.size=5.
+
+class Mine:
+	def __init__(self, location):
+		self.coordinates=location
+		self.size=3.
+		
 
 
 class Mine_Data: 
 
-	def __init__(self, map_size):
+	def __init__(self, map_size,number_of_charging_docks):
+		self.number_of_charging_docks=number_of_charging_docks
 		self.pre_num_unknown_locations=map_size*map_size
 		self.seen = np.ndarray(shape=(map_size,map_size), dtype=int)
 		self.temp_seen = np.ndarray(shape=(map_size,map_size), dtype=int)
 		self.map_size=map_size
+
+		self.charging_docks=[]
+		for i in range(self.number_of_charging_docks):
+			self.charging_docks.append(Charging_Dock((50,50)))
+
+		self.mines=[]
+		for i in range(random.randint(1, 10)):
+			self.mines.append(Mine((50,50)))
 
 		self.middle=(self.map_size/2,self.map_size/2)
 		self.max_reward=self.map_size*self.map_size
@@ -82,6 +101,15 @@ class Mine_Data:
 					self.seen[region[0]][region[1]]=1
 				
 		
+		self.charging_docks=[]
+		for i in range(self.number_of_charging_docks):
+			self.charging_docks.append(Charging_Dock((random.randint(0, self.map_size),random.randint(0, self.map_size))))	
+
+		self.mines=[]
+		for i in range(random.randint(1, 10)):
+			self.mines.append(Mine((random.randint(0, self.map_size),random.randint(0, self.map_size))))	
+
+
 		self.pre_num_unknown_locations-=self.seen.sum()
 		self.init_reward=self.seen.sum()
 
@@ -89,11 +117,23 @@ class Mine_Data:
 		self.temp_seen=self.seen.copy()
 		self.seen[1:][:] = self.temp_seen[:-1][:]
 
+	def update_charging_dock_locations(self,x,y):
+		self.charging_docks=[]
+		for i in range(len(x)):
+			self.charging_docks.append(Charging_Dock((x[i],y[i])))		
+
+	def update_mine_locations(self,x,y):
+		self.mines=[]
+		for i in range(len(x)):
+			self.mines.append(Mine((x[i],y[i])))	
 
 	def imprint(self, a):
 		a.seen=self.seen.copy()
 		a.pre_num_unknown_locations=self.pre_num_unknown_locations
 		a.occupied=self.occupied
+		a.charging_docks=self.charging_docks
+		a.number_of_charging_docks=self.number_of_charging_docks
+		a.mines=self.mines
 
 
 

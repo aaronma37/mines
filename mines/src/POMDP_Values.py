@@ -34,10 +34,10 @@ class Pi:
 		reward = []
 		states_=[]
 		base=A.get_base()
-		Phi.set_alpha([.5,.5])
+		#Phi.set_alpha([.5,.5])
 	
 		for i in range(1000):
-			Phi.set_alpha([.5,.5])
+			#Phi.set_alpha([.5,.5])
 			s=Phi.get_state(A,i)
 			a,l,r = Psi.get_with_level(0,s,self,Phi)
 			if Phi.get_loc_from_vision(Phi.visions[i][0],base) is not None:
@@ -111,28 +111,28 @@ class Phi:
 		self.num_visions=1000		
 		self.visions={}
 		self.gen_ord_state()
-		self.alpha=[.5,.5]
+		self.alpha=[.3,.3,.3]
 		self.obj=Objective.Objective_Handler()
-		self.alpha_list=[]
-		self.alpha_list.append((1.,0.))
-		self.alpha_list.append((.5,.5))
-		self.alpha_list.append((.4,.6))
-		self.alpha_list.append((.3,.7))
-		self.alpha_list.append((.2,.8))
-		self.alpha_list.append((.1,.9))
-		self.alpha_list.append((0.,1.))
-		self.alpha_list.append((.6,.4))
-		self.alpha_list.append((.7,.3))
-		self.alpha_list.append((.8,.2))
-		self.alpha_list.append((.9,.1))
+		#self.alpha_list=[]
+		#self.alpha_list.append((1.,0.))
+		#self.alpha_list.append((.5,.5))
+		#self.alpha_list.append((.4,.6))
+		#self.alpha_list.append((.3,.7))
+		#self.alpha_list.append((.2,.8))
+		#self.alpha_list.append((.1,.9))
+		#self.alpha_list.append((0.,1.))
+		#self.alpha_list.append((.6,.4))
+		#self.alpha_list.append((.7,.3))
+		#self.alpha_list.append((.8,.2))
+		#self.alpha_list.append((.9,.1))
 
-	def set_alpha(self,alpha):
-		self.alpha=alpha
+	#def set_alpha(self,alpha):
+		#self.alpha=alpha
 
-	def set_random_alpha(self):
-		i=random.random()
-		self.alpha[0]=round(i, 1)
-		self.alpha[1]=1-round(i, 1)
+	#def set_random_alpha(self):
+	#	i=random.random()
+	#	self.alpha[0]=round(i, 1)
+	#	self.alpha[1]=1-round(i, 1)
 
 	def gen_ord_state(self):
 

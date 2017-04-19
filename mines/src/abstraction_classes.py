@@ -201,7 +201,33 @@ class mini_ab():
 
 
 
-		return h,h2,h3,r		
+		return h,h2,h3,r	
+
+class Charging_Docks():
+	def __init__(self):
+		self.regions=[]
+		self.coordinates=[]
+
+	def update(self,docks):
+		self.regions=[]
+		self.coordinates=[]
+		for dock in docks:
+			self.regions.append(Regions.get_region(dock.coordinates[0],dock.coordinates[1]))
+			self.coordinates.append(dock.coordinates)
+
+class Mines():
+	def __init__(self):
+		self.regions=[]
+		self.coordinates=[]
+
+	def update(self,mines):
+		self.regions=[]
+		self.coordinates=[]
+		for mine in mines:
+			self.regions.append(Regions.get_region(mine.coordinates[0],mine.coordinates[1]))
+			self.coordinates.append(mine.coordinates)
+
+
 
 
 
@@ -219,6 +245,8 @@ class Abstractions():
 	
 		self.explore_events={}#[region][time]
 		self.E=Events.Event("default",0)
+		self.charging_docks=Charging_Docks()
+		self.mines=Mines()
 
 	def imprint(self,a):
 		for i in range(len(self.regions)):
@@ -232,6 +260,12 @@ class Abstractions():
 		a.location.region=self.location.region
 		a.location.hash=self.location.hash
 		a.battery.num=self.battery.num
+		
+		a.charging_docks.regions=self.charging_docks.regions
+		a.charging_docks.coordinates=self.charging_docks.coordinates
+
+		a.mines.regions=self.mines.regions
+		a.mines.coordinates=self.mines.coordinates
 
 	def update_all(self,s,a):
 		for r in self.regions:
@@ -243,6 +277,9 @@ class Abstractions():
 		self.battery.num=a.battery
 
 		self.E=a.Exploration_Event
+		self.charging_docks.update(s.charging_docks)
+		self.mines.update(s.mines)
+
 
 
 

@@ -16,6 +16,7 @@ action_library=[]
 
 action_library.append('explore')
 action_library.append('charge')
+action_library.append('mine')
 
 
 
@@ -84,8 +85,7 @@ class Policy:
 		return max(math.fabs(x-x2),math.fabs(y-y2))
 
 	def get_target(self,a,s):
-		
-		if self.index_type=="charge":
+		if self.index_type=="charge" or self.index_type=="mine":
 			if self.point is not None:
 				return self.point
 			else:

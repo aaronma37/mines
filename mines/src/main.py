@@ -19,6 +19,8 @@ from mines.msg import event
 from mines.msg import event_region
 from mines.msg import event_time
 from mines.msg import trajectory
+from mines.msg import map_info
+from mines.msg import uuv_data
 
 from std_msgs.msg import Int32
 from agent_classes import Agent
@@ -34,7 +36,7 @@ import Regions
 import POMDP_Values as v
 
 L_MAX=v.L_MAX
-
+number_of_charging_docks = rospy.get_param("/number_of_charging_docks")
 event_time_horizon = rospy.get_param("/event_time_horizon")
 agent_poll_time = rospy.get_param("/agent_poll_time")
 a_step_time = rospy.get_param("/agent_step_time")
@@ -44,7 +46,7 @@ write_psi_flag = rospy.get_param("/write_psi")
 f_path = rospy.get_param("/temp_file_path")
 
 rospy.init_node('main', anonymous=True)
-env_pub =rospy.Publisher('/environment_matrix', OccupancyGrid, queue_size=100)#CHANGE TO MATRIX
+env_pub =rospy.Publisher('/environment_matrix', map_info, queue_size=100)#CHANGE TO MATRIX
 
 reset_publisher = rospy.Publisher('/reset', Int32, queue_size=100)#CHANGE TO MATRIX
 restart_publisher = rospy.Publisher('/restart', Int32, queue_size=100)#CHANGE TO MATRIX
@@ -63,7 +65,7 @@ map_size=100
 sb=Mobile_Buoy_Environment(map_size)
 agent_dict = {}# {Agent Identity:Agent}
 buoy_dict = {}
-o = OccupancyGrid()
+environment_information = map_info()
 
 
 Exploration_Event=event()
@@ -89,11 +91,11 @@ networks = OccupancyGrid()
 
 for i in range(map_size):
 	for j in range(map_size):
-		o.data.append(0)
+		environment_information.grid.append(0)
 
 for i in range(map_size):
 	for j in range(map_size):
-		o.data.append(0)
+		environment_information.grid.append(0)
 
 
 
@@ -102,8 +104,8 @@ for i in range(map_size):
 class Simulator:
 
 	def __init__(self):
-		self.s=Mine_Data(map_size)
-		self.s_old=Mine_Data(map_size)
+		self.s=Mine_Data(map_size,number_of_charging_docks)
+		self.s_old=Mine_Data(map_size,number_of_charging_docks)
 
 		self.Na_Level=v.Na_Level()
 		self.Q_Level=v.Q_Level()
@@ -182,18 +184,21 @@ class Simulator:
 			self.Psi.write_psi(f_path+'/psi_main.txt')
 
 
-	def pose_cb(self,data):
-		if data.header.frame_id not in agent_dict:
-			agent_dict[data.header.frame_id]=Agent(agent_poll_time,event_time_horizon,data.header.frame_id)
+	def pose_cb(self,uuv_data):
+		if uuv_data.frame_id not in agent_dict:
+			agent_dict[uuv_data.frame_id]=Agent(agent_poll_time,event_time_horizon,uuv_data.frame_id)
 	 
 
-		agent_dict[data.header.frame_id].x=int(data.pose.position.x)
-		agent_dict[data.header.frame_id].y=int(data.pose.position.y)
-		agent_dict[data.header.frame_id].battery=int(data.pose.position.z)
-		agent_dict[data.header.frame_id].work=int(data.pose.orientation.x)
-		agent_dict[data.header.frame_id].time_away_from_network=int(data.pose.orientation.y)
-		agent_dict[data.header.frame_id].lvl=int(data.pose.orientation.z)
-		agent_dict[data.header.frame_id].measure(self.s,False)
+
+
+		agent_dict[uuv_data.frame_id].x=int(uuv_data.x)
+		agent_dict[uuv_data.frame_id].y=int(uuv_data.y)
+		agent_dict[uuv_data.frame_id].battery=int(uuv_data.battery)
+		agent_dict[uuv_data.frame_id].work=int(uuv_data.work)
+		agent_dict[uuv_data.frame_id].display_action=uuv_data.display_action
+		agent_dict[uuv_data.frame_id].time_away_from_network=int(uuv_data.time_away_from_network)
+		agent_dict[uuv_data.frame_id].measure(self.s,False)
+		agent_dict[uuv_data.frame_id].mine(self.s,False)
 
 	def trajectory_cb(self,data):
 		if data.frame_id not in agent_dict:
@@ -227,31 +232,34 @@ class Simulator:
 	
 		for i in range(map_size):
 			for j in range(map_size):
-				o.data[i*map_size+j]=self.s.seen[i][j]
+				environment_information.grid[i*map_size+j]=self.s.seen[i][j]
 
 		for i in range(map_size):
 			for j in range(map_size):
-				o.data[i*map_size+j+map_size*map_size]=self.s_old.seen[i][j]
+				environment_information.grid[i*map_size+j+map_size*map_size]=self.s_old.seen[i][j]
 
 		#print self.s.get_reward()-self.s_old.get_reward()
 
 		self.s.imprint(self.s_old)
 
-		o.info.origin.position.x=map_size/2
-		o.info.origin.position.y=map_size/2
-		o.info.origin.position.z=20
+		environment_information.charging_dock_x=[]
+		environment_information.charging_dock_y=[]
 
-		o.info.origin.orientation.x=self.s.pre_num_unknown_locations
-		o.info.origin.orientation.y=self.s_old.pre_num_unknown_locations
+		for dock in self.s.charging_docks:
+			environment_information.charging_dock_x.append(dock.coordinates[0])
+			environment_information.charging_dock_y.append(dock.coordinates[1])
 
-		env_pub.publish(o)
+		environment_information.mines_x=[]
+		environment_information.mines_y=[]
 
-		for k,b in buoy_dict.items():
-			o.info.origin.position.x=b.x
-			o.info.origin.position.y=b.y
-			o.info.origin.position.z=20
+		for mine in self.s.mines:
+			environment_information.mines_x.append(mine.coordinates[0])
+			environment_information.mines_y.append(mine.coordinates[1])
 
-			env_pub.publish(o)
+		environment_information.new_exploration_reward=self.s.pre_num_unknown_locations
+		environment_information.old_exploration_reward=self.s_old.pre_num_unknown_locations
+
+		env_pub.publish(environment_information)
 
 
 	def pub2(self):
@@ -325,7 +333,7 @@ class Simulator:
 def main(args):
 
 	sim=Simulator()
-	posesub =rospy.Subscriber('/pose', PoseStamped, sim.pose_cb)#CHANGE TO MATRIX
+	posesub =rospy.Subscriber('/pose', uuv_data, sim.pose_cb)#CHANGE TO MATRIX
 	agent_trajectory_sub =rospy.Subscriber('/trajectory', trajectory, sim.trajectory_cb)#CHANGE TO MATRIX
 
 

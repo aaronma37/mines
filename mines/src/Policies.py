@@ -120,7 +120,7 @@ class Policy:
 			for i in l:
 				if s.seen[i[0]][i[1]]==s.NOT_SEEN:
 					if self.time < 5.:
-						if 10*self.get_distance(a.x,a.y,i[0],i[1])*self.time/self.max_time + self.get_distance(short_next[0],short_next[1],i[0],i[1])*(self.max_time-self.time)/self.max_time < m and self.allowable_motions(self.last_motion,(a.x-i[0],a.y-i[1])) is True:	
+						if 10*self.get_distance(a.x,a.y,i[0],i[1])*self.time/self.max_time + 0*self.get_distance(short_next[0],short_next[1],i[0],i[1])*(self.max_time-self.time)/self.max_time < m and self.allowable_motions(self.last_motion,(a.x-i[0],a.y-i[1])) is True:	
 							m=self.get_distance(a.x,a.y,i[0],i[1])
 							loc = i
 					else:
@@ -133,6 +133,7 @@ class Policy:
 			return loc
 
 	def allowable_motions(self,prev,motion):
+		return True
 		if prev == (0,0):
 			return True
 		if prev[0] == -1:

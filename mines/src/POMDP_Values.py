@@ -36,9 +36,12 @@ class Pi:
 		base=A.get_base()
 		#Phi.set_alpha([.5,.5])
 	
-		for i in range(1000):
+		for i in range(Phi.num_visions):
 			#Phi.set_alpha([.5,.5])
 			s=Phi.get_state(A,i)
+			E=Phi.get_events(A,i)
+			s= Phi.pre_evolve(s,E)
+
 			a,l,r = Psi.get_with_level(0,s,self,Phi)
 			if Phi.get_loc_from_vision(Phi.visions[i][0],base) is not None:
 				if Phi.get_loc_from_vision(Phi.visions[i][0],base)+1 != last_expected_action:
@@ -105,13 +108,13 @@ class Pi:
 			return Psi.get_from_state_pure(L,state,self,Phi)
 
 class Phi:
-	def __init__(self):
+	def __init__(self,event_time_horizon):
 		'''init'''
-		self.state_size=6
+		self.state_size=event_time_horizon
 		self.num_visions=1000		
 		self.visions={}
 		self.gen_ord_state()
-		self.alpha=[.3,.3,.3]
+		self.alpha=[.05,.9,.05]
 		self.obj=Objective.Objective_Handler()
 		#self.alpha_list=[]
 		#self.alpha_list.append((1.,0.))
@@ -133,6 +136,9 @@ class Phi:
 	#	i=random.random()
 	#	self.alpha[0]=round(i, 1)
 	#	self.alpha[1]=1-round(i, 1)
+	def print_pre_evolve(self,s,E):
+		self.obj.print_pre_evolve(s,self,E)
+
 
 	def gen_ord_state(self):
 
@@ -174,6 +180,9 @@ class Phi:
 
 	def get_reward(self,s,a):
 		return self.obj.get_reward(s,a)
+
+	def pre_evolve(self,s,E):
+		return self.obj.pre_evolve(s,self,E)
 
 	def evolve(self,s,a,E):
 		return self.obj.evolve(s,a,E)

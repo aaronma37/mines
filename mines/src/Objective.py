@@ -52,6 +52,53 @@ class Service():
 
 		return h
 
+	def pre_evolve(self,state_string,E):
+
+		mine_string = state_string.split("~")
+		mine_string=mine_string[:-1]
+		#E>dimension>time>actions
+		#print mine_string
+		#print E.E
+		for i in range(len(E.E)):
+			for j in range(i+1):
+				if j == len(E.E):
+					break
+				for a in E.E[i][j]:
+					mine_string[i]=self.Pr(mine_string[i],a)
+			
+
+
+
+		h=""
+		for l in mine_string:
+			h=h+l+"~"
+		#print h
+		return h
+
+	def print_pre_evolve(self,state_string,E):
+
+		mine_string = state_string.split("~")
+		mine_string=mine_string[:-1]
+		#E>dimension>time>actions
+		#print mine_string
+		#print E.E
+		for i in range(len(E.E)):
+			for j in range(i+1):
+				for a in E.E[i][j]:
+					mine_string[i]=self.Pr(mine_string[i],a)
+			
+
+
+
+		h=""
+		for l in mine_string:
+			h=h+l+"~"
+		print h, "ree", E.E[0], state_string
+		#return h
+
+
+
+
 
 	def get_reward(self,state_string,a):
 		mine_string = state_string.split("~")
@@ -63,7 +110,7 @@ class Service():
 			if ex==1:
 				return 1000.
 			else:
-				return 0.
+				return -1000.
 		else:
 			return 0.
 
@@ -144,6 +191,10 @@ class Battery():
 
 		return h
 
+	def pre_evolve(self,state_string,E):
+		return state_string
+
+
 	def get_reward(self,state_string,a):
 		s_ = state_string.split(";")
 
@@ -205,6 +256,26 @@ class Exploration():
 
 		return h
 
+	def pre_evolve(self,state_string,E):
+		exploration_string = state_string.split("~")
+		exploration_string=exploration_string[:-1]
+		#E>dimension>time>actions
+
+
+		for i in range(len(E.E)):
+			for j in range(i+1):
+				for a in E.E[i][j]:
+					exploration_string[i]=self.Pr(exploration_string[i],a)
+
+
+		h=""
+		for l in exploration_string:
+			h=h+l+"~"
+
+		return h
+
+	
+
 	def get_reward(self,state_string,a):
 		exploration_string = state_string.split("~")
 		exploration_string=exploration_string[:-1]
@@ -228,7 +299,7 @@ class Exploration():
 		r = random.random()
 		if action != "explore" or state_index<1:
 			return str(state_index) 
-		if r < .75:
+		if r < .5:
 			return str(state_index-1)
 		return str(state_index)
 
@@ -263,13 +334,13 @@ class Events():
 			E.append([])
 			for j in range(state_size):
 				E[i].append([])
-				if A.E.data.get(i) is not None:
-					if A.E.data[i].get(j) is not None:
-						for e in A.E.data[i][j]:
+				if A.E.data.get(trajectory[i]) is not None:
+					if A.E.data[trajectory[i]].get(j) is not None:
+						for e in A.E.data[trajectory[i]][j]:
 							E[i][j].append(e)
 
-		
-
+		#print i,trajectory[i]
+		#E format: [x_regional trajectory index (0 -> trajectory length)],[time],[event list] (this assumes a region)
 		return E
 
 	def imprint(self,target):
@@ -294,7 +365,12 @@ class Events():
 
 	def ammend(self,a):
 		current=self.state_size-len(self.E)
+
+
 		self.E[0][0].append(a)
+		#if current > len(self.region_linked) - 1 or current < 0:
+		#	return
+
 		for j in self.region_linked[current]:
 			self.E[j-current][0].append(a)		
 			
@@ -355,6 +431,41 @@ class Objective_Handler():
 
 		return h,E
 
+	def print_pre_evolve(self,s,Phi,E):
+		state_string = s.split(",")
+		state_string=state_string[:-1]
+		alpha_string = state_string[0]
+		alpha_string = alpha_string.split("~")
+		alpha_string = alpha_string[:-1]
+		objective_string = state_string[1:]
+		
+
+		self.objectives[2].print_pre_evolve(objective_string[2],E)
+		
+
+	def pre_evolve(self,s,Phi,E):
+		state_string = s.split(",")
+		state_string=state_string[:-1]
+		alpha_string = state_string[0]
+		alpha_string = alpha_string.split("~")
+		alpha_string = alpha_string[:-1]
+		objective_string = state_string[1:]
+
+
+		for obj in range(len(self.objectives)):
+			objective_string[obj] = self.objectives[obj].pre_evolve(objective_string[obj],E)
+
+		h=''
+		for i in alpha_string:
+			h=h+i+"~"
+
+		h=h+","
+
+		for l in objective_string:		
+			h=h+l+","
+
+		return h
+
 	def get_events(self,A,Phi,seed):
 		# E is [dimension of trajectory][time][# events]
 		E=[]
@@ -376,14 +487,14 @@ class Objective_Handler():
 		r=0.
 		if len(alpha_string)<3:
 			print alpha_string,"d"
-		alpha_string[2]
 
-		self.objectives[2]
-		objective_string[2]
+		#print "reward: ", s, a		
 		for i in range(len(self.objectives)):
+			#print float(alpha_string[i])*self.objectives[i].get_reward(objective_string[i],a)
 			r+=float(alpha_string[i])*self.objectives[i].get_reward(objective_string[i],a)
 
-		
+
+
 		return r
 
 

@@ -37,20 +37,20 @@ event_time_horizon = rospy.get_param("/event_time_horizon")
 agent_poll_time = rospy.get_param("/agent_poll_time")
 multi_agent_model = rospy.get_param("/multi_agent_model")
 a_step_time = rospy.get_param("/agent_step_time")
+agent_policy_steps = rospy.get_param("/agent_policy_steps")
 
 
+s=Mine_Data(map_size,0,0)
+si=Mine_Data(map_size,0,0)
 
-s=Mine_Data(map_size,0)
-si=Mine_Data(map_size,0)
-
-s_old=Mine_Data(map_size,0)
+s_old=Mine_Data(map_size,0,0)
 
 
 task= PoseStamped()
 
 
 rospy.init_node('Agent', anonymous=True)
-a = Agent(agent_poll_time,event_time_horizon,rospy.get_name())
+a = Agent(agent_poll_time,event_time_horizon,rospy.get_name(),agent_policy_steps)
 
 task.header.frame_id= rospy.get_name()
 
@@ -96,18 +96,12 @@ class Simulator:
 
 	def action_request_cb(self,Event):
 		if Event.requested_agent==rospy.get_name():
+			a.clear_events()
+			a.update_events(Event)
 			s.imprint(si)
 			a.calculate_A(si)
 			a.decide(si)
-			
-			a.clear_events()
-			a.update_events(Event)
-
 			trajectory_pub.publish(a.trajectory)
-
-
-
-
 
 
 	def alpha_pub(self):
@@ -156,6 +150,7 @@ class Simulator:
 				UUV_Data.work=a.current_action.index-1
 				UUV_Data.time_away_from_network=a.time_away_from_network
 				UUV_Data.display_action=a.display_action
+				UUV_Data.current_state=a.current_state
 				pose_pub.publish(UUV_Data)
 
 

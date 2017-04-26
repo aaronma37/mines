@@ -1,4 +1,9 @@
 <launch>
+<param name="multi_agent_model" type="string" value="pure"/>
+<param name="event_time_horizon" type="int" value="3"/>
+<param name="number_of_charging_docks" type="int" value="2"/>
+<param name="agent_policy_steps" type="double" value="3"/>
+<param name="agent_poll_time" type="double" value="20"/>
 <param name="agent_step_time" type="double" value=".1"/>
 <param name="load_q" type="bool" value="False"/>
 <param name="write_q" type="bool" value="True"/>
@@ -11,5 +16,7 @@
 
 <node pkg="mines" type="agent_standard.py" name="a1" output="screen">
 </node>
+
+
 
 </launch>

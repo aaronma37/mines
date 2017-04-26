@@ -30,7 +30,7 @@ import os
 import sys
 
 map_size=100
-s=Mine_Data(map_size,0)
+s=Mine_Data(map_size,0,0)
 agent_dict={}
 RESET=0
 HIGHLIGHT=1
@@ -340,9 +340,9 @@ def draw_all(s,agent_dict,map_size,buoy_dict,gui_data,step_num):
 	for k,a in agent_dict.items():
 		draw_text(1.2, 1.1-count/4.,"Agent: " + str(k))
 		draw_text(1.2,-.025+ 1.1-count/4.,"Battery: " + str(a.battery))
-		draw_text(1.2,-.05+ 1.1-count/4.,"Action: " + str(a.work))
-		draw_text(1.2,-.075+ 1.1-count/4.,"Network state: " + str(a.time_away_from_network))
-		draw_text(1.2,-.1+ 1.1-count/4.,"State level: " + str(a.lvl))
+		draw_text(1.2,-.05+ 1.1-count/4.,"Region: " + str(a.trajectory.region_trajectory))
+		draw_text(1.2,-.075+ 1.1-count/4.,"State: " + a.current_state)
+		draw_text(1.2,-.1+ 1.1-count/4.,"Action: " + str(a.trajectory.action_trajectory))
 		count+=1
 
 

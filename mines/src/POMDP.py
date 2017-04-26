@@ -21,11 +21,12 @@ Gamma=.5
 
 class Solver: 
 
-	def __init__(self):
+	def __init__(self,event_time_horizon):
+		self.event_time_horizon=event_time_horizon
 		self.N=v.N()
 		self.Na=v.Na()
 		self.Q=v.Q()
-		self.Phi=v.Phi()
+		self.Phi=v.Phi(event_time_horizon)
 		self.Psi=v.Psi()
 		self.Pi=v.Pi()
 		self.great=[]
@@ -40,7 +41,7 @@ class Solver:
 		self.N=v.N()
 		self.Na=v.Na()
 		self.Q=v.Q()
-		self.Phi=v.Phi()
+		self.Phi=v.Phi(self.event_time_horizon)
 		self.Psi=v.Psi()
 		self.Pi=v.Pi()
 		self.H=heuristic()
@@ -55,8 +56,12 @@ class Solver:
 			seed=randint(0,999)
 			state=self.Phi.get_state(A,seed)
 			#self.Phi.set_random_alpha()
+
 			E=self.Phi.get_events(A,seed)
 
+			#print " "
+
+			state= self.Phi.pre_evolve(state,E)
 			self.search(state,E,0)
 			end = time.time()
 
@@ -87,7 +92,9 @@ class Solver:
 		r = self.Phi.get_reward(state,a)
 
 		E.ammend(a)
+
 		state,E = self.Phi.evolve(state,a,E)
+
 
 		r += Gamma*self.search(state,E,depth+1)
 
@@ -99,19 +106,33 @@ class Solver:
 
 
 	def get_action(self,A,next_expected_action,event_time_horizon):
+
+		
 		a, b, x_traj,seed = self.Pi.get_and_return_level(A,self.Psi,self.Phi,next_expected_action,event_time_horizon)
 
 		E=self.Phi.get_events(A,seed)
 		state=self.Phi.get_state(A,seed)
+		self.Phi.print_pre_evolve(state,E)
+		print "ree"
+		state= self.Phi.pre_evolve(state,E)
+
 		a_traj=[]
 		print x_traj
 		for i in range(0,len(x_traj)):
 			action,l,r=self.Psi.get_with_level(0,state,self.Pi,self.Phi)		
 			a_traj.append(action)
+			if i== len(x_traj) -1:
+				break
 			E.ammend(action)
 			state,E = self.Phi.evolve(state,action,E)
 
-		return a,b,x_traj,a_traj
+
+		E=self.Phi.get_events(A,seed)
+		state=self.Phi.get_state(A,seed)
+
+		state= self.Phi.pre_evolve(state,E)
+		print state
+		return a,b,x_traj,a_traj,state
 
 
 	def arg_max(self,A):

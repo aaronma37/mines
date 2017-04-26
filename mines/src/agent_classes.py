@@ -19,11 +19,11 @@ from mines.msg import trajectory
 class Agent: 
 
 
-	def __init__(self,agent_poll_time,event_time_horizon,identification):
+	def __init__(self,agent_poll_time,event_time_horizon,identification,policy_steps):
 
-		self.solver = Solver() # get rid of
+		self.solver = Solver(event_time_horizon) # get rid of
 		self.lvl=0
-
+		self.policy_steps=policy_steps
 		self.x=50
 		self.y=50
 	
@@ -33,10 +33,11 @@ class Agent:
 		self.battery=100
 		self.work_load=[]
 		self.work=0
-
+		self.current_event=0
+		self.current_state="None"
 		self.last_reward=0.
 		self.poll_time=agent_poll_time
-
+		self.decide_counter=10
 		self.current_action=Policies.Policy(0,0,self.poll_time,0,(50,50))
 		self.display_action="None"
 		self.steps=0.
@@ -59,10 +60,14 @@ class Agent:
 		self.trajectory.action_trajectory=[]
 
 	def clear_events(self):
+		''' '''
 		self.Exploration_Event.clear()
 		
 	def update_events(self,e):
+		''' '''
+		self.current_event=e.event_id
 		self.Exploration_Event.update(e)
+
 
 		
 	def update_heuristics(self,old_s,new_s):
@@ -126,52 +131,62 @@ class Agent:
 		self.new_A.update_all(s,self)
 
 	def decide(self,s):	
+		print self.current_action.time
+		print self.current_event,self.new_A.E.id
+		if self.decide_counter>=self.policy_steps-1:
+			a,an,x_traj,a_traj,state  = self.solver.get_action(self.new_A,self.current_action.next,self.event_time_horizon)	
+			self.trajectory.region_trajectory=x_traj
+			self.trajectory.action_trajectory=a_traj
+			print state
+			self.current_state=state
+			self.decide_counter=1
+		else:
+			self.trajectory.region_trajectory=self.trajectory.region_trajectory[1:]
+			self.trajectory.action_trajectory=self.trajectory.action_trajectory[1:]
+			self.decide_counter+=1
+				
+		print self.trajectory.action_trajectory
+		self.display_action=self.trajectory.action_trajectory[0]
+		#if a == 26:
+		#	print "ERROR",26
 
-		a,an,x_traj,a_traj  = self.solver.get_action(self.new_A,self.current_action.next,self.event_time_horizon)	
-		self.trajectory.region_trajectory=x_traj
-		self.trajectory.action_trajectory=a_traj
-					
-		self.display_action=a_traj[0]
-		if a == 26:
-			print "ERROR",26
-
-		if a_traj[0]=="charge":
+		if self.trajectory.action_trajectory[0]=="charge":
 			try:
-				charge_index=self.new_A.charging_docks.regions.index(x_traj[0])
+				charge_index=self.new_A.charging_docks.regions.index(self.trajectory.region_trajectory[0])
 				coordinates = self.new_A.charging_docks.coordinates[charge_index]
 			except ValueError:
 				try:
-					charge_index=self.new_A.charging_docks.regions.index(x_traj[1])
+					charge_index=self.new_A.charging_docks.regions.index(self.trajectory.region_trajectory[1])
 					coordinates = self.new_A.charging_docks.coordinates[charge_index]
 				except ValueError:
 					charge_index=None
-					coordinates = Regions.region[x_traj[0]]
-				
+					coordinates = Regions.region[self.trajectory.region_trajectory[0]]
+			
 
 
 
 			print charge_index,coordinates
-			self.current_action=Policies.Policy(x_traj[0]+1,x_traj[1]+1,self.poll_time,a_traj[0],coordinates)
-		elif a_traj[0]=="mine":
+			self.current_action=Policies.Policy(self.trajectory.region_trajectory[0]+1,self.trajectory.region_trajectory[1]+1,self.poll_time,self.trajectory.action_trajectory[0],coordinates)
+		elif self.trajectory.action_trajectory[0]=="mine":
 			try:
-				charge_index=self.new_A.mines.regions.index(x_traj[0])
+				charge_index=self.new_A.mines.regions.index(self.trajectory.region_trajectory[0])
 				coordinates = self.new_A.mines.coordinates[charge_index]
 			except ValueError:
 				try:
-					charge_index=self.new_A.mines.regions.index(x_traj[1])
+					charge_index=self.new_A.mines.regions.index(self.trajectory.region_trajectory[1])
 					coordinates = self.new_A.mines.coordinates[charge_index]
 				except ValueError:
 					charge_index=None
-					coordinates = Regions.region[x_traj[0]]
-				
+					coordinates = Regions.region[self.trajectory.region_trajectory[0]]
+			
 
 
 
 			print charge_index,coordinates
-			self.current_action=Policies.Policy(x_traj[0]+1,x_traj[1]+1,self.poll_time,a_traj[0],coordinates)
+			self.current_action=Policies.Policy(self.trajectory.region_trajectory[0]+1,self.trajectory.region_trajectory[1]+1,self.poll_time,self.trajectory.action_trajectory[0],coordinates)
 
 		else:
-			self.current_action=Policies.Policy(x_traj[0]+1,x_traj[1]+1,self.poll_time,a_traj[0],Regions.region[x_traj[0]])
+			self.current_action=Policies.Policy(self.trajectory.region_trajectory[0]+1,self.trajectory.region_trajectory[1]+1,self.poll_time,self.trajectory.action_trajectory[0],Regions.region[self.trajectory.region_trajectory[0]])
 
 		if self.current_action.index < 26 and self.current_action.index > 0:
 			self.work=self.current_action.index-1
@@ -180,6 +195,14 @@ class Agent:
 		#action = self.current_action.get_next_action(self,s)
 		#self.execute(action,s)#NEED TO RESOLVE s
 		self.lvl=0
+
+
+
+
+
+
+
+
 
 	def move(self,s):
 		self.steps+=1.

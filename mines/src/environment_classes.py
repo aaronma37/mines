@@ -28,8 +28,9 @@ class Mine:
 
 class Mine_Data: 
 
-	def __init__(self, map_size,number_of_charging_docks):
+	def __init__(self, map_size,number_of_charging_docks,number_of_mines):
 		self.number_of_charging_docks=number_of_charging_docks
+		self.number_of_mines=number_of_mines
 		self.pre_num_unknown_locations=map_size*map_size
 		self.seen = np.ndarray(shape=(map_size,map_size), dtype=int)
 		self.temp_seen = np.ndarray(shape=(map_size,map_size), dtype=int)
@@ -40,7 +41,7 @@ class Mine_Data:
 			self.charging_docks.append(Charging_Dock((50,50)))
 
 		self.mines=[]
-		for i in range(random.randint(1, 10)):
+		for i in range(number_of_mines):
 			self.mines.append(Mine((50,50)))
 
 		self.middle=(self.map_size/2,self.map_size/2)
@@ -53,32 +54,6 @@ class Mine_Data:
 
 		for i in range(25):
 			self.occupied.append(0)
-
-	def get_region_score(self,x_l,y_l):
-		#x_l is of xmin xmax
-		score =0.
-		size=0.
-		for i in range(x_l[0],x_l[1]):
-			for j in range(y_l[0],y_l[1]):	
-				size+=1.
-				if self.seen[i][j] == 0:		
-					score+=1.
-
-		return math.ceil(3.*score/size)
-
-
-
-	def calculate_occupied(self,agent_dict,region,r_size):
-		self.occupied=[]
-		for i in range(25):
-			self.occupied.append(0)
-
-		for k,a in agent_dict.items():
-			for i in range(len(region)):
-				if a.x > region[i][0] -r_size and a.x <  region[i][0] +r_size+1:
-					if a.y >  region[i][1] -r_size and a.y <  region[i][1] +r_size+1:
-						self.occupied[i]=1
-						break
 
 	def reset(self):
 
@@ -106,12 +81,40 @@ class Mine_Data:
 			self.charging_docks.append(Charging_Dock((random.randint(0, self.map_size),random.randint(0, self.map_size))))	
 
 		self.mines=[]
-		for i in range(random.randint(1, 10)):
+		for i in range(self.number_of_mines):
 			self.mines.append(Mine((random.randint(0, self.map_size),random.randint(0, self.map_size))))	
 
 
 		self.pre_num_unknown_locations-=self.seen.sum()
 		self.init_reward=self.seen.sum()
+
+
+	def get_region_score(self,x_l,y_l):
+		#x_l is of xmin xmax
+		score =0.
+		size=0.
+		for i in range(x_l[0],x_l[1]):
+			for j in range(y_l[0],y_l[1]):	
+				size+=1.
+				if self.seen[i][j] == 0:		
+					score+=1.
+
+		return math.ceil(3.*score/size)
+
+
+
+	def calculate_occupied(self,agent_dict,region,r_size):
+		self.occupied=[]
+		for i in range(25):
+			self.occupied.append(0)
+
+		for k,a in agent_dict.items():
+			for i in range(len(region)):
+				if a.x > region[i][0] -r_size and a.x <  region[i][0] +r_size+1:
+					if a.y >  region[i][1] -r_size and a.y <  region[i][1] +r_size+1:
+						self.occupied[i]=1
+						break
+
 
 	def move(self):
 		self.temp_seen=self.seen.copy()

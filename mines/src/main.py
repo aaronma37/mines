@@ -37,6 +37,8 @@ import POMDP_Values as v
 
 L_MAX=v.L_MAX
 number_of_charging_docks = rospy.get_param("/number_of_charging_docks")
+number_of_mines = rospy.get_param("/number_of_mines")
+agent_policy_steps = rospy.get_param("/agent_policy_steps")
 event_time_horizon = rospy.get_param("/event_time_horizon")
 agent_poll_time = rospy.get_param("/agent_poll_time")
 a_step_time = rospy.get_param("/agent_step_time")
@@ -74,7 +76,7 @@ for region in range(len(Regions.region)):
 	for t in range(event_time_horizon):
 		Exploration_Event.region[region].time.append(event_time())
 
-
+Exploration_Event.event_id=0
 
 reset_ = Int32()
 reset_.data = 0
@@ -104,14 +106,14 @@ for i in range(map_size):
 class Simulator:
 
 	def __init__(self):
-		self.s=Mine_Data(map_size,number_of_charging_docks)
-		self.s_old=Mine_Data(map_size,number_of_charging_docks)
+		self.s=Mine_Data(map_size,number_of_charging_docks,number_of_mines)
+		self.s_old=Mine_Data(map_size,number_of_charging_docks,number_of_mines)
 
 		self.Na_Level=v.Na_Level()
 		self.Q_Level=v.Q_Level()
 		self.Q=v.Q()
 		self.Na=v.Na()
-		self.Phi=v.Phi()
+		self.Phi=v.Phi(event_time_horizon)
 		self.Psi=v.Psi()
 		self.Pi=v.Pi()
 		self.send_to=0
@@ -186,7 +188,7 @@ class Simulator:
 
 	def pose_cb(self,uuv_data):
 		if uuv_data.frame_id not in agent_dict:
-			agent_dict[uuv_data.frame_id]=Agent(agent_poll_time,event_time_horizon,uuv_data.frame_id)
+			agent_dict[uuv_data.frame_id]=Agent(agent_poll_time,event_time_horizon,uuv_data.frame_id,agent_policy_steps)
 	 
 
 
@@ -197,20 +199,19 @@ class Simulator:
 		agent_dict[uuv_data.frame_id].work=int(uuv_data.work)
 		agent_dict[uuv_data.frame_id].display_action=uuv_data.display_action
 		agent_dict[uuv_data.frame_id].time_away_from_network=int(uuv_data.time_away_from_network)
+		agent_dict[uuv_data.frame_id].current_state=uuv_data.current_state
 		agent_dict[uuv_data.frame_id].measure(self.s,False)
 		agent_dict[uuv_data.frame_id].mine(self.s,False)
 
+
 	def trajectory_cb(self,data):
 		if data.frame_id not in agent_dict:
-			agent_dict[data.header.frame_id]=Agent(agent_poll_time,event_time_horizon,data.frame_id)
+			agent_dict[data.header.frame_id]=Agent(agent_poll_time,event_time_horizon,data.frame_id,agent_policy_steps)
 
 		agent_dict[data.frame_id].trajectory.action_trajectory=data.action_trajectory
 		agent_dict[data.frame_id].trajectory.region_trajectory=data.region_trajectory
 
-		self.send_to+=1
 
-		if self.send_to + 1 > len(list(agent_dict.values())):
-			self.send_to=0
 	
 		self.append_events(data)
 
@@ -226,6 +227,8 @@ class Simulator:
 				Exploration_Event.region[r].time.append(event_time())
 		for a in agent_dict.values():
 			self.append_events(a.trajectory)
+		Exploration_Event.event_id+=1
+		
 
 
 	def pub(self):
@@ -271,6 +274,11 @@ class Simulator:
 			agent_dict[Exploration_Event.requested_agent].clear_trajectory()
 			self.update_events()
 			request_action_pub.publish(Exploration_Event)
+
+			self.send_to+=1
+
+			if self.send_to + 1 > len(list(agent_dict.values())):
+				self.send_to=0
 
 	def reset_pub(self,recalculate_policy_flag):
 

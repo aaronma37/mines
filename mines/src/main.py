@@ -15,9 +15,11 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import OccupancyGrid
 from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Bool
 from mines.msg import event
 from mines.msg import event_region
 from mines.msg import event_time
+from mines.msg import performance
 from mines.msg import trajectory
 from mines.msg import map_info
 from mines.msg import uuv_data
@@ -46,12 +48,13 @@ load_q_flag = rospy.get_param("/load_q")
 write_q_flag = rospy.get_param("/write_q")
 write_psi_flag = rospy.get_param("/write_psi")
 f_path = rospy.get_param("/temp_file_path")
+trial_time = rospy.get_param("/total_trial_time")
 
 rospy.init_node('main', anonymous=True)
 env_pub =rospy.Publisher('/environment_matrix', map_info, queue_size=100)#CHANGE TO MATRIX
 
-reset_publisher = rospy.Publisher('/reset', Int32, queue_size=100)#CHANGE TO MATRIX
-restart_publisher = rospy.Publisher('/restart', Int32, queue_size=100)#CHANGE TO MATRIX
+reset_publisher = rospy.Publisher('/reset', performance, queue_size=100)#CHANGE TO MATRIX
+restart_publisher = rospy.Publisher('/restart', performance, queue_size=100)#CHANGE TO MATRIX
 request_action_pub = rospy.Publisher('/request_action', event, queue_size=100)#CHANGE TO MATRIX
 
 region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
@@ -68,6 +71,9 @@ sb=Mobile_Buoy_Environment(map_size)
 agent_dict = {}# {Agent Identity:Agent}
 buoy_dict = {}
 environment_information = map_info()
+performance_msg = performance()
+performance_msg.exploration=0
+performance_msg.mines=0
 
 
 Exploration_Event=event()
@@ -124,6 +130,8 @@ class Simulator:
 		self.sim_time=50
 		self.total_sims=500
 		self.cull=20
+
+		self.wait_flag=False
 
 		if load_q_flag is True:
 			self.load_q()
@@ -215,6 +223,8 @@ class Simulator:
 	
 		self.append_events(data)
 
+
+
 	def append_events(self,trajectory):
 		for t in range(len(trajectory.action_trajectory)):
 			Exploration_Event.region[trajectory.region_trajectory[t]].time[t].event.append(trajectory.action_trajectory[t])
@@ -280,12 +290,25 @@ class Simulator:
 			if self.send_to + 1 > len(list(agent_dict.values())):
 				self.send_to=0
 
-	def reset_pub(self,recalculate_policy_flag):
+	def ready_cb(self,data):
+		self.wait_flag=False
 
-		reset_.data=self.s.get_reward()-self.s.init_reward
-		print self.s.get_reward()-self.s.init_reward, "H"
+	def reset_pub(self,recalculate_policy_flag):
+	
+		batteries=0
+
+		for k,a in agent_dict.items():
+			if a.battery>0:
+				batteries+=1
+
+		print batteries
+
+		self.wait_flag=True
+		performance_msg.exploration=self.s.get_reward_1()
+		performance_msg.mines=self.s.get_reward_2()
+		performance_msg.battery=batteries
 		self.s.reset()
-		reset_publisher.publish(reset_)
+		reset_publisher.publish(performance_msg)
 		time.sleep(2)
 		if recalculate_policy_flag is True:
 			self.load_files()
@@ -293,8 +316,7 @@ class Simulator:
 			self.write_psi()
 		self.s.reset()	
 
-		restart_publisher.publish(restart_)
-		time.sleep(self.time_to_wait)
+		restart_publisher.publish(performance_msg)
 
 
 
@@ -305,6 +327,7 @@ class Simulator:
 		start = time.time()
 		start2= time.time()
 		asynch_timer=time.time()
+		self.wait_flag=False
 		self.s.reset()
 		self.sim_count=0
 
@@ -313,6 +336,10 @@ class Simulator:
 			#if time.time()-start > 100:
 				#s.reset()
 			#	start = time.time()
+
+			if self.wait_flag==True:
+				start2=time.time()
+
 			agents=list(agent_dict.keys())
 			self.agent_num = len(agents)
 			if self.agent_num > 0:
@@ -326,7 +353,7 @@ class Simulator:
 				#self.pub_to_buoys()
 				start = time.time()
 
-			if time.time()-start2 > self.sim_time:
+			if time.time()-start2 > trial_time:
 				self.sim_count+=1
 				if self.sim_count > self.total_sims:
 					return
@@ -334,7 +361,8 @@ class Simulator:
 					self.reset_pub(True)
 				else:
 					self.reset_pub(False)
-				start2=time.time()
+
+				#start2=time.time()
 
 
 ###MAIN
@@ -343,7 +371,7 @@ def main(args):
 	sim=Simulator()
 	posesub =rospy.Subscriber('/pose', uuv_data, sim.pose_cb)#CHANGE TO MATRIX
 	agent_trajectory_sub =rospy.Subscriber('/trajectory', trajectory, sim.trajectory_cb)#CHANGE TO MATRIX
-
+	ready_sub =rospy.Subscriber('/ready', Bool, sim.ready_cb)#CHANGE TO MATRIX
 
 	try:
 	

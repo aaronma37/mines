@@ -59,7 +59,7 @@ class Mine_Data:
 
 		self.pre_num_unknown_locations=self.map_size*self.map_size
 		self.seen=np.random.randint(1, size=(self.map_size,self.map_size))
-		
+		'''
 		for i in range(25):
 			k= random.randint(0, 3)
 			if k == 3:
@@ -74,7 +74,7 @@ class Mine_Data:
 			for region in Regions.region_list[i]:
 				if random.random() < chance:
 					self.seen[region[0]][region[1]]=1
-				
+		'''		
 		
 		self.charging_docks=[]
 		for i in range(self.number_of_charging_docks):
@@ -141,7 +141,14 @@ class Mine_Data:
 
 
 	def get_reward(self):
-		return self.max_reward-self.pre_num_unknown_locations
+		return (self.max_reward-self.pre_num_unknown_locations)*.95+.05*(self.number_of_mines-len(self.mines))
+
+	def get_reward_1(self):
+		return (self.max_reward-self.pre_num_unknown_locations)
+
+	def get_reward_2(self):
+		print "total mines:", self.number_of_mines, "left:",len(self.mines)
+		return self.number_of_mines-len(self.mines)
 
 	def measure_loc(self, loc, imaginary):
 		

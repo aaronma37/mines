@@ -21,6 +21,8 @@ from mines.msg import event
 from mines.msg import event_region
 from mines.msg import event_time
 from mines.msg import map_info
+from mines.msg import performance
+from std_msgs.msg import Bool
 from mines.msg import uuv_data
 
 ''' This is the ros file that runs an agent'''
@@ -45,7 +47,8 @@ si=Mine_Data(map_size,0,0)
 
 s_old=Mine_Data(map_size,0,0)
 
-
+ready_msg=Bool()
+ready_msg.data=True
 task= PoseStamped()
 
 
@@ -58,6 +61,7 @@ task.header.frame_id= rospy.get_name()
 pose_pub = rospy.Publisher('/pose',uuv_data,queue_size=1)
 
 trajectory_pub = rospy.Publisher('/trajectory',trajectory,queue_size=100)
+ready_publisher = rospy.Publisher('/ready',Bool,queue_size=100)
 alpha_pub = rospy.Publisher('/alpha',OccupancyGrid,queue_size=1)
 
 alpha = OccupancyGrid()
@@ -103,6 +107,9 @@ class Simulator:
 			a.decide(si)
 			trajectory_pub.publish(a.trajectory)
 
+	def ready_pub(self):
+		ready_publisher.publish(ready_msg)
+
 
 	def alpha_pub(self):
 		alpha.data=[]
@@ -115,13 +122,13 @@ class Simulator:
 		self.reset_flag=True
 		self.reset_data=data
 
-	def reset_fun(self,data):
+	def reset_fun(self,performance):
 		s.reset()
-		a.reset(s,data.data,f_path,UUV_Data.frame_id)
+		a.reset(s,performance,f_path,UUV_Data.frame_id)
 
 	def restart_cb(self,data):
 		a.restart(f_path)
-
+		self.ready_pub()
 
 		#write_file(a.solver.H,pose.header.frame_id)
 		#time.sleep(random.random()*5.)
@@ -188,8 +195,8 @@ def main(args):
 	environment_sub =rospy.Subscriber('/environment_matrix', map_info , sim.environment_cb)#CHANGE TO MATRIX
 
 	request_sub =rospy.Subscriber('/request_action', event , sim.action_request_cb)#CHANGE TO MATRIX
-	reset_sub =rospy.Subscriber('/reset', Int32 , sim.reset_cb)#CHANGE TO MATRIX
-	restart_sub =rospy.Subscriber('/restart', Int32 , sim.restart_cb)#CHANGE TO MATRIX
+	reset_sub =rospy.Subscriber('/reset', performance , sim.reset_cb)#CHANGE TO MATRIX
+	restart_sub =rospy.Subscriber('/restart', performance , sim.restart_cb)#CHANGE TO MATRIX
 	#time.sleep(random.random()*5.)
 
 	try:

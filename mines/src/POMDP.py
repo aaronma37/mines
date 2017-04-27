@@ -30,6 +30,8 @@ class Solver:
 		self.Psi=v.Psi()
 		self.Pi=v.Pi()
 		self.great=[]
+		self.great2=[]
+		self.great3=[]
 		self.steps=[]
 		self.A=Abstractions()
 
@@ -189,15 +191,26 @@ class Solver:
 	def write_file(self,filename):
 		self.Q.write_q(filename,self.Na)
 
-	def write_performance(self,fp,data,steps):
-		self.great.append(data)
-		self.steps.append(steps)
+	def write_performance(self,fp,performance,steps,battery):
+		self.great.append(performance.exploration)
+		self.great2.append(performance.mines)
+		self.great3.append(performance.battery)
 
-		file = open(fp+'/performance.txt','w') 
+		file = open(fp+'/performance_exploration.txt','w') 
 		for i in range(len(self.great)):
-			if self.steps[i] > 0:
-				file.write(str(self.great[i]/self.steps[i]) +"\n")
-			else:
-				file.write(str(0) +"\n")
+			file.write(str(self.great[i]) +"\n")
+
+		file.close()
+
+		file = open(fp+'/performance_mines.txt','w') 
+		for i in range(len(self.great2)):
+			file.write(str(self.great2[i]) +"\n")
+
+		file.close()
+
+		file = open(fp+'/performance_battery.txt','w') 
+		for i in range(len(self.great3)):
+			file.write(str(self.great3[i]) +"\n")
+
 		file.close()
 

@@ -114,7 +114,7 @@ class Phi:
 		self.num_visions=1000		
 		self.visions={}
 		self.gen_ord_state()
-		self.alpha=[.05,.9,.05]
+		self.alpha=[.33,.33,.33]
 		self.obj=Objective.Objective_Handler()
 		#self.alpha_list=[]
 		#self.alpha_list.append((1.,0.))

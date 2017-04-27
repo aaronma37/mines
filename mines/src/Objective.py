@@ -137,7 +137,7 @@ class Battery():
 				h=h+str(0)+"~"
 			else:
 				h=h+str(1)+"~"
-			n-=5
+			n-=.6*30.
 
 
 		h=h+';'
@@ -176,7 +176,6 @@ class Battery():
 		else:
 			battery_string=battery_string[1:]
 			battery_string.append(battery_string[-1])
-		
 
 
 		charger_string=charger_string[1:]
@@ -299,7 +298,7 @@ class Exploration():
 		r = random.random()
 		if action != "explore" or state_index<1:
 			return str(state_index) 
-		if r < .5:
+		if r < .2:
 			return str(state_index-1)
 		return str(state_index)
 

@@ -82,17 +82,18 @@ class Agent:
 	def predict_A(self):
 		self.new_A.evolve_all(self.solver.H,self)
 
-	def reset(self,s,data,fp,fn):
+	def reset(self,s,performance,fp,fn):
 		self.x=50
 		self.y=50
 		self.current_action=Policies.Policy(0,0,self.poll_time,0,(50,50))
 		self.old_A=Abstractions()
 		self.new_A=Abstractions()
-		self.battery=100
+
 		self.old_A.update_all(s,self)
 		self.new_A.update_all(s,self)
 		self.solver.write_file(fp+fn+".txt")
-		self.solver.write_performance(fp,data,self.steps)
+		self.solver.write_performance(fp,performance,self.steps,self.battery)
+		self.battery=100
 		self.available_flag=False
 		self.lvl=0
 
@@ -206,10 +207,13 @@ class Agent:
 
 	def move(self,s):
 		self.steps+=1.
+
 		if self.battery  > 1:
 			action = self.current_action.get_next_action(self,s)
 			self.execute(action,s)#NEED TO RESOLVE s
-		self.battery-=.25
+		self.battery-=.6
+		if self.battery < 0:
+			self.battery=0
 		self.check_docking()
 
 	def check_docking(self):
@@ -264,7 +268,8 @@ class Agent:
 	def measure(self,mine_data_,imaginary):
 		for i in range(-1,2):
 			for j in range(-1,2):
-				if self.work == Regions.get_region(self.x+i,self.y+j):
+				if Regions.in_bounds(self.x+i,self.y+j) is True:
+					#if self.work == Regions.get_region(self.x+i,self.y+j):
 					mine_data_.measure_loc((self.x+i,self.y+j),imaginary)
 
 	def mine(self,e,imaginary):

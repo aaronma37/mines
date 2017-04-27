@@ -16,6 +16,12 @@ region_size=10
 
 region_list=[]
 
+def in_bounds(x,y):
+	if x>-1 and x < 100:
+		if y>-1 and y<100:
+			return True
+	return False
+
 def get_distance(x,y,x2,y2):
 	return max(math.fabs(x2-x),math.fabs(y2-y))
 

@@ -7,6 +7,21 @@ import numpy as np
 import math
 import Regions
 
+temp_mine_list=[]
+temp_mine_list.append((15,35))
+temp_mine_list.append((35,35))
+temp_mine_list.append((55,55))
+temp_mine_list.append((75,75))
+temp_mine_list.append((55,35))
+temp_mine_list.append((15,55))
+temp_mine_list.append((15,75))
+temp_mine_list.append((55,35))
+temp_mine_list.append((75,15))
+temp_mine_list.append((85,85))
+
+temp_charge_docks=[]
+temp_charge_docks.append((25,25))
+temp_charge_docks.append((75,75))
 
 def get_norm_size(s):
 	return 1./s
@@ -55,6 +70,21 @@ class Mine_Data:
 		for i in range(25):
 			self.occupied.append(0)
 
+	def check_state(self, a, o, state_i):
+		if o[0] == "explore":
+			if state_i != self.get_region_score(Regions.region[o[1]][0],Regions.region[o[1]][1]):
+				return True
+			else:
+				return False
+
+		elif o[0] == "travel":
+			if Regions.get_region(a.x,a.y) == o[1]:
+				return True
+			else:
+				return False
+
+		return False
+
 	def reset(self):
 
 		self.pre_num_unknown_locations=self.map_size*self.map_size
@@ -78,11 +108,11 @@ class Mine_Data:
 		
 		self.charging_docks=[]
 		for i in range(self.number_of_charging_docks):
-			self.charging_docks.append(Charging_Dock((random.randint(0, self.map_size),random.randint(0, self.map_size))))	
+			self.charging_docks.append(Charging_Dock((temp_charge_docks[i][0],temp_charge_docks[i][1])))	
 
 		self.mines=[]
 		for i in range(self.number_of_mines):
-			self.mines.append(Mine((random.randint(0, self.map_size),random.randint(0, self.map_size))))	
+			self.mines.append(Mine((temp_mine_list[i][0],temp_mine_list[i][1])))	
 
 
 		self.pre_num_unknown_locations-=self.seen.sum()

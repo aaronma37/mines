@@ -14,6 +14,7 @@ import time
 import Policies
 import Events
 from mines.msg import trajectory
+import Trajectories
 
 
 class Agent: 
@@ -42,6 +43,8 @@ class Agent:
 		self.display_action="None"
 		self.steps=0.
 		self.available_flag=True
+		self.current_trajectory = Trajectories.Trajectory([]) 
+		self.current_sub_environment= Trajectories.Sub_Environment([],[],[])
 		self.trajectory=trajectory()
 		self.trajectory.frame_id=identification
 		self.event_time_horizon=event_time_horizon
@@ -132,8 +135,12 @@ class Agent:
 		self.new_A.update_all(s,self)
 
 	def decide(self,s):	
-		print self.current_action.time
-		print self.current_event,self.new_A.E.id
+
+
+		
+
+
+
 		if self.decide_counter>=self.policy_steps-1:
 			a,an,x_traj,a_traj,state  = self.solver.get_action(self.new_A,self.current_action.next,self.event_time_horizon)	
 			self.trajectory.region_trajectory=x_traj
@@ -207,14 +214,9 @@ class Agent:
 
 	def move(self,s):
 		self.steps+=1.
+		action = self.current_trajectory.get_action(self,s)
+		self.execute(action,s)
 
-		if self.battery  > 1:
-			action = self.current_action.get_next_action(self,s)
-			self.execute(action,s)#NEED TO RESOLVE s
-		self.battery-=.6
-		if self.battery < 0:
-			self.battery=0
-		self.check_docking()
 
 	def check_docking(self):
 		if self.current_action.index_type=="charge" and Regions.get_region(self.x,self.y) in self.new_A.charging_docks.regions:

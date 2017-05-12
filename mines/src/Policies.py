@@ -72,95 +72,45 @@ def get_discrete_action(a,s,action):
 		return (next_x,next_y)
 
 class Policy:
-	def __init__(self,index,next,agent_poll_time,index_type,point):
-		self.index=index
-		self.index_type=index_type #explore, go to point, etc.#
-		self.point=point
-		self.next=next
-		self.time=agent_poll_time
-		self.max_time=agent_poll_time
-		self.last_motion=(0,0)
-	
+	def __init__(self,objective_type,state_i,state_f,region_i,region_f):
+		self.complete=False
+		self.objectives=[(objective_type,region_i),("travel",region_f)]
+
+		self.state_i=state_i
+		self.state_f=state_f
+
+
 	def get_distance(self,x,y,x2,y2):
 		return max(math.fabs(x-x2),math.fabs(y-y2))
 
-	def get_target(self,a,s):
-		if self.index_type=="charge" or self.index_type=="mine":
-			if self.point is not None:
-				return self.point
-			else:
-				return Regions.region[next]
+	def get_target(self,o,a,s):
+		#returns closest in o in region
+		o_list = s.get_objective_locations(o)
 
-		if self.index==0:
-			return (s.middle[0],s.middle[1])
-		elif self.index <26:
-			
-			m=1000
-			if self.index==15:
-				loc=(50,50)
-			else:
-				loc=(a.x,a.y)
+		min_dist=1000
+		min_next=(a.x,a.y)
 
-			l = Regions.region_list[self.index-1]
-			l2 = Regions.region_list[self.next-1]
-			shuffle(l)
-			shuffle(l2)
+		for loc_o in o_list:
+			if self.get_distance(a.x,a.y,loc_o(0),loc_o(1)) < min_dist:
+				min_dist=self.get_distance(a.x,a.y,loc_o(0),loc_o(1))
+				min_next=loc_o
 
-
-			short_next=(a.x,a.y)
-			m2=1000
-		
-
-			for i in l2:
-				if s.seen[i[0]][i[1]]==s.NOT_SEEN:
-					if self.get_distance(a.x,a.y,i[0],i[1]) < m2:
-						m2=self.get_distance(a.x,a.y,i[0],i[1])
-						short_next = i
-
-			for i in l:
-				if s.seen[i[0]][i[1]]==s.NOT_SEEN:
-					if self.time < 5.:
-						if 10*self.get_distance(a.x,a.y,i[0],i[1])*self.time/self.max_time + 0*self.get_distance(short_next[0],short_next[1],i[0],i[1])*(self.max_time-self.time)/self.max_time < m and self.allowable_motions(self.last_motion,(a.x-i[0],a.y-i[1])) is True:	
-							m=self.get_distance(a.x,a.y,i[0],i[1])
-							loc = i
-					else:
-						if self.get_distance(a.x,a.y,i[0],i[1])*self.time/self.max_time < m and self.allowable_motions(self.last_motion,(a.x-i[0],a.y-i[1])) is True:	
-							m=self.get_distance(a.x,a.y,i[0],i[1])
-							loc = i
-
-			self.last_motion = a.x-loc[0],a.y-loc[1]
-
-			return loc
-
-	def allowable_motions(self,prev,motion):
-		return True
-		if prev == (0,0):
+		return min_next
+				
+	def check_completion(self,a,s):
+		self.current_objective=self.objectives[0]
+		if s.check_state(a,o,self.state_i) == True:
+			self.current_objective = self.objectives[1]
+		if s.check_state(a,o,"default") == True:
 			return True
-		if prev[0] == -1:
-			if motion[0] == 1:
-				return False
-		elif prev[0] == 1:
-			if motion[0] == -1:
-				return False
-		if prev[1] == -1:
-			if motion[1] == 1:
-				return False
-		elif prev[1] == 1:
-			if motion[1] == -1:
-				return False
-		return True
-
-						
+		else:
+			return False
+		
 	def get_next_action(self,a,s):
 		next_x=0
 		next_y=0
-		self.time-=1
 
-		if self.index==26:
-			return (0,0)
-
-
-		target = self.get_target(a,s)
+		target = self.get_target(self.current_objective,a,s)
 	
 		if a.x < target[0]:
 			next_x = 1

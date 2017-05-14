@@ -23,22 +23,26 @@ class TTS:
 
 	def __init__(self,event_time_horizon):
 		self.event_time_horizon=event_time_horizon
-		self.N=v.N()
-		self.Q=v.Q()
+		self.N={}
+		self.Q={}
 		self.T=[]
+		self.T_full=[]
 
 
 	def reset(self):
-		self.N=v.N()
-		self.Q=v.Q()
+		self.N={}
+		self.Q={}
 		self.T=[]
+		self.T_full=[]
 
 
-	def search_call(self,complete_state,time_to_work):
+	def execute(self,complete_state,time_to_work):
 		start = time.time()
 		end = start
 
 		self.T=[] #Tree
+		self.T_full=[]
+
 
 		while end - start < time_to_work:
 			best_sub_environment = #UCB
@@ -46,13 +50,10 @@ class TTS:
 			
 			self.value_update(self.search(complete_state,best_sub_environment))
 
-		return get_max_full(T)
-
-
-
+		return self.get_max_full(self.T_full),self.get_trajectory()
 
 	def search(self,complete_state,best_sub_environment,T):
-		children_sub_environments=get_children(complete_state,best_sub_environment)
+		children_sub_environments=self.get_children(complete_state,best_sub_environment)
 		for c in children_sub_environments:
 			self.T.append(c)
 
@@ -65,115 +66,45 @@ class TTS:
 
 		return self.search(complete_state,best_sub_environment)
 
+	def get_children(self,complete_state,best_sub_environment):
 
-	
+	def UCB(self):
+		return self.T[0]
 
+	def value_update(self,best_sub_environment,r):
+		for k in range(0,L):
+			self.N[best_sub_environment.state[0:k]]+=1
+			self.Q[best_sub_environment.state[0:k]]+=(r-self.Q[best_sub_environment.state[0:k]])/(self.N[best_sub_environment.state[0:k]])
 
-
-	def get_action(self,A,next_expected_action,event_time_horizon):
-
+	def get_max_full(self,T):\
+		best_env=None
+		max_expected=0
 		
-		a, b, x_traj,seed = self.Pi.get_and_return_level(A,self.Psi,self.Phi,next_expected_action,event_time_horizon)
+		for sub_env in T:
+			if self.Q[sub_env] > max_expected:
+				best_env=sub_env
+				max_expected=self.Q[best_env]
 
-		E=self.Phi.get_events(A,seed)
-		state=self.Phi.get_state(A,seed)
-		self.Phi.print_pre_evolve(state,E)
-		print "ree"
-		state= self.Phi.pre_evolve(state,E)
+		return best_env
 
-		a_traj=[]
-		print x_traj
-		for i in range(0,len(x_traj)):
-			action,l,r=self.Psi.get_with_level(0,state,self.Pi,self.Phi)		
-			a_traj.append(action)
-			if i== len(x_traj) -1:
-				break
-			E.ammend(action)
-			state,E = self.Phi.evolve(state,action,E)
+	def get_random_sub_environment(self,agent,complete_state):
+		sub_environment=environment_classes.Sub_Environment()
+		sub_environment.set_random_region_list((agent.x,agent.y))
+		sub_environment.update_state(complete_state)
+		return sub_environment
 
+	def get_trajectory(self,sub_environment,mcts):
+		ordered_objective_type_list=[]				
+		for k in range(L-1):	
+			ordered_objective_type_list.append(mcts.arg_max(sub_environment.cull_state_from_front(k))) # an objective_type - string
 
-		E=self.Phi.get_events(A,seed)
-		state=self.Phi.get_state(A,seed)
-
-		state= self.Phi.pre_evolve(state,E)
-		print state
-		return a,b,x_traj,a_traj,state
-
-
-	def arg_max(self,A):
-		return self.Pi.get(L_MAX,A,self.Phi,self.Psi)	
-
-	def rollout(self,A):
-		return A.get_max_reward_funct()
-
-	def arg_max_ucb(self,state):
-
-		if self.agg_Q.q.get(state) is None:
-			return Policies.action_library[0]
-
-		action_list=Policies.action_library
-		shuffle(action_list)
-
-		if self.agg_Q.q[state].get(action_list[0]) is None:
-			return action_list[0]
-
-		max_a=action_list[0]
-		max_ucb=self.ucb_from_state(self.agg_Q.q[state][max_a],self.agg_N.n[state],self.agg_Na.na[state][max_a])
-
-
-		for a in action_list:
-			if self.agg_Q.q[state].get(a) is None:
-				return a
-
-			if self.ucb_from_state(self.agg_Q.q[state][a],self.agg_N.n[state],self.agg_Na.na[state][a])  > max_ucb:
-				max_ucb = self.ucb_from_state(self.agg_Q.q[state][a],self.agg_N.n[state],self.agg_Na.na[state][a]) 
-				max_a=a
-
-		return max_a
-		
+		return task_classes.Trajectory(sub_environment,ordered_objective_type_list)
+			
+			
 
 
 
 
-	def ucb(self,A,a):
-		return self.Q.get(A,self.Phi,a)+100.*math.sqrt(math.log(1+self.N.get(A,self.Phi))/(1+self.Na.get(A,self.Phi,a)))
 
-	def ucb_from_state(self,r,n,na):
-		return r+1.94*math.sqrt(math.log(1+n)/(1+na))
-
-
-	def get_psi(self,filename):
-		self.Psi.load(filename)
-
-	def set_aggregate_q(self,filename):
-		self.agg_Q.load_file(filename,self.agg_Na,self.agg_N,self.Phi)
-
-	def update_psi(self):
-		self.Psi.update(self.Q,self.Na)
-
-	def write_file(self,filename):
-		self.Q.write_q(filename,self.Na)
-
-	def write_performance(self,fp,performance,steps,battery):
-		self.great.append(performance.exploration)
-		self.great2.append(performance.mines)
-		self.great3.append(performance.battery)
-
-		file = open(fp+'/performance_exploration.txt','w') 
-		for i in range(len(self.great)):
-			file.write(str(self.great[i]) +"\n")
-
-		file.close()
-
-		file = open(fp+'/performance_mines.txt','w') 
-		for i in range(len(self.great2)):
-			file.write(str(self.great2[i]) +"\n")
-
-		file.close()
-
-		file = open(fp+'/performance_battery.txt','w') 
-		for i in range(len(self.great3)):
-			file.write(str(self.great3[i]) +"\n")
-
-		file.close()
-
+			
+				

@@ -7,200 +7,153 @@ import numpy as np
 import math
 import Regions
 
-temp_mine_list=[]
-temp_mine_list.append((15,35))
-temp_mine_list.append((35,35))
-temp_mine_list.append((55,55))
-temp_mine_list.append((75,75))
-temp_mine_list.append((55,35))
-temp_mine_list.append((15,55))
-temp_mine_list.append((15,75))
-temp_mine_list.append((55,35))
-temp_mine_list.append((75,15))
-temp_mine_list.append((85,85))
-
-temp_charge_docks=[]
-temp_charge_docks.append((25,25))
-temp_charge_docks.append((75,75))
-
-def get_norm_size(s):
-	return 1./s
-
-def get_sqr_loc(x,s):
-	return 2.*x/s-1.
-
-class Charging_Dock:
-	def __init__(self, location):
-		self.coordinates=location
-		self.size=5.
-
-class Mine:
-	def __init__(self, location):
-		self.coordinates=location
-		self.size=3.
+class Regions:
+	def __init__(self,size):
+		self.size=size
 		
+	def get_region(self,x,y):
+		return (math.floor((math.abs(x)-self.size/2)/self.size),math.floor((math.abs(y)-self.size/2)/self.size))
 
+	def get_region_parts(self,r):
+		region_list=[]
+		for x in range(self.size*r(0)-self.size/2,self.size*r(0)+self.size/2)
+			for y in range(self.size*r(1)-self.size/2,self.size*r(1)+self.size/2)		
+				region_list.append(x,y)
+		return region_list
 
-class Mine_Data: 
-
-	def __init__(self, map_size,number_of_charging_docks,number_of_mines):
-		self.number_of_charging_docks=number_of_charging_docks
-		self.number_of_mines=number_of_mines
-		self.pre_num_unknown_locations=map_size*map_size
-		self.seen = np.ndarray(shape=(map_size,map_size), dtype=int)
-		self.temp_seen = np.ndarray(shape=(map_size,map_size), dtype=int)
-		self.map_size=map_size
-
-		self.charging_docks=[]
-		for i in range(self.number_of_charging_docks):
-			self.charging_docks.append(Charging_Dock((50,50)))
-
-		self.mines=[]
-		for i in range(number_of_mines):
-			self.mines.append(Mine((50,50)))
-
-		self.middle=(self.map_size/2,self.map_size/2)
-		self.max_reward=self.map_size*self.map_size
-		self.reset()
-		self.occupied = []
-		self.NOT_SEEN=0
-		self.SEEN=1
-		self.init_reward
-
-		for i in range(25):
-			self.occupied.append(0)
-
-	def check_state(self, a, o, state_i):
-		if o[0] == "explore":
-			if state_i != self.get_region_score(Regions.region[o[1]][0],Regions.region[o[1]][1]):
-				return True
-			else:
-				return False
-
-		elif o[0] == "travel":
-			if Regions.get_region(a.x,a.y) == o[1]:
-				return True
-			else:
-				return False
-
+	def is_feasible_travel_path(self,r1,r2):
+		if math.abs(r1(0)-r2(0))<2 and math.abs(r1(1)-r2(1))<2:
+			return True
 		return False
 
+class Sub_Objective():
+	def __init__(self,x,y):
+		self.x=x
+		self.y=y
+		self.region=Regions.get_region(x,y)
+
+
+class Objective():
+	def __init__(self,objective_parameters):
+		self.sub_objectives=[]
+		self.distribute(objective_parameters[0])
+		self.granularity=objective_parameters[1]
+		
+		
+	def distribute(self,distribution_type):
+		if distribution_type=="All":
+			for x in range(100):
+				for y in range(100):
+					self.sub_objectives.append(Sub_Objective(x,y))
+		
+
+class Sub_Environment:
+	def __init__(self):
+		self.region_list=None
+		self.state=None
+		self.interaction_set=None
+		 
+	def set_region_list(self,region_list):
+		self.region_list=region_list
+	
+	def set_random_region_list(self,r):
+		self.region_list=[]
+		self.region_list.append(r)
+		for k in range(L):
+			self.region_list.append((self.region_list[-1][0]+random.randint(-1, 1),self.region_list[-1][1]+random.randint(-1, 1)))
+
+
+
+	def get_sub_sub_environment(self,k):
+		return Sub_Environment(self.region_list[0:k],self.state[0:k],self.interaction_set[0:k])
+
+	def cull_state_from_back(self,k):
+		s=self.state.split(".")
+
+		h=""
+		for i in range(0,len(s)-k):
+			h=h+"."+s[i]
+
+		return h
+		
+
+	def cull_state_from_front(self,k):
+		s=self.state.split(".")
+		h=""
+		for i in range(k,len(s)):
+			h=h+"."+s[i]
+
+		return h
+
+	def get_state_index(self,k):
+		return self.state.split(".")[k]
+
+	def get_objective_index(self,k,objective_type):
+		o_index=objective_set.index(objective_type)
+		return self.get_state_index(k).split(",")[o_index]
+
+		
+		
+	def update_state(self,complete_environment):
+		self.state=""
+		for r in self.region_list:
+			self.state=self.state+"."
+			for o in objectives:
+				self.state=self.state+str(complete_environment.get_region_objective_state(o,r))
+
+	def get_region_objective_state(self,k,objective_type):
+		
+
+
+
+class Complete_Environment:
+	def __init__(self,region_size,objective_parameter_list):
+		self.regions=Regions(region_size) 
+		self.objective_parameter_list=objective_parameter_list
+		self.objective_set=[]
+		for objective_parameters in objective_parameter_list:
+			self.objective_set.append(Objective(objective_parameters))
+		self.agent_locations=[]
+
 	def reset(self):
+		self.objective_set=[]
+		for objective_parameters in objective_parameter_list:
+				self.objective_set.append(Objective(objective_parameters))
 
-		self.pre_num_unknown_locations=self.map_size*self.map_size
-		self.seen=np.random.randint(1, size=(self.map_size,self.map_size))
-		'''
-		for i in range(25):
-			k= random.randint(0, 3)
-			if k == 3:
-				chance=1.
-			elif k==2:
-				chance=.66
-			elif k==1:
-				chance=.33	
-			else:
-				chance=0.
+	def update(self,agent_locations):
+		self.agent_locations=agent_locations
 
-			for region in Regions.region_list[i]:
-				if random.random() < chance:
-					self.seen[region[0]][region[1]]=1
-		'''		
+	def get_sub_objectives_in_region(self,objective_type,r):
+		sub_objectives=[]
+		for sub_objective in self.objective_set[objective_type]:
+			if sub_objective.region==r:
+				sub_objectives.append(sub_objective)
+		return sub_objectives
+
+	def get_region(self,x,y):
+		return self.regions.get_region(x,y)
+
+	
+	def get_feasible_travel_paths(self,r):
+		regions=[]
+		for p in range(r(0)-1,r(0)+2):
+			for q in range(r(1)-1,r(1)+2):
+				regions.append(p,q)		
+
+		return regions
+
+	def get_region_objective_state(self,objective_type,r):
+		c=0
+		for sub_objective in self.objective_set[objective_type]:
+			if sub_objective.region == r:
+				c+=sub_objective.granularity
 		
-		self.charging_docks=[]
-		for i in range(self.number_of_charging_docks):
-			self.charging_docks.append(Charging_Dock((temp_charge_docks[i][0],temp_charge_docks[i][1])))	
-
-		self.mines=[]
-		for i in range(self.number_of_mines):
-			self.mines.append(Mine((temp_mine_list[i][0],temp_mine_list[i][1])))	
-
-
-		self.pre_num_unknown_locations-=self.seen.sum()
-		self.init_reward=self.seen.sum()
-
-
-	def get_region_score(self,x_l,y_l):
-		#x_l is of xmin xmax
-		score =0.
-		size=0.
-		for i in range(x_l[0],x_l[1]):
-			for j in range(y_l[0],y_l[1]):	
-				size+=1.
-				if self.seen[i][j] == 0:		
-					score+=1.
-
-		return math.ceil(3.*score/size)
-
-
-
-	def calculate_occupied(self,agent_dict,region,r_size):
-		self.occupied=[]
-		for i in range(25):
-			self.occupied.append(0)
-
-		for k,a in agent_dict.items():
-			for i in range(len(region)):
-				if a.x > region[i][0] -r_size and a.x <  region[i][0] +r_size+1:
-					if a.y >  region[i][1] -r_size and a.y <  region[i][1] +r_size+1:
-						self.occupied[i]=1
-						break
-
-
-	def move(self):
-		self.temp_seen=self.seen.copy()
-		self.seen[1:][:] = self.temp_seen[:-1][:]
-
-	def update_charging_dock_locations(self,x,y):
-		self.charging_docks=[]
-		for i in range(len(x)):
-			self.charging_docks.append(Charging_Dock((x[i],y[i])))		
-
-	def update_mine_locations(self,x,y):
-		self.mines=[]
-		for i in range(len(x)):
-			self.mines.append(Mine((x[i],y[i])))	
-
-	def imprint(self, a):
-		a.seen=self.seen.copy()
-		a.pre_num_unknown_locations=self.pre_num_unknown_locations
-		a.occupied=self.occupied
-		a.charging_docks=self.charging_docks
-		a.number_of_charging_docks=self.number_of_charging_docks
-		a.mines=self.mines
-
-
-
-	def get_reward(self):
-		return (self.max_reward-self.pre_num_unknown_locations)*.95+.05*(self.number_of_mines-len(self.mines))
-
-	def get_reward_1(self):
-		return (self.max_reward-self.pre_num_unknown_locations)
-
-	def get_reward_2(self):
-		print "total mines:", self.number_of_mines, "left:",len(self.mines)
-		return self.number_of_mines-len(self.mines)
-
-	def measure_loc(self, loc, imaginary):
+		return math.ceil(c/(self.region.size*self.region.size))	
 		
-		if self.check_boundaries(loc) is False:
-			return
-
-		if self.seen[loc[0]][loc[1]] == 1:
-			return
-
-		self.seen[loc[0]][loc[1]]=1
-		self.pre_num_unknown_locations-= 1
 
 
-	def check_boundaries(self, loc):
-		if loc[0]<0 or loc[0] >= self.map_size:
-			return False
 
-		if loc[1]<0 or loc[1] >= self.map_size:
-			return False
 
-		return True
-        	
 
 
 	

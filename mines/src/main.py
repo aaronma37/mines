@@ -6,9 +6,7 @@ import time
 from PIL import Image
 import numpy as numpy
 from agent_classes import Agent
-from environment_classes import get_sqr_loc
-from environment_classes import get_norm_size
-from environment_classes import Mine_Data
+import environment_classes
 import draw
 import math
 import rospy
@@ -64,7 +62,8 @@ region_size=10
 
 gd=gui_data()
 
-map_size=100
+objective_parameter_list=[]
+objective_parameter_list.append(('All',3))
 
 
 sb=Mobile_Buoy_Environment(map_size)
@@ -112,19 +111,8 @@ for i in range(map_size):
 class Simulator:
 
 	def __init__(self):
-		self.s=Mine_Data(map_size,number_of_charging_docks,number_of_mines)
-		self.s_old=Mine_Data(map_size,number_of_charging_docks,number_of_mines)
+		self.complete_environment=environment_classes.Complete_Environment(objective_parameter_list)
 
-		self.Na_Level=v.Na_Level()
-		self.Q_Level=v.Q_Level()
-		self.Q=v.Q()
-		self.Na=v.Na()
-		self.Phi=v.Phi(event_time_horizon)
-		self.Psi=v.Psi()
-		self.Pi=v.Pi()
-		self.send_to=0
-		self.agent_num=0
-		self.time_to_wait=0
 		self.sim_count=0
 		self.num_eval=1
 		self.sim_time=50
@@ -133,65 +121,6 @@ class Simulator:
 
 		self.wait_flag=False
 
-		if load_q_flag is True:
-			self.load_q()
-
-	def load_q(self):
-		self.load_file(f_path+"/q_main.txt")
-
-
-	def load_files(self):
-		for k,a in agent_dict.items():
-			self.load_file(f_path+k+".txt")
-
-
-
-	def load_file(self,fn):
-		#Modded for symmetry
-		f = open(fn,'r')
-		size=0
-		for line in f:
-
-			l = line.split(">")
-			if l[0]=="Q" and len(l)>4:
-				size+=1
-				state=l[1]
-
-				try:
-					a_i=l[2]
-				except ValueError:
-					print "Value error trying to convert", l[2]					
-					return
-
-				try:
-					r=float(l[3])
-				except ValueError:
-					print "Value error trying to convert", l[3]					
-					return
-
-				try:
-					n=float(l[4])
-				except ValueError:
-					print "Value error trying to convert", l[4]					
-					return
-
-
-				self.Na.append_to(state,a_i,n,self.Phi)
-				self.Q.append_to(state,a_i,0.,self.Phi)
-				self.Q.append_to_average(state,a_i,r,self.Phi,self.Na)
-
-		#self.Q_Level.write_q(f_path+'/qq.txt',self.Na_Level)
-		f.close()
-		print "Successfully appended",fn, "with", size, "lines"
-
-	def calculate_policy(self):
-		self.time_to_wait=self.Psi.update(self.Pi,self.Phi,self.Q,self.Na)
-		
-	def write_psi(self):
-		if write_q_flag is True:
-			self.Q.write_q(f_path+'/q_main.txt',self.Na)
-		if write_psi_flag is True:
-			self.Psi.write_psi(f_path+'/psi_main.txt')
 
 
 	def pose_cb(self,uuv_data):
@@ -208,8 +137,8 @@ class Simulator:
 		agent_dict[uuv_data.frame_id].display_action=uuv_data.display_action
 		agent_dict[uuv_data.frame_id].time_away_from_network=int(uuv_data.time_away_from_network)
 		agent_dict[uuv_data.frame_id].current_state=uuv_data.current_state
-		agent_dict[uuv_data.frame_id].measure(self.s,False)
-		agent_dict[uuv_data.frame_id].mine(self.s,False)
+		agent_dict[uuv_data.frame_id].measure(self.complete_environment,False)
+		agent_dict[uuv_data.frame_id].mine(self.complete_environment,False)
 
 
 	def trajectory_cb(self,data):
@@ -223,72 +152,8 @@ class Simulator:
 	
 		self.append_events(data)
 
-
-
-	def append_events(self,trajectory):
-		for t in range(len(trajectory.action_trajectory)):
-			Exploration_Event.region[trajectory.region_trajectory[t]].time[t].event.append(trajectory.action_trajectory[t])
-
-	def update_events(self):
-		Exploration_Event.region=[]
-		for r in range(len(Regions.region)):
-			Exploration_Event.region.append(event_region())
-			for t in range(event_time_horizon):
-				Exploration_Event.region[r].time.append(event_time())
-		for a in agent_dict.values():
-			self.append_events(a.trajectory)
-		Exploration_Event.event_id+=1
-		
-
-
-	def pub(self):
-	
-		for i in range(map_size):
-			for j in range(map_size):
-				environment_information.grid[i*map_size+j]=self.s.seen[i][j]
-
-		for i in range(map_size):
-			for j in range(map_size):
-				environment_information.grid[i*map_size+j+map_size*map_size]=self.s_old.seen[i][j]
-
-		#print self.s.get_reward()-self.s_old.get_reward()
-
-		self.s.imprint(self.s_old)
-
-		environment_information.charging_dock_x=[]
-		environment_information.charging_dock_y=[]
-
-		for dock in self.s.charging_docks:
-			environment_information.charging_dock_x.append(dock.coordinates[0])
-			environment_information.charging_dock_y.append(dock.coordinates[1])
-
-		environment_information.mines_x=[]
-		environment_information.mines_y=[]
-
-		for mine in self.s.mines:
-			environment_information.mines_x.append(mine.coordinates[0])
-			environment_information.mines_y.append(mine.coordinates[1])
-
-		environment_information.new_exploration_reward=self.s.pre_num_unknown_locations
-		environment_information.old_exploration_reward=self.s_old.pre_num_unknown_locations
-
-		env_pub.publish(environment_information)
-
-
-	def pub2(self):
-
-
-		if self.agent_num > 0:
-
-			Exploration_Event.requested_agent=list(agent_dict.keys())[self.send_to]
-			agent_dict[Exploration_Event.requested_agent].clear_trajectory()
-			self.update_events()
-			request_action_pub.publish(Exploration_Event)
-
-			self.send_to+=1
-
-			if self.send_to + 1 > len(list(agent_dict.values())):
-				self.send_to=0
+	def pub_objectives(self):
+		mine_objective_publisher.publish(mine_objective_msg)
 
 	def ready_cb(self,data):
 		self.wait_flag=False
@@ -304,17 +169,13 @@ class Simulator:
 		print batteries
 
 		self.wait_flag=True
-		performance_msg.exploration=self.s.get_reward_1()
-		performance_msg.mines=self.s.get_reward_2()
+		performance_msg.exploration=self.complete_environment.get_reward_1()
+		performance_msg.mines=self.complete_environment.get_reward_2()
 		performance_msg.battery=batteries
-		self.s.reset()
+		self.complete_state.reset()
 		reset_publisher.publish(performance_msg)
 		time.sleep(2)
-		if recalculate_policy_flag is True:
-			self.load_files()
-			self.calculate_policy()
-			self.write_psi()
-		self.s.reset()	
+		self.complete_state.reset()	
 
 		restart_publisher.publish(performance_msg)
 
@@ -328,11 +189,11 @@ class Simulator:
 		start2= time.time()
 		asynch_timer=time.time()
 		self.wait_flag=False
-		self.s.reset()
+		self.complete_environment.reset()
 		self.sim_count=0
 
 		while not rospy.is_shutdown():
-			draw.render_once(self.s,agent_dict,map_size,buoy_dict,gd,self.reset_pub,time.time()-start2)
+			draw.render_once(self.complete_environment,agent_dict,map_size,buoy_dict,gd,self.reset_pub,time.time()-start2)
 			#if time.time()-start > 100:
 				#s.reset()
 			#	start = time.time()

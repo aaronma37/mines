@@ -1,6 +1,0 @@
-import Heuristics
-
-H=Heuristics.heuristic()
-Heuristics.load_file(0,'testfile.txt')
-
-

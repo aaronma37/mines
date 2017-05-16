@@ -5,18 +5,16 @@ from random import randint
 import random
 import numpy as np
 import math
-import Regions
 
-Objective_Types
-
-def get_available_objective_types(sub_environment):
+def get_available_objective_types(sub_environment,complete_environment):
 	aot=[]
 	aot.append("wait")
 	aot.append("travel")
 	
-	for o in Objective_Types:
-		if sub_environment.get_objective_index(0,o) > 0:
-			aot.append(o)
+
+	for obj_type in complete_environment.objective_map.keys():
+		if sub_environment.get_objective_index(0,complete_environment.objective_map[obj_type]) > 0:
+			aot.append(obj_type)
 
 	return aot
 	
@@ -24,10 +22,26 @@ def get_available_objective_types(sub_environment):
 	
 
 
-def tau(objective_type,region_i,region_f):
+def tau(objective_type,score):
+
+	try:	
+         	int(score)
+    	except ValueError:
+        	print("Oops!  That was no valid number.  Try again...")
+		return 1000
+
 	if objective_type=="wait":
 		return 1000
-	return 15
+	if objective_type=="travel":
+		return 10
+	if int(score)==0:
+		return 1000
+	elif int(score)==1:
+		return 25
+	elif int(score)==2:
+		return 16
+	else:
+		return 12
 
 
 class Task:
@@ -46,6 +60,8 @@ class Task:
 
 	def get_target(self,objective_type,a,r,complete_state):
 
+		if objective_type=="wait":
+			return (a.x,a.y)
 		sub_objectives = complete_state.get_sub_objectives_in_region(objective_type,r)
 
 		min_dist=1000
@@ -60,7 +76,9 @@ class Task:
 				
 	def check_completion(self,agent,complete_state):
 		self.current_objective=self.objectives[0]
-		if complete_state.get_region_objective_state(self.current_objective[0],region_i) == self.state_i:
+		if self.current_objective[0]=="wait":
+			return False
+		if complete_state.get_region_objective_state(self.current_objective[0],self.current_objective[1]) == self.state_i:
 			self.current_objective = self.objectives[1]
 		if complete_state.get_region(agent.x,agent.y) == region_f:
 			return True
@@ -72,22 +90,22 @@ class Task:
 
 		target = self.get_target(self.current_objective[0],agent,self.current_objective[1],complete_state)
 	
-		if a.x < target[0]:
+		if agent.x < target[0]:
 			next_x = 1
-		elif a.x > target[0]:
+		elif agent.x > target[0]:
 			next_x = -1
 
-		if a.y <target[1]:
+		if agent.y <target[1]:
 			next_y= 1
-		elif a.y > target[1]:
+		elif agent.y > target[1]:
 			next_y=-1
 
-		if a.x is target[0] and a.y is target[1]:
+		if agent.x is target[0] and agent.y is target[1]:
 			return (0,0)
 		else:	
 			return (next_x,next_y)
 
-	def tau(self):
+	def tau(self,score):
 		return 15
 
 	
@@ -96,22 +114,29 @@ class Task:
 
 
 class Trajectory:
-	def __init__(self,sub_environment,ordered_objective_type_list):
+	def __init__(self,sub_environment,ordered_objective_type_list,complete_environment):
 		self.task_list=[]
 		for i in range(len(ordered_objective_type_list)):
-			self.task_list.append(Task(ordered_objective_type_list[i]),sub_environment.get_objective_index(i,ordered_objective_type_list[i]),sub_environment.region_list[i],sub_environment.region_list[i+1])
+			if ordered_objective_type_list[i] == "wait" or ordered_objective_type_list[i] == "travel":
+				self.task_list.append(Task(ordered_objective_type_list[i],0,sub_environment.region_list[i],sub_environment.region_list[i+1]))
+			else:
+				self.task_list.append(Task(ordered_objective_type_list[i],sub_environment.get_objective_index(i,complete_environment.objective_map[ordered_objective_type_list[i]]),sub_environment.region_list[i],sub_environment.region_list[i+1]))
 		#self.sub_environment=sub_environment
 		self.current_index=0
 
 	def update_completion(self,agent,complete_state):
-		for i in range(self.current_index,len(self.action_list)):
-			if self.action_list[i].check_complete(agent,complete_state) == False:
+		for i in range(self.current_index,len(self.task_list)):
+			if self.task_list[i].check_completion(agent,complete_state) == False:
 				self.current_index=i
 				break
 
 	def get_action(self,agent,complete_state):
-		self.update_completion(self,agent,complete_state)
+		self.update_completion(agent,complete_state)
 		return self.task_list[self.current_index].get_next_action(agent,complete_state)
+
+	def print_data(self):
+		for t in self.task_list:
+			print t.current_objective[0]
 
 
 

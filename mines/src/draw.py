@@ -5,10 +5,6 @@ from OpenGL.GLU import *
 import time
 from PIL import Image
 import numpy as numpy
-#from agent_classes import Agent
-from environment_classes import get_sqr_loc
-from environment_classes import get_norm_size
-from environment_classes import Mine_Data
 
 import math
 import rospy
@@ -29,8 +25,6 @@ AR=1600./1200.
 import os
 import sys
 
-map_size=100
-s=Mine_Data(map_size,0,0)
 agent_dict={}
 RESET=0
 HIGHLIGHT=1
@@ -296,21 +290,27 @@ def drawText(value, x,y,  windowHeight, windowWidth, step = 18 ):
 def end_draw():
 	glutSwapBuffers() 
 
+def get_norm_size(s):
+	return 1./s
+
+def get_sqr_loc(x,s):
+	return 2.*x/s-1.
 
 
-
-def draw_all(s,agent_dict,map_size,buoy_dict,gui_data,step_num):
+def draw_all(complete_environment,agent_dict,gui_data,step_num):
 
 	clear()
 	begin_basic()	
 	
 	draw_basic(0,0,1,1,-.1)
 
-	glColor3f(0, 0, 0)
-	for i in range(map_size):
-		for j in range(map_size):
-			if s.seen[i][j] == 1:
-				draw_basic(get_sqr_loc(i,map_size),get_sqr_loc(j,map_size),get_norm_size(map_size),get_norm_size(map_size),-.1)
+	glColor3f(1, 0, 0)
+
+	map_size=100
+
+	for o in complete_environment.objective_list:
+		for so in o.sub_objectives:
+			draw_basic(get_sqr_loc(so.x,map_size),get_sqr_loc(so.y,map_size),1./map_size,1./map_size,-.1)
 
 		
 	if gui_data.hl is not None:
@@ -339,10 +339,10 @@ def draw_all(s,agent_dict,map_size,buoy_dict,gui_data,step_num):
 	count=0
 	for k,a in agent_dict.items():
 		draw_text(1.2, 1.1-count/4.,"Agent: " + str(k))
-		draw_text(1.2,-.025+ 1.1-count/4.,"Battery: " + str(a.battery))
-		draw_text(1.2,-.05+ 1.1-count/4.,"Region: " + str(a.trajectory.region_trajectory))
-		draw_text(1.2,-.075+ 1.1-count/4.,"State: " + a.current_state)
-		draw_text(1.2,-.1+ 1.1-count/4.,"Action: " + str(a.trajectory.action_trajectory))
+		#draw_text(1.2,-.025+ 1.1-count/4.,"Battery: " + str(a.battery))
+		#draw_text(1.2,-.05+ 1.1-count/4.,"Region: " + str(a.trajectory.region_trajectory))
+		#draw_text(1.2,-.075+ 1.1-count/4.,"State: " + a.current_state)
+		#draw_text(1.2,-.1+ 1.1-count/4.,"Action: " + str(a.trajectory.action_trajectory))
 		count+=1
 
 
@@ -351,49 +351,17 @@ def draw_all(s,agent_dict,map_size,buoy_dict,gui_data,step_num):
 	for b in buttons:
 		draw(b.x, b.y, b.w,b.h,1, 1,0,-.1,map_size/10.)
 	
-	#end_draw()
 
-	## CHARGING STATION
-
-	setupTexture(6)
-	for charging_docks in s.charging_docks:
-		draw(get_sqr_loc(charging_docks.coordinates[0],map_size), get_sqr_loc(charging_docks.coordinates[1],map_size), get_norm_size(map_size)*charging_docks.size,get_norm_size(map_size)*charging_docks.size,1, 1,0,-.1,map_size/10.)
-
-	setupTexture(7)
-	for mine in s.mines:
-		draw(get_sqr_loc(mine.coordinates[0],map_size), get_sqr_loc(mine.coordinates[1],map_size), get_norm_size(map_size)*mine.size,get_norm_size(map_size)*mine.size,1, 1,0,-.1,map_size/10.)
-
-	## BUOYS
-
-	#setupTexture(5)
-
-	#for k,a in buoy_dict.items():
-	#	draw(get_sqr_loc(a.x,map_size), get_sqr_loc(a.y,map_size), get_norm_size(map_size)*20,get_norm_size(map_size)*20,1, 1,0,-.1,map_size/10.)
-
-	## BUOY STATUS
-	#setupTexture(3)
-	#count=0
-	#for k,a in buoy_dict.items():
-	#	draw(1.7, 1.-count/4., .1,.1,1, 1,3,-.1,map_size/10.)
-	#	count+=1
-
-	#count=0
-	#for k,a in buoy_dict.items():
-	#	draw_text(1.7, 1.1-count/4.,"Agent: " + str(k))
-	#	draw_text(1.7,-.05+ 1.1-count/4.,"Action: " + str(a.current_action))
-	#	count+=1
 
 	draw_text(0, 1.1,"step: " + str(step_num))
 
 
 	setupTexture(4)
 
-	#for b in buttons:
-		#draw(b.x, b.y, b.w,b.h,1, 1,0,-.1,map_size/10.)
 
                     
 
-def render_once(s,agent_dict,map_size,buoy_dict,gui_data,main,step_num):
+def render_once(complete_environment,agent_dict,gui_data,main,step_num):
 	    #glEnable(GL_DEPTH_TEST)
 	    
 	    #glShadeModel(GL_FLAT)
@@ -411,7 +379,7 @@ def render_once(s,agent_dict,map_size,buoy_dict,gui_data,main,step_num):
 		    if event.type == KEYUP and event.key == K_ESCAPE:
 		        return    
 
-		draw_all(s,agent_dict,map_size,buoy_dict,gui_data,step_num)
+		draw_all(complete_environment,agent_dict,gui_data,step_num)
 		pygame.display.flip()
 
 		pressed = pygame.mouse.get_pressed()

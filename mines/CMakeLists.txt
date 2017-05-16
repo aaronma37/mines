@@ -29,10 +29,9 @@ include_directories(
 
 add_message_files(
 	FILES
-	event_list.msg
-	event_time.msg
-	event_region.msg
-	event.msg
+	environment.msg
+	objective.msg
+	subobjective.msg
 	trajectory.msg
 	map_info.msg
 	uuv_data.msg

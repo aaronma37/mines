@@ -16,29 +16,10 @@
 <node pkg="mines" type="main.py" name="main" output="screen">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="a1">
+<node pkg="mines" type="agent_standard.py" name="a1" output="screen">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="a2" output="screen">
-</node>
 
-<node pkg="mines" type="agent_standard.py" name="a3">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="a4">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="a5">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="a6">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="a7">
-</node>
-
-<node pkg="mines" type="agent_standard.py" name="a8">
-</node>
 
 
 </launch>

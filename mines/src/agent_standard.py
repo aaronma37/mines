@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from environment_classes import Mine_Data
+
 from random import randint
 import random
 import xxhash
@@ -14,27 +14,19 @@ from agent_classes import Agent
 import numpy as np
 import sys
 import rospy
-import Regions
+
 from mines.msg import trajectory
-from Heuristics import write_file
-from mines.msg import event
-from mines.msg import event_region
-from mines.msg import event_time
-from mines.msg import map_info
+from mines.msg import environment
 from mines.msg import performance
 from std_msgs.msg import Bool
 from mines.msg import uuv_data
+import environment_classes
 
 ''' This is the ros file that runs an agent'''
 
 f_path = rospy.get_param("/temp_file_path")
 
-region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
 
-region_size=20
-
-
-map_size=100
 event_time_horizon = rospy.get_param("/event_time_horizon")
 agent_poll_time = rospy.get_param("/agent_poll_time")
 multi_agent_model = rospy.get_param("/multi_agent_model")
@@ -42,18 +34,13 @@ a_step_time = rospy.get_param("/agent_step_time")
 agent_policy_steps = rospy.get_param("/agent_policy_steps")
 
 
-s=Mine_Data(map_size,0,0)
-si=Mine_Data(map_size,0,0)
-
-s_old=Mine_Data(map_size,0,0)
-
 ready_msg=Bool()
 ready_msg.data=True
 task= PoseStamped()
 
 
 rospy.init_node('Agent', anonymous=True)
-a = Agent(agent_poll_time,event_time_horizon,rospy.get_name(),agent_policy_steps)
+a = Agent(50,rospy.get_name())
 
 task.header.frame_id= rospy.get_name()
 
@@ -75,37 +62,13 @@ class Simulator:
 	def __init__(self):
 		self.update_flag=False
 		self.reset_flag=False
+		self.complete_environment=environment_classes.Complete_Environment()
 
-	def environment_cb(self,e):
-		a.time_away_from_network=0
-
-		for i in range(map_size):
-			for j in range(map_size):
-				s.seen[i][j]=e.grid[i*map_size+j]
-
-		s.pre_num_unknown_locations = e.new_exploration_reward
-		s.update_charging_dock_locations(e.charging_dock_x,e.charging_dock_y)
-		s.update_mine_locations(e.mines_x,e.mines_y)
-
-		for i in range(map_size):
-			for j in range(map_size):
-				s_old.seen[i][j]=int(e.grid[i*map_size+j+map_size*map_size])
-
-		s_old.pre_num_unknown_locations = e.old_exploration_reward
-
+	def environment_cb(self,env_msg):
+		self.complete_environment.update(env_msg)
 		self.update_flag=True
 
-		
-		
 
-	def action_request_cb(self,Event):
-		if Event.requested_agent==rospy.get_name():
-			a.clear_events()
-			a.update_events(Event)
-			s.imprint(si)
-			a.calculate_A(si)
-			a.decide(si)
-			trajectory_pub.publish(a.trajectory)
 
 	def ready_pub(self):
 		ready_publisher.publish(ready_msg)
@@ -136,39 +99,23 @@ class Simulator:
 
 
 	def run(self):
-		a.new_A.update_all(s,a)
 		while not rospy.is_shutdown():
 			start=time.time()
-			if a.available_flag is True:
+			if a.available_flag is True or 1==1:
 				if self.update_flag is True:
 					self.update_flag=False
 				if self.reset_flag is True:
 					self.reset_fun(self.reset_data)
 					self.reset_flag=False
+				a.step(self.complete_environment,a_step_time/2.)
+				a.move(self.complete_environment)
 
+				UUV_Data.x=int(a.x)
+				UUV_Data.y=int(a.y)
 
-				s.imprint(si)
-				a.calculate_A(si)
-				a.move(s)
-
-				UUV_Data.x=a.x
-				UUV_Data.y=a.y
-				UUV_Data.battery=int(a.battery)
-				UUV_Data.work=a.current_action.index-1
-				UUV_Data.time_away_from_network=a.time_away_from_network
-				UUV_Data.display_action=a.display_action
-				UUV_Data.current_state=a.current_state
 				pose_pub.publish(UUV_Data)
 
 
-				a.step(si,a_step_time/2.)
-				#s.imprint(si)
-
-
-
-				#else:
-				#	a.predict_A()
-					#predict si
 
 			to_wait = start-time.time() + a_step_time
 		
@@ -192,9 +139,7 @@ def main(args):
 	time.sleep(1)
 
 	sim = Simulator()
-	environment_sub =rospy.Subscriber('/environment_matrix', map_info , sim.environment_cb)#CHANGE TO MATRIX
-
-	request_sub =rospy.Subscriber('/request_action', event , sim.action_request_cb)#CHANGE TO MATRIX
+	environment_sub =rospy.Subscriber('/environment', environment , sim.environment_cb)#CHANGE TO MATRIX
 	reset_sub =rospy.Subscriber('/reset', performance , sim.reset_cb)#CHANGE TO MATRIX
 	restart_sub =rospy.Subscriber('/restart', performance , sim.restart_cb)#CHANGE TO MATRIX
 	#time.sleep(random.random()*5.)

@@ -20,6 +20,9 @@ from mines.msg import environment
 from mines.msg import performance
 from std_msgs.msg import Bool
 from mines.msg import uuv_data
+from mines.msg import task as task_msg
+from mines.msg import region as region_msg
+
 import environment_classes
 
 ''' This is the ros file that runs an agent'''
@@ -112,6 +115,21 @@ class Simulator:
 
 				UUV_Data.x=int(a.x)
 				UUV_Data.y=int(a.y)
+
+				UUV_Data.task_list=[]
+				for t in a.current_trajectory.task_list:
+					task_message=task_msg()
+					task_message.task=t.objectives[0][0]
+					UUV_Data.task_list.append(task_message)
+
+				UUV_Data.region_list=[]
+				for r in a.current_sub_environment.region_list:
+					region_message=region_msg()
+					region_message.x=r[0]
+					region_message.y=r[1]
+					UUV_Data.region_list.append(region_message)
+
+				
 
 				pose_pub.publish(UUV_Data)
 

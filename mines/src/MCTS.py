@@ -10,7 +10,6 @@ import time
 from random import shuffle
 import task_classes
 
-H=5
 Gamma=.99
 
 class Solver: 
@@ -71,7 +70,7 @@ class Solver:
 		#state,E = self.Phi.evolve(state,a,E)
 		#t=task_classes.tau(objective_type,sub_environment.get_objective_index(0,complete_environment.objective_map[objective_type]))
 
-		if t+depth>50:
+		if t+depth>40:
 			return 0
 
 
@@ -127,9 +126,19 @@ class Solver:
 		v=list(self.Q[state].values())
 		key=list(self.Q[state].keys())
 		if len(key)==0:
+			#print state
+			#print "begin"
+			#self.pq()
+			#print state, "not found"
 			return 'wait'
+		print state, key[v.index(max(v))], max(v)
+		#self.pq()
 		return key[v.index(max(v))]
-			
+
+	def pq(self):
+		for s,q in self.Q.items():
+			for k,v in q.items():
+				print s,k,v
 
 	def arg_max_ucb(self,sub_environment,complete_environment):
 

@@ -18,8 +18,8 @@ class Agent:
 
 	def __init__(self,T,identification):
 
-		self.mcts = MCTS.Solver(5)
-		self.tts = Trajectory_Tree_Search.TTS(5)
+		self.mcts = MCTS.Solver(4)
+		self.tts = Trajectory_Tree_Search.TTS(4)
 		self.x=50
 		self.y=50
 		self.T=T
@@ -63,15 +63,17 @@ class Agent:
 
 	def move(self,complete_environment):
 		self.steps+=1.
-		if self.steps>5:
+		if self.steps>40:
 			self.steps=0
 			self.choose_trajectory(complete_environment)
+		#print "start execute"	, self.current_trajectory.get_action(self,complete_environment), self.x,self.y, self.current_trajectory.current_index, self.current_trajectory.sub_environment.region_list
 		self.execute(self.current_trajectory.get_action(self,complete_environment))
+		#print "end execute", self.x, self.y, complete_environment.print_objective_score("mine")
 
 
 
 	def execute(self,action_):
-		(x,y) = self.get_transition(action_,self.x,self.y)
+		self.x,self.y = self.get_transition(action_,self.x,self.y)
 		
 
 

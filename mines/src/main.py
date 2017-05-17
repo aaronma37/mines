@@ -95,9 +95,6 @@ class Simulator:
 
 		agent_dict[agent_data.frame_id].x=int(agent_data.x)
 		agent_dict[agent_data.frame_id].y=int(agent_data.y)
-	
-
-
 		self.complete_environment.execute_objective("mine",(agent_dict[agent_data.frame_id].x,agent_dict[agent_data.frame_id].y))
 
 
@@ -121,23 +118,18 @@ class Simulator:
 
 	def reset_pub(self,recalculate_policy_flag):
 	
-		batteries=0
-		for k,a in agent_dict.items():
-			if a.battery>0:
-				batteries+=1
+		print "dummy"
 
-		print batteries
+		#self.wait_flag=True
+		#performance_msg.exploration=self.complete_environment.get_reward_1()
+		#performance_msg.mines=self.complete_environment.get_reward_2()
 
-		self.wait_flag=True
-		performance_msg.exploration=self.complete_environment.get_reward_1()
-		performance_msg.mines=self.complete_environment.get_reward_2()
-		performance_msg.battery=batteries
-		self.complete_state.reset()
-		reset_publisher.publish(performance_msg)
-		time.sleep(2)
-		self.complete_state.reset()	
+		#self.complete_environment.reset()
+		#reset_publisher.publish(performance_msg)
+		#time.sleep(2)
+		#self.complete_state.reset()	
 
-		restart_publisher.publish(performance_msg)
+		#restart_publisher.publish(performance_msg)
 
 
 
@@ -154,6 +146,7 @@ class Simulator:
 
 		while not rospy.is_shutdown():
 			draw.render_once(self.complete_environment,agent_dict,gd,self.reset_pub,time.time()-start2)
+
 			#if time.time()-start > 100:
 				#s.reset()
 			#	start = time.time()
@@ -178,6 +171,7 @@ class Simulator:
 					self.reset_pub(False)
 
 				#start2=time.time()
+		
 
 
 ###MAIN

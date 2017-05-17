@@ -12,17 +12,17 @@ from mines.msg import environment as environment_msg
 size=10
 
 objective_parameter_list=[]
-objective_parameter_list.append(('All',3,"mine"))
+objective_parameter_list.append(('All',5,"mine"))
 
 
 def get_region(x,y):
-	return (math.floor((abs(x-size/2)/size)),math.floor((abs(y-size/2)/size)))
+	return (int(math.floor(x/size)),int(math.floor(y/size)))
 
 def get_region_parts(r):
 	region_list=[]
-	for x in range(size*r(0)-size/2,size*r(0)+size/2):
-		for y in range(size*r(1)-size/2,size*r(1)+size/2):		
-			region_list.append(x,y)
+	for x in range(r[0]*size,(r[0]+1)*size):
+		for y in range(r[1]*size,(r[1]+1)*size):		
+			region_list.append((x,y))
 	return region_list
 
 def is_feasible_travel_path(r1,r2):
@@ -55,8 +55,8 @@ class Objective():
 
 	def repopulate(self):
 		if self.distribution_type=="All":
-			for x in range(50):
-				for y in range(50):
+			for x in range(25,75):
+				for y in range(25,75):
 					self.sub_objectives.append(Sub_Objective(x,y))		
 		
 
@@ -72,7 +72,7 @@ class Sub_Environment:
 	def set_random_region_list(self,r,L):
 		self.region_list=[]
 		self.region_list.append(r)
-		for k in range(L):
+		for k in range(L-1):
 			self.region_list.append((self.region_list[-1][0]+random.randint(-1, 1),self.region_list[-1][1]+random.randint(-1, 1)))
 
 
@@ -87,8 +87,8 @@ class Sub_Environment:
 		s=self.state.split(".")
 
 		h=""
-		for i in range(0,len(s)-k):
-			h=h+"."+s[i]
+		for i in range(0,len(s)-k-1):
+			h=h+s[i]+"."
 
 		return h
 
@@ -98,8 +98,8 @@ class Sub_Environment:
 	def cull_state_from_front(self,k):
 		s=self.state.split(".")
 		h=""
-		for i in range(k,len(s)):
-			h=h+"."+s[i]
+		for i in range(k,len(s)-1):
+			h=h+s[i]+"."
 
 		return h
 
@@ -163,6 +163,14 @@ class Complete_Environment:
 
 	def get_sub_objectives_in_region(self,objective_type,r):
 		sub_objectives=[]
+		if objective_type == "wait":
+			return sub_objectives
+		elif objective_type=="travel":
+			return 	get_region_parts(r)	
+
+
+
+
 		for sub_objective in self.objective_list[self.objective_map[objective_type]].sub_objectives:
 			if sub_objective.region==r:
 				sub_objectives.append(sub_objective)
@@ -182,19 +190,33 @@ class Complete_Environment:
 		return regions
 
 	def get_region_objective_state(self,objective_type,r):
+		if objective_type=="wait" or objective_type=="travel":
+			return 0
+
 		c=0
 		obj=self.objective_list[self.objective_map[objective_type]]
 		for sub_objective in obj.sub_objectives:
 			if sub_objective.region == r:
 				c+=obj.granularity
 		
-		return int(math.ceil(c/(size*size)))	
+		return int(math.ceil(c/float(size*size)))	
 
 	def execute_objective(self, objective_type, location):
 		obj=self.objective_list[self.objective_map[objective_type]]
-		for sub_objective in obj.sub_objectives:
-			if abs(sub_objective.x-location[0])<2 and abs(sub_objective.y-location[1])<2:
-				obj.sub_objectives.remove(sub_objective)
+
+		for i in xrange(len(obj.sub_objectives)-1,-1,-1):
+			if abs(obj.sub_objectives[i].x-location[0])<2 and abs(obj.sub_objectives[i].y-location[1])<2:
+				del obj.sub_objectives[i]
+
+
+
+#
+		#for sub_objective in list(obj.sub_objectives):
+		#	if abs(sub_objective.x-location[0])<2 and abs(sub_objective.y-location[1])<2:
+		#		obj.sub_objectives.delete(sub_objective)
+
+
+
 
 
 	def generate_environment_msg(self):
@@ -221,12 +243,17 @@ class Complete_Environment:
 	def update(self,env_msg):
 		self.objective_list=[]
 		self.objective_map={}
+
 		for o in env_msg.objective:
 			self.objective_list.append(Objective([o.param1,o.param2,o.frame_id]))
 			self.objective_map[o.frame_id]=len(self.objective_list)-1
-			for so in o.subobjective:
+			for so in list(o.subobjective):
 				self.objective_list[-1].sub_objectives.append(Sub_Objective(so.x,so.y))
-			
+
+
+	def print_objective_score(self,objective_type):
+		obj=self.objective_list[self.objective_map[objective_type]]
+		print "score", objective_type, len(obj.sub_objectives)
 			
 
 

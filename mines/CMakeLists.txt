@@ -32,6 +32,10 @@ add_message_files(
 	environment.msg
 	objective.msg
 	subobjective.msg
+	region_state.msg
+	objective_state.msg
+	region.msg
+	task.msg
 	trajectory.msg
 	map_info.msg
 	uuv_data.msg

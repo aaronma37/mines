@@ -62,6 +62,22 @@ class Task:
 
 		if objective_type=="wait":
 			return (a.x,a.y)
+		elif objective_type=="travel":
+			target_locations = complete_state.get_sub_objectives_in_region(objective_type,r)
+
+			min_dist=1000
+			min_next=(a.x,a.y)
+
+			for loc in target_locations:
+				if self.get_distance(a.x,a.y,loc[0],loc[1]) < min_dist:
+					min_dist=self.get_distance(a.x,a.y,loc[0],loc[1])
+					min_next=(loc[0],loc[1])
+
+			#print min_dist, "distance", objective_type
+			#if min_dist==0:
+			#	print self.current_objective[1],complete_state.get_region(a.x,a.y)
+			return min_next
+
 		sub_objectives = complete_state.get_sub_objectives_in_region(objective_type,r)
 
 		min_dist=1000
@@ -74,14 +90,18 @@ class Task:
 
 		return min_next
 				
-	def check_completion(self,agent,complete_state):
+	def check_completion(self,agent,complete_environment):
 		self.current_objective=self.objectives[0]
 		if self.current_objective[0]=="wait":
 			return False
-		if complete_state.get_region_objective_state(self.current_objective[0],self.current_objective[1]) == self.state_i:
+		if self.current_objective[0]=="travel":
+			if complete_environment.get_region(agent.x,agent.y) == self.current_objective[1]:
+				return True
+		elif int(complete_environment.get_region_objective_state(self.current_objective[0],self.current_objective[1])) != int(self.state_i):
+			#print int(self.state_i)==int(complete_environment.get_region_objective_state(self.current_objective[0],self.current_objective[1])), self.current_objective[0]
 			self.current_objective = self.objectives[1]
-		if complete_state.get_region(agent.x,agent.y) == region_f:
-			return True
+			if complete_environment.get_region(agent.x,agent.y) == self.current_objective[1]:
+				return True
 		return False
 		
 	def get_next_action(self,agent,complete_state):
@@ -121,12 +141,14 @@ class Trajectory:
 				self.task_list.append(Task(ordered_objective_type_list[i],0,sub_environment.region_list[i],sub_environment.region_list[i+1]))
 			else:
 				self.task_list.append(Task(ordered_objective_type_list[i],sub_environment.get_objective_index(i,complete_environment.objective_map[ordered_objective_type_list[i]]),sub_environment.region_list[i],sub_environment.region_list[i+1]))
-		#self.sub_environment=sub_environment
+		self.sub_environment=sub_environment
 		self.current_index=0
 
 	def update_completion(self,agent,complete_state):
 		for i in range(self.current_index,len(self.task_list)):
 			if self.task_list[i].check_completion(agent,complete_state) == False:
+				if i!= self.current_index:
+					print "updated trajectory", self.current_index, i, self.task_list[i].objectives[0][0], self.task_list[i].state_i
 				self.current_index=i
 				break
 

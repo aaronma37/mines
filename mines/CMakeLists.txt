@@ -39,7 +39,14 @@ add_message_files(
 	trajectory.msg
 	map_info.msg
 	uuv_data.msg
-	performance.msg)
+	performance.msg
+	beta_set.msg
+	beta.msg
+	claimed_objective.msg
+	collective_beta.msg
+	collective_interaction.msg
+	interaction_list.msg
+	interaction_set.msg)
                                         #PoseWithName.msg
 
 #add_message_files( DIRECTORY msg FILES  pathData.msg )

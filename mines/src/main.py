@@ -18,7 +18,10 @@ from mines.msg import environment
 from mines.msg import performance
 from mines.msg import trajectory
 from mines.msg import uuv_data
-
+from mines.msg import beta_set as beta_set_msg
+from mines.msg import collective_beta as collective_beta_msg
+from mines.msg import collective_interaction as collective_interaction_msg
+from mines.msg import interaction_list as interaction_list_msg
 from std_msgs.msg import Int32
 from agent_classes import Agent
 
@@ -45,6 +48,10 @@ env_pub =rospy.Publisher('/environment', environment, queue_size=100)
 
 reset_publisher = rospy.Publisher('/reset', performance, queue_size=100)#CHANGE TO MATRIX
 restart_publisher = rospy.Publisher('/restart', performance, queue_size=100)#CHANGE TO MATRIX
+
+
+collective_beta_pub = rospy.Publisher('/Collective_beta', collective_beta_msg, queue_size=100)#CHANGE TO MATRIX
+collective_interaction_pub = rospy.Publisher('/Collective_interaction', collective_interaction_msg, queue_size=100)#CHANGE TO MATRIX
 
 region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
 
@@ -86,6 +93,8 @@ class Simulator:
 		self.cull=20
 
 		self.wait_flag=False
+		self.collective_beta_message=collective_beta_msg()
+		self.collective_interaction_message=collective_interaction_msg()
 
 
 
@@ -96,11 +105,6 @@ class Simulator:
 		agent_dict[agent_data.frame_id].x=int(agent_data.x)
 		agent_dict[agent_data.frame_id].y=int(agent_data.y)
 		self.complete_environment.execute_objective("mine",(agent_dict[agent_data.frame_id].x,agent_dict[agent_data.frame_id].y))
-
-
-	def environment_pub(self):
-		env_pub.publish(self.complete_environment.generate_environment_msg())
-
 
 	def trajectory_cb(self,data):
 		if data.frame_id not in agent_dict:
@@ -115,6 +119,33 @@ class Simulator:
 
 	def ready_cb(self,data):
 		self.wait_flag=False
+
+
+
+
+	def beta_cb(self,msg):
+		for i in range(len(self.collective_beta_message.agent_beta)):
+			if self.collective_beta_message.agent_beta[i].frame_id==msg.frame_id:
+				self.collective_beta_message.agent_beta[i]=msg				
+				return
+		self.collective_beta_message.agent_beta.append(msg)
+
+	def interaction_cb(self,msg):
+		for i in range(len(self.collective_interaction_message.agent_interaction)):
+			if self.collective_interaction_message.agent_interaction[i].frame_id==msg.frame_id:
+				self.collective_interaction_message.agent_interaction[i]=msg				
+				return
+		self.collective_interaction_message.agent_interaction.append(msg)
+		
+
+	def beta_pub(self):
+		collective_beta_pub.publish(self.collective_beta_message)
+
+	def interaction_pub(self):
+		collective_interaction_pub.publish(self.collective_interaction_message)
+
+	def environment_pub(self):
+		env_pub.publish(self.complete_environment.generate_environment_msg())
 
 	def reset_pub(self,recalculate_policy_flag):
 	
@@ -157,8 +188,10 @@ class Simulator:
 			agents=list(agent_dict.keys())
 			self.agent_num = len(agents)
 
-			if time.time()-start > .025:
+			if time.time()-start > .2:
 				self.environment_pub()
+				self.beta_pub()
+				self.interaction_pub()
 				start = time.time()
 
 			if time.time()-start2 > trial_time:
@@ -181,6 +214,8 @@ def main(args):
 	posesub =rospy.Subscriber('/pose', uuv_data, sim.agent_cb)#CHANGE TO MATRIX
 	agent_trajectory_sub =rospy.Subscriber('/trajectory', trajectory, sim.trajectory_cb)#CHANGE TO MATRIX
 	ready_sub =rospy.Subscriber('/ready', Bool, sim.ready_cb)#CHANGE TO MATRIX
+	beta_sub = rospy.Subscriber('/Beta',beta_set_msg,sim.beta_cb)
+	beta_sub = rospy.Subscriber('/Interaction',interaction_list_msg,sim.interaction_cb)
 
 	try:
 	

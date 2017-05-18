@@ -38,8 +38,6 @@ class Solver:
 		end = start
 		while end - start < time_to_work:
 			sub_environment=tts.get_random_sub_environment(agent,complete_environment)
-			#print sub_environment.state
-			#print sub_environment.region_list
 			self.search(sub_environment,complete_environment,0)
 			end = time.time()
 
@@ -57,7 +55,7 @@ class Solver:
 			r = 1
 
 			t=task_classes.tau(objective_type,sub_environment.get_objective_index(0,complete_environment.objective_map[objective_type]))
-			#print sub_environment.get_objective_index(0,complete_environment.objective_map[objective_type]), "G UNIT", t
+
 		else:
 			if objective_type!="travel":
 				r = 0
@@ -70,7 +68,7 @@ class Solver:
 		#state,E = self.Phi.evolve(state,a,E)
 		#t=task_classes.tau(objective_type,sub_environment.get_objective_index(0,complete_environment.objective_map[objective_type]))
 
-		if t+depth>40:
+		if t+depth>50:
 			return 0
 
 
@@ -79,7 +77,7 @@ class Solver:
 		r = math.pow(Gamma,t)*r + self.search(evolved_sub_environment,complete_environment,depth+t)
 
 		self.Q[save_state][objective_type]+=(r-self.Q[save_state][objective_type])/self.Na[save_state][objective_type]
-		#print save_state,objective_type,r
+
 
 		return r
 
@@ -126,13 +124,8 @@ class Solver:
 		v=list(self.Q[state].values())
 		key=list(self.Q[state].keys())
 		if len(key)==0:
-			#print state
-			#print "begin"
-			#self.pq()
-			#print state, "not found"
 			return 'wait'
-		print state, key[v.index(max(v))], max(v)
-		#self.pq()
+
 		return key[v.index(max(v))]
 
 	def pq(self):

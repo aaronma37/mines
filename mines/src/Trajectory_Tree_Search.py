@@ -52,7 +52,10 @@ class TTS:
 			self.value_update(self.search(complete_environment,best_sub_environment,mcts))
 			end = time.time()
 
-		return self.get_max(self.T_full),self.get_trajectory(self.get_max(self.T_full),mcts,complete_environment)
+		env = self.get_max(self.T_full)
+		print "choose over", len(self.T_full), "sub-environments and found: ", self.Q[env.state]
+
+		return env,self.get_trajectory(self.get_max(self.T_full),mcts,complete_environment)
 
 	def search(self,complete_environment,best_sub_environment,mcts):
 
@@ -61,7 +64,6 @@ class TTS:
 
 		if best_sub_environment.get_k()==self.L-1:
 			self.T_full.add(best_sub_environment)
-			#print best_sub_environment.state,mcts.arg_max_reward(best_sub_environment.state)
 			return best_sub_environment,mcts.arg_max_reward(best_sub_environment.state)
 
 
@@ -108,9 +110,6 @@ class TTS:
 	def get_max(self,T):
 		best_env=None
 		max_expected=-1
-		#for t in self.T_full:
-		#	print t.region_list, t.state		
-
 		for sub_env in T:
 
 			self.check_dict(self.Q,sub_env.state,0.)
@@ -118,6 +117,7 @@ class TTS:
 			if self.Q[sub_env.state] > max_expected:
 				best_env=sub_env
 				max_expected=self.Q[best_env.state]
+
 
 		return best_env
 
@@ -133,12 +133,10 @@ class TTS:
 
 	def get_trajectory(self,sub_environment,mcts,complete_environment):
 		ordered_objective_type_list=[]				
-		#print sub_environment.cull_state_from_front(0),"s"
 		for k in range(self.L-1):	
 			ordered_objective_type_list.append(mcts.arg_max(sub_environment.cull_state_from_front(k))) # an objective_type - string
 
 		trajectory=task_classes.Trajectory(sub_environment,ordered_objective_type_list,complete_environment)
-		#print ordered_objective_type_list
 		return trajectory
 			
 			

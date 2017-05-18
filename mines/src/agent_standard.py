@@ -23,6 +23,14 @@ from mines.msg import uuv_data
 from mines.msg import task as task_msg
 from mines.msg import region as region_msg
 
+from mines.msg import beta_set as beta_set_msg
+from mines.msg import beta as beta_msg
+from mines.msg import claimed_objective as claimed_objective_msg
+
+from mines.msg import interaction_list as interaction_list_msg
+from mines.msg import collective_beta as collective_beta_msg
+from mines.msg import collective_interaction as collective_interaction_msg
+
 import environment_classes
 
 ''' This is the ros file that runs an agent'''
@@ -49,6 +57,12 @@ task.header.frame_id= rospy.get_name()
 
 
 pose_pub = rospy.Publisher('/pose',uuv_data,queue_size=1)
+beta_pub = rospy.Publisher('/Beta',beta_set_msg,queue_size=1)
+interaction_pub = rospy.Publisher('/Interaction',interaction_list_msg,queue_size=1)
+
+beta_message=beta_set_msg()
+interaction_message=interaction_list_msg()
+
 
 trajectory_pub = rospy.Publisher('/trajectory',trajectory,queue_size=100)
 ready_publisher = rospy.Publisher('/ready',Bool,queue_size=100)
@@ -66,11 +80,20 @@ class Simulator:
 		self.update_flag=False
 		self.reset_flag=False
 		self.complete_environment=environment_classes.Complete_Environment()
+		self.beta_set_message=beta_set_msg()
 
 	def environment_cb(self,env_msg):
 		self.complete_environment.update(env_msg)
+		self.complete_environment.modify(a.claimed_objective_sets.effective_claimed_objectives)
 		self.update_flag=True
 
+
+	def collective_interaction_cb(self,msg):
+		a.interaction_list.update_others(msg)
+
+	def collective_beta_cb(self,msg):
+		a.claimed_objective_sets.collect_taken_objectives(msg)
+		a.claimed_objective_sets.construct_effective_claimed_objectives(a.interaction_list)
 
 
 	def ready_pub(self):
@@ -101,6 +124,40 @@ class Simulator:
 		#a.get_psi()
 
 
+	def update_messages(self):
+		UUV_Data.x=int(a.x)
+		UUV_Data.y=int(a.y)
+
+		UUV_Data.task_list=[]
+		for t in a.current_trajectory.task_list:
+			task_message=task_msg()
+			task_message.task=t.objectives[0][0]
+			UUV_Data.task_list.append(task_message)
+
+		UUV_Data.region_list=[]
+		for r in a.current_sub_environment.region_list:
+			region_message=region_msg()
+			region_message.x=r[0]
+			region_message.y=r[1]
+			UUV_Data.region_list.append(region_message)
+		a.update_claimed_objectives()
+
+
+	def send_messages(self):
+		pose_pub.publish(UUV_Data)
+
+		beta_message=a.claimed_objective_sets.owned_objectives
+		interaction_message=a.interaction_list.interaction_list
+
+
+
+		beta_pub.publish(beta_message)	
+		interaction_pub.publish(interaction_message)
+			
+
+				
+
+
 	def run(self):
 		while not rospy.is_shutdown():
 			start=time.time()
@@ -113,25 +170,9 @@ class Simulator:
 				a.step(self.complete_environment,a_step_time/2.)
 				a.move(self.complete_environment)
 
-				UUV_Data.x=int(a.x)
-				UUV_Data.y=int(a.y)
+				self.update_messages()
+				self.send_messages()
 
-				UUV_Data.task_list=[]
-				for t in a.current_trajectory.task_list:
-					task_message=task_msg()
-					task_message.task=t.objectives[0][0]
-					UUV_Data.task_list.append(task_message)
-
-				UUV_Data.region_list=[]
-				for r in a.current_sub_environment.region_list:
-					region_message=region_msg()
-					region_message.x=r[0]
-					region_message.y=r[1]
-					UUV_Data.region_list.append(region_message)
-
-				
-
-				pose_pub.publish(UUV_Data)
 
 
 
@@ -161,6 +202,9 @@ def main(args):
 	reset_sub =rospy.Subscriber('/reset', performance , sim.reset_cb)#CHANGE TO MATRIX
 	restart_sub =rospy.Subscriber('/restart', performance , sim.restart_cb)#CHANGE TO MATRIX
 	#time.sleep(random.random()*5.)
+	collective_beta_sub =rospy.Subscriber('/Collective_beta', collective_beta_msg , sim.collective_beta_cb)#CHANGE TO MATRIX
+	collective_interact_sub =rospy.Subscriber('/Collective_interact', collective_interaction_msg , sim.collective_interaction_cb)#CHANGE TO MATRIX
+
 
 	try:
 		sim.run()

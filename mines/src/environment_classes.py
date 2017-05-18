@@ -12,7 +12,10 @@ from mines.msg import environment as environment_msg
 size=10
 
 objective_parameter_list=[]
-objective_parameter_list.append(('All',5,"mine"))
+objective_map={}
+objective_parameter_list.append(('All',2,"mine"))
+objective_map["mine"]=0
+
 
 
 def get_region(x,y):
@@ -253,9 +256,19 @@ class Complete_Environment:
 
 	def print_objective_score(self,objective_type):
 		obj=self.objective_list[self.objective_map[objective_type]]
-		print "score", objective_type, len(obj.sub_objectives)
+		#print "score", objective_type, len(obj.sub_objectives)
 			
 
+	def modify(self,effective_beta):
+		for o in self.objective_list:
+			#print "lena", len(o.sub_objectives), len(effective_beta.claimed_objective)
+			for claimed_objective in effective_beta.claimed_objective:
+				if claimed_objective.objective_type!=o.frame_id:
+					continue
+				for i in xrange(len(o.sub_objectives)-1,-1,-1):
+					if o.sub_objectives[i].region == (claimed_objective.region.x,claimed_objective.region.y):
+						o.sub_objectives.remove(o.sub_objectives[i])
+			#print "lenb", len(o.sub_objectives)
 
 
 

@@ -19,6 +19,9 @@
 <node pkg="mines" type="agent_standard.py" name="a1" output="screen">
 </node>
 
+<node pkg="mines" type="agent_standard.py" name="a2">
+</node>
+
 
 
 

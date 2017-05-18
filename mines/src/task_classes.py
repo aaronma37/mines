@@ -160,6 +160,12 @@ class Trajectory:
 		for t in self.task_list:
 			print t.current_objective[0]
 
+	def get_task_at_k(self,k):
+		if len(self.task_list)>k:
+			return self.task_list[k].objectives[0][0]
+		else:
+			print "list too big", len(self.task_list), k
+			return "error"
 
 
 

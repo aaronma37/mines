@@ -304,7 +304,7 @@ def draw_all(complete_environment,agent_dict,gui_data,step_num):
 	begin_basic()	
 	
 	#draw_basic(0,0,1,1,-.1)
-
+	
 	glColor3f(1, 0, 0)
 
 	map_size=100
@@ -391,7 +391,7 @@ def render_once(complete_environment,agent_dict,gui_data,main,step_num):
 
 		if pressed[0]:
 			for b in buttons:
-				b.check_click(x,y,s,gui_data,main)
+				b.check_click(x,y,complete_environment,gui_data,main)
 			count=0
 			for k,a in agent_dict.items():
 				a_buttons[0].check_click(1.2,1.-count/4.,x,y,.1,.1,k,gui_data,main)
@@ -426,24 +426,7 @@ def render_once(complete_environment,agent_dict,gui_data,main,step_num):
         
 
 
-glutInit(sys.argv)                                             # initialize glut
-#glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
-#glutInitWindowSize(width, height)                      # set window size
-#glutInitWindowPosition(10, 0)                           # set window position
 
-#window = glutCreateWindow("mine swarm")              # create window with title
-
-
-pygame.init()
-screen = pygame.display.set_mode(SCREEN_SIZE, HWSURFACE|OPENGL|DOUBLEBUF)
-images =  [TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/object.png")]
-images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/uuv.png"))
-images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/arrow.png"))
-images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/uuv1.png"))
-images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/reset.png"))
-images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/green_box.png"))
-images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/yellow_box.png"))
-images.append(TexFromPNG (os.path.dirname(os.path.abspath(__file__)) + "/mine.png"))
 
 
 

@@ -9,8 +9,126 @@ from geometry_msgs.msg import PoseStamped
 import numpy as np
 import time
 from mines.msg import trajectory
+from mines.msg import collective_beta as collective_beta_msg
+from mines.msg import beta as beta_msg
+from mines.msg import beta_set as beta_set_msg
+from mines.msg import claimed_objective as claimed_objective_msg
+from mines.msg import collective_interaction as collective_interaction_msg
+from mines.msg import interaction_list as interaction_list_msg
+from mines.msg import interaction_set as interaction_set_msg	
+from mines.msg import region as region_msg
+
 import MCTS
 import Trajectory_Tree_Search
+
+
+
+class Claimed_Objective():
+	def __init__(self,state,region,objective_type):
+		self.state=state
+		self.region=region
+		self.objective_type=objective_type
+
+class Interaction_List():
+	def __init__(self,L,frame_id):
+		self.L=L
+		self.interaction_list=interaction_list_msg()
+		self.interaction_list.frame_id=frame_id
+		self.interaction_list.trajectory_index=[]
+		self.others=collective_interaction_msg()
+		self.interaction_intersection=[]
+		for i in range(self.L-1):
+			self.interaction_list.trajectory_index.append(interaction_set_msg())
+		
+
+
+	def update(self):
+		for k in range(self.L-1):
+			self.interaction_list.trajectory_index[k].agent_id=[]
+
+	def update_others(self,collective_interaction_msg):
+		self.others=collective_interaction_msg
+
+class Claimed_Objective_Sets():
+	def __init__(self,N,L,frame_id):
+		self.L=L
+		self.N=N
+		self.claimed_objective_list=beta_msg()#All claimed objectives
+		self.owned_objectives=beta_set_msg()# Offerings
+		self.owned_objectives.frame_id=frame_id
+		self.collective_beta=collective_beta_msg() #everyones beta offerings
+		for i in range(self.N+1):
+			self.owned_objectives.beta.append(beta_msg())
+		self.n_list=[] #naj
+		self.effective_claimed_objectives=beta_msg()
+		
+
+
+	def claimed_objective_list_construction(self,sub_environment,trajectory):
+		self.claimed_objective_list=beta_msg()
+		for k in range(self.L-1):
+			if trajectory.get_task_at_k(k)!="wait" and trajectory.get_task_at_k(k)!="travel":
+				region=region_msg()
+				region.x=sub_environment.region_list[k][0]
+				region.y=sub_environment.region_list[k][1]
+
+				claimed_objective=claimed_objective_msg()
+				claimed_objective.state = int(sub_environment.get_objective_index(k,environment_classes.objective_map[trajectory.get_task_at_k(k)]))
+				claimed_objective.region=region
+				claimed_objective.objective_type=trajectory.get_task_at_k(k)
+
+				self.claimed_objective_list.claimed_objective.append(claimed_objective)
+			else:
+				region=region_msg()
+				region.x=sub_environment.region_list[k][0]
+				region.y=sub_environment.region_list[k][1]
+
+				claimed_objective=claimed_objective_msg()
+				claimed_objective.state = 0
+				claimed_objective.region=region
+				claimed_objective.objective_type="None"
+
+				self.claimed_objective_list.claimed_objective.append(claimed_objective)
+			
+		
+
+	def owned_objective_construction(self,interaction_list):	
+		#print len(claimed_objective_list.claimed_objective)
+
+		for i in range(len(self.owned_objectives.beta)):
+			for k in range(self.L-1):
+				self.owned_objectives.beta[i].claimed_objective=[]
+
+				#if len(interaction_list.interaction_list.trajectory_index[k].agent_id)>=i and 
+				#print len(claimed_objective_list.claimed_objective)
+				#print len(claimed_objective_list.claimed_objective), "len"
+				self.owned_objectives.beta[i].claimed_objective.append(self.claimed_objective_list.claimed_objective[k])
+
+
+	def collect_taken_objectives(self,collective_beta_message):
+		self.collective_beta=collective_beta_message
+
+
+
+	def construct_n_list(self,interaction_list):
+		self.n_list=[]		
+		for a in range(2):
+			self.n_list.append(0)
+			#self.n_list.append(len(interaction_list.others.agent_interaction[a].trajectory_index[interaction_list.interaction_intersection]))
+
+
+
+	def construct_effective_claimed_objectives(self,interaction_list):	
+		#print "here"		
+		self.construct_n_list(interaction_list)
+		self.effective_claimed_objectives.claimed_objective=[]
+		for a in range(len(self.n_list)):
+			for claimed_objective in self.collective_beta.agent_beta[a].beta[self.n_list[a]].claimed_objective:
+			#	print claimed_objective
+				self.effective_claimed_objectives.claimed_objective.append(claimed_objective)
+			
+		
+
 
 
 class Agent: 
@@ -18,19 +136,22 @@ class Agent:
 
 	def __init__(self,T,identification):
 
-		self.mcts = MCTS.Solver(4)
-		self.tts = Trajectory_Tree_Search.TTS(4)
+		self.mcts = MCTS.Solver(5)
+		self.tts = Trajectory_Tree_Search.TTS(5)
 		self.x=50
 		self.y=50
 		self.T=T
 		self.ON=0
 
-
+		self.id=identification
 		self.steps=T+1
 		self.available_flag=True
 
 		self.current_trajectory=None
 		self.current_sub_environment=None
+
+		self.interaction_list=Interaction_List(5,self.id)
+		self.claimed_objective_sets=Claimed_Objective_Sets(1,5,self.id)
 
 
 
@@ -52,23 +173,28 @@ class Agent:
 
 	def step(self,complete_environment,time_to_work):	
 		self.mcts.execute(self,complete_environment,self.tts,time_to_work)
+
+	def update_claimed_objectives(self):
+		self.interaction_list.update()
+		self.claimed_objective_sets.claimed_objective_list_construction(self.current_sub_environment,self.current_trajectory)
+
+		self.claimed_objective_sets.owned_objective_construction(self.interaction_list)
 		
 
 
 	def choose_trajectory(self,complete_environment):	
-		sub_environment,trajectory = self.tts.execute((self.x,self.y),complete_environment,.2,self.mcts)
+		sub_environment,trajectory = self.tts.execute((self.x,self.y),complete_environment,1,self.mcts)
 		self.current_trajectory=trajectory
 		self.current_sub_environment=sub_environment
-		self.current_trajectory.print_data()
+
 
 	def move(self,complete_environment):
 		self.steps+=1.
-		if self.steps>40:
+		if self.steps>50:
 			self.steps=0
 			self.choose_trajectory(complete_environment)
-		#print "start execute"	, self.current_trajectory.get_action(self,complete_environment), self.x,self.y, self.current_trajectory.current_index, self.current_trajectory.sub_environment.region_list
 		self.execute(self.current_trajectory.get_action(self,complete_environment))
-		#print "end execute", self.x, self.y, complete_environment.print_objective_score("mine")
+
 
 
 

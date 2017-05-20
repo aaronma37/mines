@@ -45,13 +45,23 @@ a_step_time = rospy.get_param("/agent_step_time")
 agent_policy_steps = rospy.get_param("/agent_policy_steps")
 
 
+agent_trajectory_length = int(rospy.get_param("/agent_trajectory_length"))
+
+
 ready_msg=Bool()
 ready_msg.data=True
 task= PoseStamped()
 
 
 rospy.init_node('Agent', anonymous=True)
-a = Agent(50,rospy.get_name())
+a = Agent(event_time_horizon,rospy.get_name(),agent_trajectory_length)
+
+if rospy.get_name()=="/a1":
+	print rospy.get_name(), "/a1"
+	sleep_time=1
+else:
+	print rospy.get_name(), "not a1"
+	sleep_time=2
 
 task.header.frame_id= rospy.get_name()
 
@@ -108,15 +118,27 @@ class Simulator:
 		alpha_pub.publish(alpha)
 
 	def reset_cb(self,data):
-		self.reset_flag=True
-		self.reset_data=data
+		#self.reset_flag=True
+		#self.reset_data=data
+		time.sleep(.5)
+		a.reset()
+		a.x=50
+		a.y=50
+		time.sleep(.5)
+
 
 	def reset_fun(self,performance):
-		s.reset()
-		a.reset(s,performance,f_path,UUV_Data.frame_id)
+		#s.reset()
+		#a.reset(s,performance,f_path,UUV_Data.frame_id)	
+		time.sleep(1)	
+		a = Agent(event_time_horizon,rospy.get_name(),agent_trajectory_length)
+		a.x=50	
+		a.y=50	
 
+		print "HEREERE"
+		
 	def restart_cb(self,data):
-		a.restart(f_path)
+		#a.restart(f_path)
 		self.ready_pub()
 
 		#write_file(a.solver.H,pose.header.frame_id)
@@ -135,11 +157,13 @@ class Simulator:
 			UUV_Data.task_list.append(task_message)
 
 		UUV_Data.region_list=[]
+		UUV_Data.current_state=a.current_sub_environment.state
 		for r in a.current_sub_environment.region_list:
 			region_message=region_msg()
 			region_message.x=r[0]
 			region_message.y=r[1]
 			UUV_Data.region_list.append(region_message)
+
 		a.update_claimed_objectives()
 
 
@@ -168,7 +192,7 @@ class Simulator:
 					self.reset_fun(self.reset_data)
 					self.reset_flag=False
 				a.step(self.complete_environment,a_step_time/2.)
-				a.move(self.complete_environment)
+				a.move(self.complete_environment,a_step_time/2.)
 
 				self.update_messages()
 				self.send_messages()
@@ -195,7 +219,7 @@ class Simulator:
 
 ###MAIN
 def main(args):
-	time.sleep(1)
+	time.sleep(sleep_time)
 
 	sim = Simulator()
 	environment_sub =rospy.Subscriber('/environment', environment , sim.environment_cb)#CHANGE TO MATRIX

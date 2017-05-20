@@ -270,6 +270,13 @@ class Complete_Environment:
 						o.sub_objectives.remove(o.sub_objectives[i])
 			#print "lenb", len(o.sub_objectives)
 
+	def get_aggregate_cost(self):
+		c=0
+		for o in self.objective_list:
+			for sub_objective in o.sub_objectives:
+				c+=1.
+
+		return c
 
 
 

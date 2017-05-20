@@ -1,11 +1,13 @@
 <launch>
 <param name="multi_agent_model" type="string" value="pure"/>
 <param name="number_of_mines" type="int" value="10"/>
-<param name="event_time_horizon" type="int" value="6"/>
+<param name="event_time_horizon" type="int" value="30"/>
 <param name="number_of_charging_docks" type="int" value="2"/>
-<param name="agent_policy_steps" type="double" value="3"/>
+<param name="agent_policy_steps" type="double" value="100"/>
 <param name="agent_poll_time" type="double" value="30"/>
-<param name="agent_step_time" type="double" value=".25"/>
+<param name="agent_step_time" type="double" value="1"/>
+
+<param name="agent_trajectory_length" type="double" value="4"/>
 <param name="total_trial_time" type="double" value="120"/>
 <param name="load_q" type="bool" value="False"/>
 <param name="write_q" type="bool" value="True"/>

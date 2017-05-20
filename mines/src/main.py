@@ -43,6 +43,11 @@ write_psi_flag = rospy.get_param("/write_psi")
 f_path = rospy.get_param("/temp_file_path")
 trial_time = rospy.get_param("/total_trial_time")
 
+a_step_time = rospy.get_param("/agent_step_time")
+agent_policy_steps = rospy.get_param("/agent_policy_steps")
+
+total_time=a_step_time*agent_policy_steps
+
 rospy.init_node('main', anonymous=True)
 env_pub =rospy.Publisher('/environment', environment, queue_size=100)
 
@@ -91,19 +96,21 @@ class Simulator:
 		self.sim_time=50
 		self.total_sims=500
 		self.cull=20
-
+		self.initial_cost=self.complete_environment.get_aggregate_cost()
 		self.wait_flag=False
 		self.collective_beta_message=collective_beta_msg()
 		self.collective_interaction_message=collective_interaction_msg()
+		self.final_performance=[]
 
 
 
 	def agent_cb(self,agent_data):
 		if agent_data.frame_id not in agent_dict:
-			agent_dict[agent_data.frame_id]=Agent(50,agent_data.frame_id)
+			agent_dict[agent_data.frame_id]=Agent(30,agent_data.frame_id,4)
 
 		agent_dict[agent_data.frame_id].x=int(agent_data.x)
 		agent_dict[agent_data.frame_id].y=int(agent_data.y)
+	#	agent_dict[agent_data.frame_id].current_sub_environment.state=agent_data.current_state
 		self.complete_environment.execute_objective("mine",(agent_dict[agent_data.frame_id].x,agent_dict[agent_data.frame_id].y))
 
 	def trajectory_cb(self,data):
@@ -147,16 +154,23 @@ class Simulator:
 	def environment_pub(self):
 		env_pub.publish(self.complete_environment.generate_environment_msg())
 
+	def write_performance(self,performance):
+		self.final_performance.append(performance)
+		print self.final_performance, sum( self.final_performance)/len( self.final_performance)
+
 	def reset_pub(self,recalculate_policy_flag):
-	
-		print "dummy"
 
 		#self.wait_flag=True
 		#performance_msg.exploration=self.complete_environment.get_reward_1()
 		#performance_msg.mines=self.complete_environment.get_reward_2()
+		self.write_performance(self.initial_cost-self.complete_environment.get_aggregate_cost())
+		self.complete_environment.reset()
+		agent_dict={}
+		reset_publisher.publish(performance_msg)
+	#restart_publisher.publish(performance_msg)
+		self.initial_cost=self.complete_environment.get_aggregate_cost()
+		time.sleep(1)
 
-		#self.complete_environment.reset()
-		#reset_publisher.publish(performance_msg)
 		#time.sleep(2)
 		#self.complete_state.reset()	
 
@@ -194,16 +208,16 @@ class Simulator:
 				self.interaction_pub()
 				start = time.time()
 
-			if time.time()-start2 > trial_time:
-				self.sim_count+=1
-				if self.sim_count > self.total_sims:
-					return
-				if self.sim_count%self.num_eval==0 or self.sim_count==1:
-					self.reset_pub(True)
-				else:
-					self.reset_pub(False)
+			if time.time()-start2 > total_time:
+				#self.sim_count+=1
+				#if self.sim_count > self.total_sims:
+				#	return
+				#if self.sim_count%self.num_eval==0 or self.sim_count==1:
+				self.reset_pub(True)
+				#else:
+				#	self.reset_pub(False)
 
-				#start2=time.time()
+				start2=time.time()
 		
 
 

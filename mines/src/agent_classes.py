@@ -134,32 +134,42 @@ class Claimed_Objective_Sets():
 class Agent: 
 
 
-	def __init__(self,T,identification):
+	def __init__(self,T,identification,agent_trajectory_length):
 
-		self.mcts = MCTS.Solver(5)
-		self.tts = Trajectory_Tree_Search.TTS(5)
+		self.mcts = MCTS.Solver(agent_trajectory_length,T)
+		self.tts = Trajectory_Tree_Search.TTS(agent_trajectory_length)
 		self.x=50
 		self.y=50
 		self.T=T
+
 		self.ON=0
 
 		self.id=identification
 		self.steps=T+1
 		self.available_flag=True
 
+		self.reset_flag=False
+		self.traj_flag=True
+		self.mcts_flag=True
 		self.current_trajectory=None
 		self.current_sub_environment=None
 
-		self.interaction_list=Interaction_List(5,self.id)
-		self.claimed_objective_sets=Claimed_Objective_Sets(1,5,self.id)
+		self.interaction_list=Interaction_List(agent_trajectory_length,self.id)
+		self.claimed_objective_sets=Claimed_Objective_Sets(1,agent_trajectory_length,self.id)
 
 
 
-	def reset(self,s,performance,fp,fn):
+	def reset(self):
 		self.x=50
 		self.y=50
 
-		self.available_flag=False
+		self.traj_flag=True
+		self.mcts_flag=True
+		self.steps=self.T+1
+		self.current_trajectory=None
+		self.current_sub_environment=None
+
+
 
 
 	def restart(self,fp):
@@ -172,6 +182,9 @@ class Agent:
 
 
 	def step(self,complete_environment,time_to_work):	
+		if self.mcts_flag==True:
+			self.mcts.reset()
+			self.mcts_flag=False
 		self.mcts.execute(self,complete_environment,self.tts,time_to_work)
 
 	def update_claimed_objectives(self):
@@ -182,17 +195,20 @@ class Agent:
 		
 
 
-	def choose_trajectory(self,complete_environment):	
-		sub_environment,trajectory = self.tts.execute((self.x,self.y),complete_environment,1,self.mcts)
+	def choose_trajectory(self,complete_environment,time_to_work):	
+		sub_environment,trajectory = self.tts.execute((self.x,self.y),complete_environment,time_to_work,self.mcts)
 		self.current_trajectory=trajectory
 		self.current_sub_environment=sub_environment
 
 
-	def move(self,complete_environment):
+	def move(self,complete_environment,time_to_work):
 		self.steps+=1.
-		if self.steps>50:
+		if self.steps>self.T:
 			self.steps=0
-			self.choose_trajectory(complete_environment)
+			if self.traj_flag==True:
+				self.tts.reset()
+				self.traj_flag=False
+			self.choose_trajectory(complete_environment,time_to_work)
 		self.execute(self.current_trajectory.get_action(self,complete_environment))
 
 

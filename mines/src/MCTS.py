@@ -14,8 +14,9 @@ Gamma=.99
 
 class Solver: 
 
-	def __init__(self,event_time_horizon):
-		self.event_time_horizon=event_time_horizon
+	def __init__(self,trajectory_length,time_horizon):
+		self.trajectory_length=trajectory_length
+		self.time_horizon=time_horizon
 		self.N={}
 		self.Na={}
 		self.Q={}
@@ -68,7 +69,7 @@ class Solver:
 		#state,E = self.Phi.evolve(state,a,E)
 		#t=task_classes.tau(objective_type,sub_environment.get_objective_index(0,complete_environment.objective_map[objective_type]))
 
-		if t+depth>50:
+		if t+depth>self.time_horizon:
 			return 0
 
 

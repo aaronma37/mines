@@ -3,9 +3,9 @@
 <param name="number_of_mines" type="int" value="10"/>
 <param name="event_time_horizon" type="int" value="30"/>
 <param name="number_of_charging_docks" type="int" value="2"/>
-<param name="agent_policy_steps" type="double" value="100"/>
+<param name="agent_policy_steps" type="double" value="200"/>
 <param name="agent_poll_time" type="double" value="30"/>
-<param name="agent_step_time" type="double" value=".1"/>
+<param name="agent_step_time" type="double" value="2"/>
 
 <param name="agent_interaction_length" type="double" value="0"/>
 
@@ -25,6 +25,56 @@
 
 <node pkg="mines" type="agent_standard.py" name="a2">
 </node>
+
+<node pkg="mines" type="agent_standard.py" name="a3">
+</node>
+<node pkg="mines" type="agent_standard.py" name="a4">
+</node>
+<node pkg="mines" type="agent_standard.py" name="a5">
+</node>
+<node pkg="mines" type="agent_standard.py" name="a6">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="a7">
+</node>
+
+
+
+<node pkg="mines" type="agent_standard.py" name="a8">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="a9">
+</node>
+
+
+
+<node pkg="mines" type="agent_standard.py" name="a10">
+</node>
+
+
+
+<node pkg="mines" type="agent_standard.py" name="a11">
+</node>
+
+
+
+<node pkg="mines" type="agent_standard.py" name="a12">
+</node>
+
+
+
+<node pkg="mines" type="agent_standard.py" name="a13">
+</node>
+
+
+
+<node pkg="mines" type="agent_standard.py" name="a14">
+</node>
+<node pkg="mines" type="agent_standard.py" name="a15">
+</node>
+<node pkg="mines" type="agent_standard.py" name="a16">
+</node>
+
 
 
 

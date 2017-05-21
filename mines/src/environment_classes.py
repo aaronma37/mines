@@ -14,8 +14,10 @@ size=10
 
 objective_parameter_list=[]
 objective_map={}
-objective_parameter_list.append(('All',2,"mine"))
+objective_parameter_list.append(('all',2,"mine"))
+#objective_parameter_list.append(('second',1,"service"))
 objective_map["mine"]=0
+objective_map["service"]=1
 
 
 
@@ -58,10 +60,34 @@ class Objective():
 					self.sub_objectives.append(Sub_Objective(x,y))
 
 	def repopulate(self):
-		if self.distribution_type=="All":
-			for x in range(25,75):
+		if self.distribution_type=="all":
+			for x in range(0,100):
+				for y in range(0,100):
+					self.sub_objectives.append(Sub_Objective(x,y))	
+		elif self.distribution_type=="second":
+			for x in range(50,75):
 				for y in range(25,75):
+					self.sub_objectives.append(Sub_Objective(x,y))	
+		elif self.distribution_type=="third":
+			for x in range(40,50):
+				for y in range(50,75):
+					self.sub_objectives.append(Sub_Objective(x,y))	
+			for x in range(0,20):
+				for y in range(0,20):
+					self.sub_objectives.append(Sub_Objective(x,y))	
+			for x in range(80,90):
+				for y in range(15,25):
+					self.sub_objectives.append(Sub_Objective(x,y))	
+			for x in range(50,64):
+				for y in range(20,41):
+					self.sub_objectives.append(Sub_Objective(x,y))	
+			for x in range(41,43):
+				for y in range(80,90):
+					self.sub_objectives.append(Sub_Objective(x,y))	
+			for x in range(25,35):
+				for y in range(25,35):
 					self.sub_objectives.append(Sub_Objective(x,y))		
+			
 		
 
 class Sub_Environment:
@@ -127,7 +153,15 @@ class Sub_Environment:
 		for r in self.region_list:
 			self.state=self.state
 			for obj_type in complete_environment.objective_map.keys():
-				self.state=self.state+str(complete_environment.get_region_objective_state(obj_type,r))+","
+				flag=False
+				for claimed_objective in complete_environment.modification_list:
+					if claimed_objective.region.x==r[0] and claimed_objective.region.y==r[1] and claimed_objective.objective_type==obj_type:
+						flag=True
+
+				if flag==True:
+					self.state=self.state+str(0)+","
+				else:
+					self.state=self.state+str(complete_environment.get_region_objective_state(obj_type,r))+","
 
 			self.state=self.state+"."
 
@@ -170,6 +204,7 @@ class Complete_Environment:
 		self.objective_map={}
 		self.interaction_list=None
 		self.collective_trajectories_message=None
+		self.modification_list=[]
 
 		for objective_parameters in self.objective_parameter_list:
 			self.objective_list.append(Objective(objective_parameters))
@@ -225,9 +260,10 @@ class Complete_Environment:
 	def get_region_objective_state(self,objective_type,r):
 		if objective_type=="wait" or objective_type=="travel":
 			return 0
-
+		if len(self.objective_list)-1<objective_map[objective_type]:
+			return 0
 		c=0
-		obj=self.objective_list[self.objective_map[objective_type]]
+		obj=self.objective_list[objective_map[objective_type]]
 		for sub_objective in obj.sub_objectives:
 			if sub_objective.region == r:
 				c+=obj.granularity
@@ -235,7 +271,7 @@ class Complete_Environment:
 		return int(math.ceil(c/float(size*size)))	
 
 	def execute_objective(self, objective_type, location):
-		obj=self.objective_list[self.objective_map[objective_type]]
+		obj=self.objective_list[objective_map[objective_type]]
 
 		for i in xrange(len(obj.sub_objectives)-1,-1,-1):
 			if abs(obj.sub_objectives[i].x-location[0])<2 and abs(obj.sub_objectives[i].y-location[1])<2:
@@ -290,7 +326,13 @@ class Complete_Environment:
 			
 
 	def modify(self,effective_beta):
+		self.modification_list=effective_beta.claimed_objective
+		return
+
+			
+
 		for o in self.objective_list:
+			prev=			len(o.sub_objectives)
 			#print "lena", len(o.sub_objectives), len(effective_beta.claimed_objective)
 			for claimed_objective in effective_beta.claimed_objective:
 				if claimed_objective.objective_type!=o.frame_id:
@@ -298,7 +340,8 @@ class Complete_Environment:
 				for i in xrange(len(o.sub_objectives)-1,-1,-1):
 					if o.sub_objectives[i].region == (claimed_objective.region.x,claimed_objective.region.y):
 						o.sub_objectives.remove(o.sub_objectives[i])
-			#print "lenb", len(o.sub_objectives)
+			#if len(effective_beta.claimed_objective)<prev:
+				#print "reduced"
 
 	def get_aggregate_cost(self):
 		c=0

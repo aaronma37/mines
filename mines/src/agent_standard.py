@@ -58,11 +58,53 @@ rospy.init_node('Agent', anonymous=True)
 a = Agent(event_time_horizon,rospy.get_name(),agent_trajectory_length,agent_interaction_length)
 
 if rospy.get_name()=="/a1":
-	print rospy.get_name(), "/a1"
+	print  "initializing /a1"
 	sleep_time=0
-else:
-	print rospy.get_name(), "not a1"
-	sleep_time=6
+elif rospy.get_name()=="/a2":
+	print  "initializing /a2"
+	sleep_time=a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a3":
+	print  "initializing /a3"
+	sleep_time=2.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a4":
+	print  "initializing /a4"
+	sleep_time=3.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a5":
+	print  "initializing /a5"
+	sleep_time=4.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a6":
+	print  "initializing /a6"
+	sleep_time=5.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a7":
+	print  "initializing /a7"
+	sleep_time=6.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a8":
+	print  "initializing /a6"
+	sleep_time=7.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a9":
+	print  "initializing /a6"
+	sleep_time=8.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a10":
+	print  "initializing /a6"
+	sleep_time=9.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a11":
+	print  "initializing /a6"
+	sleep_time=10.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a12":
+	print  "initializing /a6"
+	sleep_time=11.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a13":
+	print  "initializing /a6"
+	sleep_time=12.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a14":
+	print  "initializing /a6"
+	sleep_time=13.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a15":
+	print  "initializing /a6"
+	sleep_time=14.*a_step_time*event_time_horizon/16.
+elif rospy.get_name()=="/a16":
+	print  "initializing /a6"
+	sleep_time=15.*a_step_time*event_time_horizon/16.
 
 task.header.frame_id= rospy.get_name()
 
@@ -92,6 +134,7 @@ class Simulator:
 		self.reset_flag=False
 		self.complete_environment=environment_classes.Complete_Environment()
 		self.beta_set_message=beta_set_msg()
+		self.sleep_time=0.
 
 	def environment_cb(self,env_msg):
 		self.complete_environment.update(env_msg)
@@ -127,6 +170,7 @@ class Simulator:
 		#self.reset_flag=True
 		#self.reset_data=data
 		time.sleep(.5)
+		self.sleep_time=sleep_time
 		a.reset(f_path)
 		a.x=50
 		a.y=50
@@ -206,6 +250,8 @@ class Simulator:
 	def run(self):
 		while not rospy.is_shutdown():
 			start=time.time()
+			time.sleep(self.sleep_time)
+			self.sleep_time=0.
 			if a.available_flag is True or 1==1:
 				if self.update_flag is True:
 					self.update_flag=False

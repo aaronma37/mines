@@ -33,15 +33,15 @@ def tau(objective_type,score):
 	if objective_type=="wait":
 		return 1000
 	if objective_type=="travel":
-		return 10
+		return 7
 	if int(score)==0:
 		return 1000
 	elif int(score)==1:
 		return 15
 	elif int(score)==2:
-		return 8
+		return 12
 	else:
-		return 5
+		return 7
 
 
 class Task:

@@ -29,6 +29,10 @@ agent_dict={}
 RESET=0
 HIGHLIGHT=1
 
+objective_colors={}
+objective_colors["mine"]=(1, 0, 0)
+objective_colors["service"]=(.5, .5, .5)
+
 
 
 class gui_data:
@@ -308,8 +312,10 @@ def draw_all(complete_environment,agent_dict,gui_data,step_num):
 	glColor3f(1, 0, 0)
 
 	map_size=100
+		
 
 	for o in complete_environment.objective_list:
+		glColor3f(objective_colors[o.frame_id][0], objective_colors[o.frame_id][1], objective_colors[o.frame_id][2])
 		for so in o.sub_objectives:
 			draw_basic(get_sqr_loc(so.x,map_size),get_sqr_loc(so.y,map_size),1./map_size,1./map_size,-.1)
 

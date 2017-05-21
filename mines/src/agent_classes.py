@@ -22,7 +22,7 @@ from mines.msg import region as region_msg
 import MCTS
 import Trajectory_Tree_Search
 
-
+total_agents=16
 
 class Claimed_Objective():
 	def __init__(self,state,region,objective_type):
@@ -68,6 +68,7 @@ class Claimed_Objective_Sets():
 	def claimed_objective_list_construction(self,sub_environment,trajectory):
 		self.claimed_objective_list=beta_msg()
 		for k in range(self.L-1):
+
 			if trajectory.get_task_at_k(k)!="wait" and trajectory.get_task_at_k(k)!="travel":
 				region=region_msg()
 				region.x=sub_environment.region_list[k][0]
@@ -77,9 +78,9 @@ class Claimed_Objective_Sets():
 				claimed_objective.state = int(sub_environment.get_objective_index(k,environment_classes.objective_map[trajectory.get_task_at_k(k)]))
 				claimed_objective.region=region
 				claimed_objective.objective_type=trajectory.get_task_at_k(k)
-
 				self.claimed_objective_list.claimed_objective.append(claimed_objective)
 			else:
+
 				region=region_msg()
 				region.x=sub_environment.region_list[k][0]
 				region.y=sub_environment.region_list[k][1]
@@ -97,8 +98,8 @@ class Claimed_Objective_Sets():
 		#print len(claimed_objective_list.claimed_objective)
 
 		for i in range(len(self.owned_objectives.beta)):
+			self.owned_objectives.beta[i].claimed_objective=[]
 			for k in range(self.L-1):
-				self.owned_objectives.beta[i].claimed_objective=[]
 				self.owned_objectives.beta[i].claimed_objective.append(self.claimed_objective_list.claimed_objective[k])
 
 
@@ -110,7 +111,7 @@ class Claimed_Objective_Sets():
 
 	def construct_n_list(self,interaction_list):
 		self.n_list=[]		
-		for a in range(len(interaction_list.interaction_total_set)):
+		for a in range(total_agents):
 			self.n_list.append(0)
 			#self.n_list.append(len(interaction_list.others.agent_interaction[a].trajectory_index[interaction_list.interaction_intersection]))
 
@@ -167,6 +168,7 @@ class Agent:
 		self.steps=self.T+1
 		self.current_trajectory=None
 		self.current_sub_environment=None
+
 
 
 

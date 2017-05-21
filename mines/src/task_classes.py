@@ -37,11 +37,11 @@ def tau(objective_type,score):
 	if int(score)==0:
 		return 1000
 	elif int(score)==1:
-		return 25
+		return 15
 	elif int(score)==2:
-		return 16
+		return 8
 	else:
-		return 12
+		return 5
 
 
 class Task:

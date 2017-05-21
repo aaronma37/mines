@@ -30,6 +30,7 @@ from mines.msg import claimed_objective as claimed_objective_msg
 from mines.msg import interaction_list as interaction_list_msg
 from mines.msg import collective_beta as collective_beta_msg
 from mines.msg import collective_interaction as collective_interaction_msg
+from mines.msg import collective_trajectories as collective_trajectories_msg
 
 import environment_classes
 
@@ -43,7 +44,7 @@ agent_poll_time = rospy.get_param("/agent_poll_time")
 multi_agent_model = rospy.get_param("/multi_agent_model")
 a_step_time = rospy.get_param("/agent_step_time")
 agent_policy_steps = rospy.get_param("/agent_policy_steps")
-
+agent_interaction_length = rospy.get_param("/agent_interaction_length")
 
 agent_trajectory_length = int(rospy.get_param("/agent_trajectory_length"))
 
@@ -54,14 +55,14 @@ task= PoseStamped()
 
 
 rospy.init_node('Agent', anonymous=True)
-a = Agent(event_time_horizon,rospy.get_name(),agent_trajectory_length)
+a = Agent(event_time_horizon,rospy.get_name(),agent_trajectory_length,agent_interaction_length)
 
 if rospy.get_name()=="/a1":
 	print rospy.get_name(), "/a1"
-	sleep_time=1
+	sleep_time=0
 else:
 	print rospy.get_name(), "not a1"
-	sleep_time=2
+	sleep_time=6
 
 task.header.frame_id= rospy.get_name()
 
@@ -95,15 +96,20 @@ class Simulator:
 	def environment_cb(self,env_msg):
 		self.complete_environment.update(env_msg)
 		self.complete_environment.modify(a.claimed_objective_sets.effective_claimed_objectives)
+		self.complete_environment.update_from_agent(a)
 		self.update_flag=True
 
 
 	def collective_interaction_cb(self,msg):
 		a.interaction_list.update_others(msg)
 
+	def collective_trajectories_cb(self,msg):
+		a.update_collective_trajectories(msg)
+
+
 	def collective_beta_cb(self,msg):
 		a.claimed_objective_sets.collect_taken_objectives(msg)
-		a.claimed_objective_sets.construct_effective_claimed_objectives(a.interaction_list)
+		a.claimed_objective_sets.construct_effective_claimed_objectives(rospy.get_name(),a.interaction_list)
 
 
 	def ready_pub(self):
@@ -121,7 +127,7 @@ class Simulator:
 		#self.reset_flag=True
 		#self.reset_data=data
 		time.sleep(.5)
-		a.reset()
+		a.reset(f_path)
 		a.x=50
 		a.y=50
 		time.sleep(.5)
@@ -151,13 +157,28 @@ class Simulator:
 		UUV_Data.y=int(a.y)
 
 		UUV_Data.task_list=[]
+		UUV_Data.current_trajectory.task_trajectory=[]
+
 		for t in a.current_trajectory.task_list:
 			task_message=task_msg()
 			task_message.task=t.objectives[0][0]
 			UUV_Data.task_list.append(task_message)
+			UUV_Data.current_trajectory.task_trajectory.append(t.objectives[0][0])
 
 		UUV_Data.region_list=[]
 		UUV_Data.current_state=a.current_sub_environment.state
+		UUV_Data.current_trajectory.state=a.current_sub_environment.state
+		UUV_Data.current_trajectory.region_trajectory=[]
+		UUV_Data.current_trajectory.frame_id=rospy.get_name()
+		for i in range(len(a.current_sub_environment.region_list)):
+			region_message=region_msg()
+			region_message.x=a.current_sub_environment.region_list[i][0]
+			region_message.y=a.current_sub_environment.region_list[i][1]
+			UUV_Data.current_trajectory.region_trajectory.append(region_message)
+
+			
+		UUV_Data.current_trajectory.task_index=a.current_trajectory.current_index
+
 		for r in a.current_sub_environment.region_list:
 			region_message=region_msg()
 			region_message.x=r[0]
@@ -228,7 +249,7 @@ def main(args):
 	#time.sleep(random.random()*5.)
 	collective_beta_sub =rospy.Subscriber('/Collective_beta', collective_beta_msg , sim.collective_beta_cb)#CHANGE TO MATRIX
 	collective_interact_sub =rospy.Subscriber('/Collective_interact', collective_interaction_msg , sim.collective_interaction_cb)#CHANGE TO MATRIX
-
+	collective_trajectories_sub =rospy.Subscriber('/Collective_trajectories', collective_trajectories_msg , sim.collective_trajectories_cb)#CHANGE TO MATRIX
 
 	try:
 		sim.run()

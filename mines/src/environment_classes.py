@@ -9,6 +9,7 @@ from mines.msg import subobjective as subobjective_msg
 from mines.msg import objective as objective_msg
 from mines.msg import environment as environment_msg
 
+
 size=10
 
 objective_parameter_list=[]
@@ -67,7 +68,8 @@ class Sub_Environment:
 	def __init__(self):
 		self.region_list=[]
 		self.state=None
-		self.interaction_set=None
+		self.interaction_state=None
+		self.interaction_set=set()
 		 
 	def set_region_list(self,region_list):
 		self.region_list=region_list
@@ -77,6 +79,8 @@ class Sub_Environment:
 		self.region_list.append(r)
 		for k in range(L-1):
 			self.region_list.append((self.region_list[-1][0]+random.randint(-1, 1),self.region_list[-1][1]+random.randint(-1, 1)))
+		
+
 
 
 
@@ -127,12 +131,33 @@ class Sub_Environment:
 
 			self.state=self.state+"."
 
-	def evolve(self,complete_environment):
+		self.update_interaction_state(complete_environment)
+
+	def evolve(self,agent,complete_environment):
 		evolved_environment=Sub_Environment()
 		evolved_environment.region_list=self.region_list[1:]
 		evolved_environment.update_state(complete_environment)
 		return evolved_environment
 
+	def update_interaction_state(self,complete_environment):
+		self.interaction_state='Interaction state: '		
+		if complete_environment.interaction_list is None or len(self.interaction_set)==0:
+			return
+		#self.interaction_set=complete_environment.interaction_list.interaction_total_set
+
+		for agent_id in self.interaction_set:
+			for agent_trajectory in complete_environment.collective_trajectories_message.agent_trajectory:
+				if agent_id==agent_trajectory.frame_id: 
+					state_string = agent_trajectory.state
+					state_string_list = state_string.split(".")
+					for i in range(len(state_string_list)-2):
+						self.interaction_state=self.interaction_state + "("+ str(state_string_list[i]) +","+str(agent_trajectory.task_trajectory[i])+"["
+						for r in self.region_list:	
+							if agent_trajectory.region_trajectory[i].x == r[0] and agent_trajectory.region_trajectory[i].y == r[1]:
+								self.interaction_state= self.interaction_state + "1"
+							else:
+								self.interaction_state= self.interaction_state + "0"
+						self.interaction_state=self.interaction_state+"]"+")"
 		
 
 
@@ -143,6 +168,9 @@ class Complete_Environment:
 		self.objective_parameter_list=objective_parameter_list
 		self.objective_list=[]
 		self.objective_map={}
+		self.interaction_list=None
+		self.collective_trajectories_message=None
+
 		for objective_parameters in self.objective_parameter_list:
 			self.objective_list.append(Objective(objective_parameters))
 			self.objective_map[objective_parameters[2]]=len(self.objective_list)-1
@@ -157,12 +185,14 @@ class Complete_Environment:
 			self.objective_map[objective_parameters[2]]=len(self.objective_list)-1
 		self.repopulate()
 
+	def update_from_agent(self,agent):
+		self.interaction_list=agent.interaction_list
+		self.collective_trajectories_message=agent.collective_trajectories
+
 	def repopulate(self):
 		for o in self.objective_list:
 			o.repopulate()
 
-	def update(self,agent_locations):
-		self.agent_locations=agent_locations
 
 	def get_sub_objectives_in_region(self,objective_type,r):
 		sub_objectives=[]

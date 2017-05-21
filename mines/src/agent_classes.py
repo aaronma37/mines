@@ -14,6 +14,7 @@ from mines.msg import beta as beta_msg
 from mines.msg import beta_set as beta_set_msg
 from mines.msg import claimed_objective as claimed_objective_msg
 from mines.msg import collective_interaction as collective_interaction_msg
+from mines.msg import collective_trajectories as collective_trajectories_msg
 from mines.msg import interaction_list as interaction_list_msg
 from mines.msg import interaction_set as interaction_set_msg	
 from mines.msg import region as region_msg
@@ -32,6 +33,7 @@ class Claimed_Objective():
 class Interaction_List():
 	def __init__(self,L,frame_id):
 		self.L=L
+		self.interaction_total_set=set()
 		self.interaction_list=interaction_list_msg()
 		self.interaction_list.frame_id=frame_id
 		self.interaction_list.trajectory_index=[]
@@ -39,10 +41,9 @@ class Interaction_List():
 		self.interaction_intersection=[]
 		for i in range(self.L-1):
 			self.interaction_list.trajectory_index.append(interaction_set_msg())
-		
-
-
+	
 	def update(self):
+		self.interaction_total_set.clear()
 		for k in range(self.L-1):
 			self.interaction_list.trajectory_index[k].agent_id=[]
 
@@ -98,34 +99,31 @@ class Claimed_Objective_Sets():
 		for i in range(len(self.owned_objectives.beta)):
 			for k in range(self.L-1):
 				self.owned_objectives.beta[i].claimed_objective=[]
-
-				#if len(interaction_list.interaction_list.trajectory_index[k].agent_id)>=i and 
-				#print len(claimed_objective_list.claimed_objective)
-				#print len(claimed_objective_list.claimed_objective), "len"
 				self.owned_objectives.beta[i].claimed_objective.append(self.claimed_objective_list.claimed_objective[k])
 
 
 	def collect_taken_objectives(self,collective_beta_message):
 		self.collective_beta=collective_beta_message
+		
 
 
 
 	def construct_n_list(self,interaction_list):
 		self.n_list=[]		
-		for a in range(2):
+		for a in range(len(interaction_list.interaction_total_set)):
 			self.n_list.append(0)
 			#self.n_list.append(len(interaction_list.others.agent_interaction[a].trajectory_index[interaction_list.interaction_intersection]))
 
 
 
-	def construct_effective_claimed_objectives(self,interaction_list):	
+	def construct_effective_claimed_objectives(self,self_id,interaction_list):	
 		#print "here"		
 		self.construct_n_list(interaction_list)
 		self.effective_claimed_objectives.claimed_objective=[]
 		for a in range(len(self.n_list)):
-			for claimed_objective in self.collective_beta.agent_beta[a].beta[self.n_list[a]].claimed_objective:
-			#	print claimed_objective
-				self.effective_claimed_objectives.claimed_objective.append(claimed_objective)
+			if self.collective_beta.agent_beta[a].frame_id!=self_id:
+				for claimed_objective in self.collective_beta.agent_beta[a].beta[self.n_list[a]].claimed_objective:
+					self.effective_claimed_objectives.claimed_objective.append(claimed_objective)
 			
 		
 
@@ -134,10 +132,10 @@ class Claimed_Objective_Sets():
 class Agent: 
 
 
-	def __init__(self,T,identification,agent_trajectory_length):
+	def __init__(self,T,identification,agent_trajectory_length,max_interaction_number):
 
 		self.mcts = MCTS.Solver(agent_trajectory_length,T)
-		self.tts = Trajectory_Tree_Search.TTS(agent_trajectory_length)
+		self.tts = Trajectory_Tree_Search.TTS(agent_trajectory_length,max_interaction_number)
 		self.x=50
 		self.y=50
 		self.T=T
@@ -153,16 +151,17 @@ class Agent:
 		self.mcts_flag=True
 		self.current_trajectory=None
 		self.current_sub_environment=None
+		self.collective_trajectories=collective_trajectories_msg()
 
 		self.interaction_list=Interaction_List(agent_trajectory_length,self.id)
 		self.claimed_objective_sets=Claimed_Objective_Sets(1,agent_trajectory_length,self.id)
 
 
 
-	def reset(self):
+	def reset(self,fp):
 		self.x=50
 		self.y=50
-
+		self.mcts.write(fp)
 		self.traj_flag=True
 		self.mcts_flag=True
 		self.steps=self.T+1
@@ -192,6 +191,12 @@ class Agent:
 		self.claimed_objective_sets.claimed_objective_list_construction(self.current_sub_environment,self.current_trajectory)
 
 		self.claimed_objective_sets.owned_objective_construction(self.interaction_list)
+
+	def update_collective_trajectories(self,msg):
+		self.collective_trajectories=msg
+		for agent in self.collective_trajectories.agent_trajectory:	
+			if agent.frame_id==self.id:
+				self.collective_trajectories.agent_trajectory.remove(agent)
 		
 
 
@@ -210,8 +215,6 @@ class Agent:
 				self.traj_flag=False
 			self.choose_trajectory(complete_environment,time_to_work)
 		self.execute(self.current_trajectory.get_action(self,complete_environment))
-
-
 
 
 	def execute(self,action_):

@@ -21,6 +21,7 @@ from mines.msg import uuv_data
 from mines.msg import beta_set as beta_set_msg
 from mines.msg import collective_beta as collective_beta_msg
 from mines.msg import collective_interaction as collective_interaction_msg
+from mines.msg import collective_trajectories as collective_trajectories_msg
 from mines.msg import interaction_list as interaction_list_msg
 from std_msgs.msg import Int32
 from agent_classes import Agent
@@ -57,6 +58,10 @@ restart_publisher = rospy.Publisher('/restart', performance, queue_size=100)#CHA
 
 collective_beta_pub = rospy.Publisher('/Collective_beta', collective_beta_msg, queue_size=100)#CHANGE TO MATRIX
 collective_interaction_pub = rospy.Publisher('/Collective_interaction', collective_interaction_msg, queue_size=100)#CHANGE TO MATRIX
+collective_trajectory_pub = rospy.Publisher('/Collective_trajectories', collective_trajectories_msg, queue_size=100)#CHANGE TO MATRIX
+
+
+
 
 region = [(10,10),(10,30),(10,50),(10,70),(10,90),(30,10),(50,10),(70,10),(90,10),(30,30),(50,30),(70,30),(90,30),(30,50),(50,50),(70,50),(90,50),(30,70),(50,70),(70,70),(90,70),(30,90),(50,90),(70,90),(90,90)]
 
@@ -101,17 +106,27 @@ class Simulator:
 		self.collective_beta_message=collective_beta_msg()
 		self.collective_interaction_message=collective_interaction_msg()
 		self.final_performance=[]
+		self.collective_trajectory_message=collective_trajectories_msg()
 
 
 
 	def agent_cb(self,agent_data):
 		if agent_data.frame_id not in agent_dict:
-			agent_dict[agent_data.frame_id]=Agent(30,agent_data.frame_id,4)
+			agent_dict[agent_data.frame_id]=Agent(30,agent_data.frame_id,4,0)
 
 		agent_dict[agent_data.frame_id].x=int(agent_data.x)
 		agent_dict[agent_data.frame_id].y=int(agent_data.y)
 	#	agent_dict[agent_data.frame_id].current_sub_environment.state=agent_data.current_state
 		self.complete_environment.execute_objective("mine",(agent_dict[agent_data.frame_id].x,agent_dict[agent_data.frame_id].y))
+
+
+
+
+		for i in range(len(self.collective_trajectory_message.agent_trajectory)):
+			if self.collective_trajectory_message.agent_trajectory[i].frame_id==agent_data.current_trajectory.frame_id:
+				self.collective_trajectory_message.agent_trajectory[i]=agent_data.current_trajectory				
+				return
+		self.collective_trajectory_message.agent_trajectory.append(agent_data.current_trajectory)
 
 	def trajectory_cb(self,data):
 		if data.frame_id not in agent_dict:
@@ -137,6 +152,8 @@ class Simulator:
 				return
 		self.collective_beta_message.agent_beta.append(msg)
 
+
+
 	def interaction_cb(self,msg):
 		for i in range(len(self.collective_interaction_message.agent_interaction)):
 			if self.collective_interaction_message.agent_interaction[i].frame_id==msg.frame_id:
@@ -153,6 +170,10 @@ class Simulator:
 
 	def environment_pub(self):
 		env_pub.publish(self.complete_environment.generate_environment_msg())
+
+	def traj_pub(self):
+		collective_trajectory_pub.publish(self.collective_trajectory_message)
+
 
 	def write_performance(self,performance):
 		self.final_performance.append(performance)
@@ -206,6 +227,7 @@ class Simulator:
 				self.environment_pub()
 				self.beta_pub()
 				self.interaction_pub()
+				self.traj_pub()
 				start = time.time()
 
 			if time.time()-start2 > total_time:

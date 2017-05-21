@@ -1,3 +1,6 @@
 string frame_id
-int32[] region_trajectory
-string[] action_trajectory
+mines/region[] region_trajectory
+string state
+string[] task_trajectory
+int8 task_index
+

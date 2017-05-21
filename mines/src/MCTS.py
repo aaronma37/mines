@@ -39,15 +39,15 @@ class Solver:
 		end = start
 		while end - start < time_to_work:
 			sub_environment=tts.get_random_sub_environment(agent,complete_environment)
-			self.search(sub_environment,complete_environment,0)
+			self.search(agent,sub_environment,complete_environment,0)
 			end = time.time()
 
 
 
 
-	def search(self,sub_environment,complete_environment,depth):
+	def search(self,agent,sub_environment,complete_environment,depth):
 
-		save_state = sub_environment.state
+		save_state = sub_environment.state + sub_environment.interaction_state
 		objective_type = self.arg_max_ucb(sub_environment,complete_environment)
 
 		self.check_variables_init(save_state,objective_type)
@@ -73,9 +73,9 @@ class Solver:
 			return 0
 
 
-		evolved_sub_environment=sub_environment.evolve(complete_environment)
+		evolved_sub_environment=sub_environment.evolve(agent,complete_environment)
 
-		r = math.pow(Gamma,t)*r + self.search(evolved_sub_environment,complete_environment,depth+t)
+		r = math.pow(Gamma,t)*r + self.search(agent,evolved_sub_environment,complete_environment,depth+t)
 
 		self.Q[save_state][objective_type]+=(r-self.Q[save_state][objective_type])/self.Na[save_state][objective_type]
 
@@ -162,5 +162,13 @@ class Solver:
 
 	def ucb_from_state(self,r,n,na):
 		return r+1.94*math.sqrt(math.log(1+n)/(1+na))
+
+	def write(self,fp):
+		file = open(fp+'/q.txt','w')
+		for s,q in self.Q.items():
+			for k,v in q.items():
+				file.write(str(s)+"\n"+str(k)+"\n"+str(v) +"\n\n")
+
+		file.close()
 
 

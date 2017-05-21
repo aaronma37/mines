@@ -14,12 +14,13 @@ import task_classes
 
 class TTS: 
 
-	def __init__(self,L):
+	def __init__(self,L,max_interaction_num):
 		self.L=L
 		self.N={}
 		self.Q={}
 		self.T=set()
 		self.T_full=set()
+		self.max_interaction_num=max_interaction_num
 
 
 	def reset(self):
@@ -64,7 +65,7 @@ class TTS:
 
 		if best_sub_environment.get_k()==self.L-1:
 			self.T_full.add(best_sub_environment)
-			return best_sub_environment,mcts.arg_max_reward(best_sub_environment.state)
+			return best_sub_environment,mcts.arg_max_reward(best_sub_environment.state+best_sub_environment.interaction_state)
 
 
 		children_sub_environments=self.get_children(complete_environment,best_sub_environment)
@@ -91,6 +92,19 @@ class TTS:
 				children_sub_environments[-1].region_list.append(r)
 			children_sub_environments[-1].region_list.append(f_region)
 			children_sub_environments[-1].update_state(complete_environment)
+			
+			if len(children_sub_environments[-1].interaction_set)<self.max_interaction_num and complete_environment.collective_trajectories_message is not None:
+				for agent_trajectory in complete_environment.collective_trajectories_message.agent_trajectory:
+					for region in agent_trajectory.region_trajectory:
+						if f_region[0]==region.x and f_region[1]==region.y:
+							children_sub_environments.append(environment_classes.Sub_Environment())
+							for r in best_sub_environment.region_list:
+								children_sub_environments[-1].region_list.append(r)
+							children_sub_environments[-1].region_list.append(f_region)
+							children_sub_environments[-1].update_state(complete_environment)
+							children_sub_environments[-1].interaction_set.add(agent_trajectory.frame_id)	
+							continue
+
 
 		return children_sub_environments
 
@@ -128,13 +142,25 @@ class TTS:
 	def get_random_sub_environment(self,agent,complete_environment):
 		sub_environment=environment_classes.Sub_Environment()
 		sub_environment.set_random_region_list(environment_classes.get_region(agent.x,agent.y),self.L)
+		
+		if complete_environment.collective_trajectories_message is not None:
+			for agent_trajectory in complete_environment.collective_trajectories_message.agent_trajectory:
+				if len(sub_environment.interaction_set)<self.max_interaction_num:
+					for r in sub_environment.region_list:
+						for region in agent_trajectory.region_trajectory:
+							if r[0]==region.x and r[1]==region.y:
+								sub_environment.interaction_set.add(agent_trajectory.frame_id)	
+		
+						
+
+
 		sub_environment.update_state(complete_environment)
 		return sub_environment
 
 	def get_trajectory(self,sub_environment,mcts,complete_environment):
 		ordered_objective_type_list=[]				
 		for k in range(self.L-1):	
-			ordered_objective_type_list.append(mcts.arg_max(sub_environment.cull_state_from_front(k))) # an objective_type - string
+			ordered_objective_type_list.append(mcts.arg_max(sub_environment.cull_state_from_front(k)+sub_environment.interaction_state)) # an objective_type - string
 
 		trajectory=task_classes.Trajectory(sub_environment,ordered_objective_type_list,complete_environment)
 		return trajectory

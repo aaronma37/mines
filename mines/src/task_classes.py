@@ -5,6 +5,7 @@ from random import randint
 import random
 import numpy as np
 import math
+from environment_classes import objective_map
 
 def get_available_objective_types(sub_environment,complete_environment):
 	aot=[]
@@ -12,8 +13,8 @@ def get_available_objective_types(sub_environment,complete_environment):
 	aot.append("travel")
 	
 
-	for obj_type in complete_environment.objective_map.keys():
-		if sub_environment.get_objective_index(0,complete_environment.objective_map[obj_type]) > 0:
+	for obj_type in objective_map.keys():
+		if sub_environment.get_objective_index(0,objective_map[obj_type]) > 0:
 			aot.append(obj_type)
 
 	return aot
@@ -27,7 +28,7 @@ def tau(objective_type,score):
 	try:	
          	int(score)
     	except ValueError:
-        	print("Oops!  That was no valid number.  Try again...")
+        	#print("Oops!  That was no valid number.  Try again..."),score
 		return 1000
 
 	if objective_type=="wait":
@@ -88,6 +89,9 @@ class Task:
 				min_dist=self.get_distance(a.x,a.y,sub_objective.x,sub_objective.y)
 				min_next=(sub_objective.x,sub_objective.y)
 
+		if min_next==(a.x,a.y):
+			print "There was some error", len(sub_objectives)
+
 		return min_next
 				
 	def check_completion(self,agent,complete_environment):
@@ -140,7 +144,7 @@ class Trajectory:
 			if ordered_objective_type_list[i] == "wait" or ordered_objective_type_list[i] == "travel":
 				self.task_list.append(Task(ordered_objective_type_list[i],0,sub_environment.region_list[i],sub_environment.region_list[i+1]))
 			else:
-				self.task_list.append(Task(ordered_objective_type_list[i],sub_environment.get_objective_index(i,complete_environment.objective_map[ordered_objective_type_list[i]]),sub_environment.region_list[i],sub_environment.region_list[i+1]))
+				self.task_list.append(Task(ordered_objective_type_list[i],sub_environment.get_objective_index(i,objective_map[ordered_objective_type_list[i]]),sub_environment.region_list[i],sub_environment.region_list[i+1]))
 		self.sub_environment=sub_environment
 		self.current_index=0
 

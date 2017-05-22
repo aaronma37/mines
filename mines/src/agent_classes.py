@@ -121,7 +121,8 @@ class Claimed_Objective_Sets():
 		#print "here"		
 		self.construct_n_list(interaction_list)
 		self.effective_claimed_objectives.claimed_objective=[]
-		for a in range(len(self.n_list)):
+		#for a in range(len(self.collective_beta.agent_beta)):
+		for a in range(len( self.collective_beta.agent_beta)):
 			if self.collective_beta.agent_beta[a].frame_id!=self_id:
 				for claimed_objective in self.collective_beta.agent_beta[a].beta[self.n_list[a]].claimed_objective:
 					self.effective_claimed_objectives.claimed_objective.append(claimed_objective)
@@ -142,11 +143,11 @@ class Agent:
 		self.T=T
 
 		self.ON=0
-
+		self.my_action="none"
 		self.id=identification
 		self.steps=T+1
 		self.available_flag=True
-
+		self.total_steps=0.
 		self.reset_flag=False
 		self.traj_flag=True
 		self.mcts_flag=True
@@ -168,6 +169,8 @@ class Agent:
 		self.steps=self.T+1
 		self.current_trajectory=None
 		self.current_sub_environment=None
+		print self.total_steps	
+		self.total_steps=0.
 
 
 
@@ -210,6 +213,7 @@ class Agent:
 
 	def move(self,complete_environment,time_to_work):
 		self.steps+=1.
+		self.total_steps+=1.
 		if self.steps>self.T:
 			self.steps=0
 			if self.traj_flag==True:
@@ -217,6 +221,7 @@ class Agent:
 				self.traj_flag=False
 			self.choose_trajectory(complete_environment,time_to_work)
 		self.execute(self.current_trajectory.get_action(self,complete_environment))
+		
 
 
 	def execute(self,action_):

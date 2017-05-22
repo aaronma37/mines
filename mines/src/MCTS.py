@@ -9,6 +9,7 @@ from sets import Set
 import time
 from random import shuffle
 import task_classes
+from environment_classes import objective_map	
 
 Gamma=.99
 
@@ -20,6 +21,7 @@ class Solver:
 		self.N={}
 		self.Na={}
 		self.Q={}
+		self.pre_Q={}
 
 		self.great=[]
 		self.great2=[]
@@ -42,10 +44,13 @@ class Solver:
 			self.search(agent,sub_environment,complete_environment,0)
 			end = time.time()
 
-
+			self.save_pre_Q(sub_environment)
 
 
 	def search(self,agent,sub_environment,complete_environment,depth):
+
+		if sub_environment.get_k()==0:
+			return 0
 
 		save_state = sub_environment.state + sub_environment.interaction_state
 		objective_type = self.arg_max_ucb(sub_environment,complete_environment)
@@ -55,7 +60,7 @@ class Solver:
 		if objective_type!="wait" and objective_type!="travel":
 			r = 1
 
-			t=task_classes.tau(objective_type,sub_environment.get_objective_index(0,complete_environment.objective_map[objective_type]))
+			t=task_classes.tau(objective_type,sub_environment.get_objective_index(0,objective_map[objective_type]))
 
 		else:
 			if objective_type!="travel":
@@ -82,7 +87,11 @@ class Solver:
 
 		return r
 
-	
+	def save_pre_Q(self,sub_environment):
+		for i in range(sub_environment.get_k()):
+			self.pre_Q[sub_environment.cull_state_from_back(i)]=1
+		
+		
 	
 
 	def check_variables_init(self,save_state,objective_type):

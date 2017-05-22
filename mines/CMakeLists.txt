@@ -47,7 +47,8 @@ add_message_files(
 	collective_interaction.msg
 	interaction_list.msg
 	interaction_set.msg
-	collective_trajectories.msg)
+	collective_trajectories.msg
+	o_r_state.msg)
                                         #PoseWithName.msg
 
 #add_message_files( DIRECTORY msg FILES  pathData.msg )

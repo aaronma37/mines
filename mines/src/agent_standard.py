@@ -37,8 +37,8 @@ import environment_classes
 ''' This is the ros file that runs an agent'''
 
 f_path = rospy.get_param("/temp_file_path")
-
-
+regulation_time = rospy.get_param("/regulation_time")
+time_increment = rospy.get_param("/time_increment")
 event_time_horizon = rospy.get_param("/event_time_horizon")
 agent_poll_time = rospy.get_param("/agent_poll_time")
 multi_agent_model = rospy.get_param("/multi_agent_model")
@@ -57,54 +57,57 @@ task= PoseStamped()
 rospy.init_node('Agent', anonymous=True)
 a = Agent(event_time_horizon,rospy.get_name(),agent_trajectory_length,agent_interaction_length)
 
+
+sp=regulation_time
+
 if rospy.get_name()=="/a1":
 	print  "initializing /a1"
 	sleep_time=0
 elif rospy.get_name()=="/a2":
 	print  "initializing /a2"
-	sleep_time=a_step_time*event_time_horizon/16.
+	sleep_time=sp*event_time_horizon/16.
 elif rospy.get_name()=="/a3":
 	print  "initializing /a3"
-	sleep_time=2.*a_step_time*event_time_horizon/16.
+	sleep_time=2.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a4":
 	print  "initializing /a4"
-	sleep_time=3.*a_step_time*event_time_horizon/16.
+	sleep_time=3.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a5":
 	print  "initializing /a5"
-	sleep_time=4.*a_step_time*event_time_horizon/16.
+	sleep_time=4.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a6":
 	print  "initializing /a6"
-	sleep_time=5.*a_step_time*event_time_horizon/16.
+	sleep_time=5.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a7":
 	print  "initializing /a7"
-	sleep_time=6.*a_step_time*event_time_horizon/16.
+	sleep_time=6.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a8":
 	print  "initializing /a6"
-	sleep_time=7.*a_step_time*event_time_horizon/16.
+	sleep_time=7.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a9":
 	print  "initializing /a6"
-	sleep_time=8.*a_step_time*event_time_horizon/16.
+	sleep_time=8.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a10":
 	print  "initializing /a6"
-	sleep_time=9.*a_step_time*event_time_horizon/16.
+	sleep_time=9.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a11":
 	print  "initializing /a6"
-	sleep_time=10.*a_step_time*event_time_horizon/16.
+	sleep_time=10.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a12":
 	print  "initializing /a6"
-	sleep_time=11.*a_step_time*event_time_horizon/16.
+	sleep_time=11.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a13":
 	print  "initializing /a6"
-	sleep_time=12.*a_step_time*event_time_horizon/16.
+	sleep_time=12.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a14":
 	print  "initializing /a6"
-	sleep_time=13.*a_step_time*event_time_horizon/16.
+	sleep_time=13.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a15":
 	print  "initializing /a6"
-	sleep_time=14.*a_step_time*event_time_horizon/16.
+	sleep_time=14.*sp*event_time_horizon/16.
 elif rospy.get_name()=="/a16":
 	print  "initializing /a6"
-	sleep_time=15.*a_step_time*event_time_horizon/16.
+	sleep_time=15.*sp*event_time_horizon/16.
 
 task.header.frame_id= rospy.get_name()
 
@@ -135,6 +138,7 @@ class Simulator:
 		self.complete_environment=environment_classes.Complete_Environment()
 		self.beta_set_message=beta_set_msg()
 		self.sleep_time=0.
+		self.a_step_time=a_step_time
 
 	def environment_cb(self,env_msg):
 		self.complete_environment.update(env_msg)
@@ -142,6 +146,9 @@ class Simulator:
 		self.complete_environment.update_from_agent(a)
 		self.update_flag=True
 
+	def update_environment(self):
+		self.complete_environment.execute_objective('mine',(a.x,a.y))
+		#self.complete_environment.execute_objective('service',(a.x,a.y))
 
 	def collective_interaction_cb(self,msg):
 		a.interaction_list.update_others(msg)
@@ -175,6 +182,7 @@ class Simulator:
 		a.x=50
 		a.y=50
 		time.sleep(.5)
+		self.a_step_time+=time_increment
 
 
 	def reset_fun(self,performance):
@@ -203,6 +211,8 @@ class Simulator:
 		UUV_Data.task_list=[]
 		UUV_Data.current_trajectory.task_trajectory=[]
 
+		if a.current_trajectory is None:
+			return
 		for t in a.current_trajectory.task_list:
 			task_message=task_msg()
 			task_message.task=t.objectives[0][0]
@@ -258,16 +268,16 @@ class Simulator:
 				if self.reset_flag is True:
 					self.reset_fun(self.reset_data)
 					self.reset_flag=False
-				a.step(self.complete_environment,a_step_time/2.)
-				a.move(self.complete_environment,a_step_time/2.)
+				a.step(self.complete_environment,self.a_step_time/2.)
+				a.move(self.complete_environment,self.a_step_time/2.)
 
 				self.update_messages()
 				self.send_messages()
+				self.update_environment()
 
 
 
-
-			to_wait = start-time.time() + a_step_time
+			to_wait = start-time.time() + regulation_time #self.a_step_time
 		
 
 

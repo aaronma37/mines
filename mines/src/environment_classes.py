@@ -8,7 +8,7 @@ import math
 from mines.msg import subobjective as subobjective_msg
 from mines.msg import objective as objective_msg
 from mines.msg import environment as environment_msg
-
+from mines.msg import o_r_state as o_r_state_msg
 
 size=10
 
@@ -17,7 +17,7 @@ objective_map={}
 objective_parameter_list.append(('all',2,"mine"))
 #objective_parameter_list.append(('second',1,"service"))
 objective_map["mine"]=0
-objective_map["service"]=1
+#objective_map["service"]=1
 
 
 
@@ -140,6 +140,14 @@ class Sub_Environment:
 		return self.state.split(".")[k]
 
 	def get_objective_index(self,k,o_index):
+
+		try:	
+		 	int(self.get_state_index(k).split(",")[o_index])
+	    	except ValueError:
+			''' '''
+			#print("Oops!  That was no valid number.  Try again..."),self.get_state_index(k).split(","),self.state
+
+
 		return self.get_state_index(k).split(",")[o_index]
 
 	def get_k(self):
@@ -161,7 +169,8 @@ class Sub_Environment:
 				if flag==True:
 					self.state=self.state+str(0)+","
 				else:
-					self.state=self.state+str(complete_environment.get_region_objective_state(obj_type,r))+","
+					#self.state=self.state+str(complete_environment.get_region_objective_state(obj_type,r))+","
+					self.state=self.state+str(complete_environment.pull_region_objective_state(obj_type,r))+","
 
 			self.state=self.state+"."
 
@@ -205,10 +214,13 @@ class Complete_Environment:
 		self.interaction_list=None
 		self.collective_trajectories_message=None
 		self.modification_list=[]
+		self.o_r_state={}
+		
 
 		for objective_parameters in self.objective_parameter_list:
 			self.objective_list.append(Objective(objective_parameters))
 			self.objective_map[objective_parameters[2]]=len(self.objective_list)-1
+			self.o_r_state[objective_parameters[2]]={}
 		self.agent_locations=[]
 		self.repopulate()
 
@@ -238,8 +250,9 @@ class Complete_Environment:
 
 
 
-
-		for sub_objective in self.objective_list[self.objective_map[objective_type]].sub_objectives:
+		if len(self.objective_list)-1<objective_map[objective_type]:
+			return sub_objectives
+		for sub_objective in self.objective_list[objective_map[objective_type]].sub_objectives:
 			if sub_objective.region==r:
 				sub_objectives.append(sub_objective)
 		return sub_objectives
@@ -253,6 +266,8 @@ class Complete_Environment:
 		
 		for p in range((int(r[0])-1),(int(r[0])+2)):
 			for q in range((int(r[1])-1),(int(r[1])+2)):
+				#if r[0] ==p and r[1] ==q:
+				#	continue
 				regions.append((p,q))		
 
 		return regions
@@ -268,10 +283,40 @@ class Complete_Environment:
 			if sub_objective.region == r:
 				c+=obj.granularity
 		
-		return int(math.ceil(c/float(size*size)))	
+		return int(math.ceil(c/float(size*size)))
+
+	def calculate_o_r_state(self):
+		for o in self.objective_list:
+			self.o_r_state[o.frame_id]={}
+
+		for o in self.objective_list:
+			for so in o.sub_objectives:
+				if self.o_r_state[o.frame_id].get(so.region) is None:
+					self.o_r_state[o.frame_id][so.region]=self.get_region_objective_state(o.frame_id,so.region)
+
+
+	def pull_region_objective_state(self,obj_type,r):
+		if self.o_r_state[obj_type].get(r) is None:
+			return 0
+		
+
+		try:
+			return self.o_r_state[obj_type][r]
+		except KeyError:
+			print "key error", obj_type,r
+			return 0
+
+			
 
 	def execute_objective(self, objective_type, location):
+
+
+		if len(self.objective_list)-1<objective_map[objective_type]:
+			return
+
 		obj=self.objective_list[objective_map[objective_type]]
+
+
 
 		for i in xrange(len(obj.sub_objectives)-1,-1,-1):
 			if abs(obj.sub_objectives[i].x-location[0])<2 and abs(obj.sub_objectives[i].y-location[1])<2:
@@ -307,11 +352,33 @@ class Complete_Environment:
 				env_msg.objective[-1].subobjective[-1].rx=so.region[0]
 				env_msg.objective[-1].subobjective[-1].ry=so.region[1]
 
+
+		self.calculate_o_r_state()
+	
+
+		for o in self.objective_list:
+			for k,v in self.o_r_state[o.frame_id].items():
+				o_r_state_message=o_r_state_msg()
+				o_r_state_message.region.x=k[0]
+				o_r_state_message.region.y=k[1]
+				o_r_state_message.value=v
+				o_r_state_message.obj_type=o.frame_id
+
+				env_msg.o_r_state.append(o_r_state_message)				
+
+
 		return env_msg
 
 	def update(self,env_msg):
 		self.objective_list=[]
 		self.objective_map={}
+
+		for o in self.objective_list:		
+			self.o_r_state[o.frame_id]={}
+
+		for o_r_state_msg in env_msg.o_r_state:
+				self.o_r_state[o_r_state_msg.obj_type][(o_r_state_msg.region.x,o_r_state_msg.region.y)]=int(o_r_state_msg.value)	
+		
 
 		for o in env_msg.objective:
 			self.objective_list.append(Objective([o.param1,o.param2,o.frame_id]))
@@ -320,13 +387,17 @@ class Complete_Environment:
 				self.objective_list[-1].sub_objectives.append(Sub_Objective(so.x,so.y))
 
 
+
 	def print_objective_score(self,objective_type):
-		obj=self.objective_list[self.objective_map[objective_type]]
+		obj=self.objective_list[objective_map[objective_type]]
 		#print "score", objective_type, len(obj.sub_objectives)
 			
 
 	def modify(self,effective_beta):
+		#self.calculate_o_r_state()
+		#return
 		self.modification_list=effective_beta.claimed_objective
+		#self.calculate_o_r_state()
 		return
 
 			

@@ -31,7 +31,10 @@ from pynput import mouse
 from multiprocessing import Process
 from draw import gui_data
 
+time_increment = rospy.get_param("/time_increment")
 
+
+regulation_time = rospy.get_param("/regulation_time")
 number_of_charging_docks = rospy.get_param("/number_of_charging_docks")
 number_of_mines = rospy.get_param("/number_of_mines")
 agent_policy_steps = rospy.get_param("/agent_policy_steps")
@@ -47,7 +50,7 @@ trial_time = rospy.get_param("/total_trial_time")
 a_step_time = rospy.get_param("/agent_step_time")
 agent_policy_steps = rospy.get_param("/agent_policy_steps")
 
-total_time=a_step_time*agent_policy_steps
+total_time=regulation_time*agent_policy_steps
 
 rospy.init_node('main', anonymous=True)
 env_pub =rospy.Publisher('/environment', environment, queue_size=100)
@@ -107,7 +110,8 @@ class Simulator:
 		self.collective_interaction_message=collective_interaction_msg()
 		self.final_performance=[]
 		self.collective_trajectory_message=collective_trajectories_msg()
-
+		self.a_step_time=a_step_time
+		self.total_time=total_time
 
 
 	def agent_cb(self,agent_data):
@@ -118,8 +122,9 @@ class Simulator:
 		agent_dict[agent_data.frame_id].y=int(agent_data.y)
 	#	agent_dict[agent_data.frame_id].current_sub_environment.state=agent_data.current_state
 		self.complete_environment.execute_objective("mine",(agent_dict[agent_data.frame_id].x,agent_dict[agent_data.frame_id].y))
+		#self.complete_environment.execute_objective("service",(agent_dict[agent_data.frame_id].x,agent_dict[agent_data.frame_id].y))
 
-
+		agent_dict[agent_data.frame_id].my_action=str(agent_data.current_trajectory.task_trajectory[int(agent_data.current_trajectory.task_index)])
 
 
 		for i in range(len(self.collective_trajectory_message.agent_trajectory)):
@@ -196,6 +201,8 @@ class Simulator:
 		#self.complete_state.reset()	
 
 		#restart_publisher.publish(performance_msg)
+		self.a_step_time+=time_increment
+		self.total_time=regulation_time*agent_policy_steps
 
 
 
@@ -223,14 +230,14 @@ class Simulator:
 			agents=list(agent_dict.keys())
 			self.agent_num = len(agents)
 
-			if time.time()-start > .2:
+			if time.time()-start > regulation_time:
 				self.environment_pub()
 				self.beta_pub()
 				self.interaction_pub()
 				self.traj_pub()
 				start = time.time()
 
-			if time.time()-start2 > total_time:
+			if time.time()-start2 > self.total_time:
 				#self.sim_count+=1
 				#if self.sim_count > self.total_sims:
 				#	return

@@ -20,6 +20,7 @@ class TTS:
 		self.L=L
 		self.N={}
 		self.Q={}
+		self.naive_t=set()
 		self.T=set()
 		self.T_full=set()
 		self.max_interaction_num=max_interaction_num
@@ -30,6 +31,7 @@ class TTS:
 		self.Q={}
 		self.T.clear()
 		self.T_full.clear()
+		self.naive_t.clear()
 
 
 	def execute(self,agent_loc,complete_environment,time_to_work,mcts):
@@ -48,20 +50,29 @@ class TTS:
 		self.T_full.clear()
 
 
+		'''
 		while end - start < time_to_work:
 			best_sub_environment = self.UCB()
 		
 			
 			self.value_update(self.search(complete_environment,best_sub_environment,mcts))
 			end = time.time()
-
+		
 
 		env = self.get_max(self.T_full)
-
-
 		print "choose over", len(self.T_full), "sub-environments and found: ", self.Q[env.state]
+		'''
+		if self.get_max2(self.naive_t,mcts) == False:
+			env = self.get_random_sub_environment(agent_loc,complete_environment)
+		else:
+			env = self.get_max2(self.naive_t,mcts)
+			print "choose over", len(self.naive_t), "sub-environments and found: ", mcts.arg_max_reward(env.state+env.interaction_state)
 
-		return env,self.get_trajectory(self.get_max(self.T_full),mcts,complete_environment)
+
+
+
+		self.naive_t.clear()
+		return env,self.get_trajectory(env,mcts,complete_environment)
 
 	def search(self,complete_environment,best_sub_environment,mcts):
 
@@ -102,8 +113,10 @@ class TTS:
 		return self.search(complete_environment,best_sub_environment,mcts)
 
 	def get_children(self,mcts,complete_environment,best_sub_environment):
+
 		children_sub_environments=[]
 		for f_region in complete_environment.get_feasible_travel_paths(best_sub_environment.region_list[-1]):
+			start=time.time()
 			children_sub_environments.append(environment_classes.Sub_Environment())
 			for r in best_sub_environment.region_list:
 				children_sub_environments[-1].region_list.append(r)
@@ -112,6 +125,18 @@ class TTS:
 			#if mcts.pre_Q.get(children_sub_environments[-1].state) is None:
 			#	children_sub_environments=children_sub_environments[:-1]
 			#	continue
+			start2=time.time()
+			
+			if len(children_sub_environments[-1].interaction_set)<self.max_interaction_num and complete_environment.collective_trajectories_message is not None and complete_environment.cross_trajectory.get(f_region) is not None:
+				for agent_id in complete_environment.cross_trajectory[f_region]:
+					children_sub_environments.append(environment_classes.Sub_Environment())
+					for r in best_sub_environment.region_list:
+						children_sub_environments[-1].region_list.append(r)
+					children_sub_environments[-1].region_list.append(f_region)
+					children_sub_environments[-1].interaction_set.add(agent_id)	
+					children_sub_environments[-1].update_state(complete_environment)
+
+			'''
 			
 			if len(children_sub_environments[-1].interaction_set)<self.max_interaction_num and complete_environment.collective_trajectories_message is not None:
 				for agent_trajectory in complete_environment.collective_trajectories_message.agent_trajectory:
@@ -126,7 +151,9 @@ class TTS:
 
 
 							continue
-
+			
+			'''
+			print "1", (start2-start)/(time.time()-start), "2", (time.time()-start2)/(time.time()-start) 
 
 		return children_sub_environments
 
@@ -143,9 +170,30 @@ class TTS:
 
 	
 
+	def get_max2(self,T,mcts):
+		best_env=None
+		max_expected=-1
+		if len(T)==0:
+			return False
+
+		for sub_env in T:
+			if mcts.arg_max_reward(sub_env.state+sub_env.interaction_state) > max_expected:
+				best_env=sub_env
+				max_expected=mcts.arg_max_reward(sub_env.state+sub_env.interaction_state)
+	
+
+
+		return best_env
+
+
 	def get_max(self,T):
 		best_env=None
 		max_expected=-1
+		if len(T)==0:
+			return False
+
+	
+		'''
 		for sub_env in T:
 
 			self.check_dict(self.Q,sub_env.state,0.)
@@ -153,7 +201,7 @@ class TTS:
 			if self.Q[sub_env.state] > max_expected:
 				best_env=sub_env
 				max_expected=self.Q[best_env.state]
-
+		'''
 
 		return best_env
 
@@ -161,9 +209,10 @@ class TTS:
 		if dict_name.get(state) == None:
 			dict_name[state] = default
 
-	def get_random_sub_environment(self,agent,complete_environment):
+	def get_random_sub_environment(self,agent_loc,complete_environment):
+
 		sub_environment=environment_classes.Sub_Environment()
-		sub_environment.set_random_region_list(environment_classes.get_region(agent.x,agent.y),self.L)
+		sub_environment.set_random_region_list(environment_classes.get_region(agent_loc[0],agent_loc[1]),self.L)
 		
 		if complete_environment.collective_trajectories_message is not None:
 			for agent_trajectory in complete_environment.collective_trajectories_message.agent_trajectory:
@@ -177,6 +226,8 @@ class TTS:
 
 
 		sub_environment.update_state(complete_environment)
+		self.naive_t.add(sub_environment)
+		#self.naive_Q[sub_environment.state]
 		return sub_environment
 
 	def get_trajectory(self,sub_environment,mcts,complete_environment):

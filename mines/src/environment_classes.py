@@ -9,15 +9,18 @@ from mines.msg import subobjective as subobjective_msg
 from mines.msg import objective as objective_msg
 from mines.msg import environment as environment_msg
 from mines.msg import o_r_state as o_r_state_msg
+from mines.msg import cross_trajectory as cross_trajectory_msg
 
 size=10
 
 objective_parameter_list=[]
 objective_map={}
-objective_parameter_list.append(('all',2,"mine"))
-#objective_parameter_list.append(('second',1,"service"))
+objective_parameter_list.append(('none',2,"mine",1))
+objective_parameter_list.append(('fourth',2,"service",5))
+objective_parameter_list.append(('third',2,"service2",10))
 objective_map["mine"]=0
-#objective_map["service"]=1
+objective_map["service"]=1
+objective_map["service2"]=2
 
 
 
@@ -51,6 +54,7 @@ class Objective():
 		self.distribution_type=objective_parameters[0]
 		self.granularity=objective_parameters[1]
 		self.frame_id=objective_parameters[2]
+		self.individual_reward=objective_parameters[3]
 		
 		
 	def distribute(self,distribution_type):
@@ -60,6 +64,7 @@ class Objective():
 					self.sub_objectives.append(Sub_Objective(x,y))
 
 	def repopulate(self):
+		self.sub_objectives=[]
 		if self.distribution_type=="all":
 			for x in range(0,100):
 				for y in range(0,100):
@@ -69,8 +74,8 @@ class Objective():
 				for y in range(25,75):
 					self.sub_objectives.append(Sub_Objective(x,y))	
 		elif self.distribution_type=="third":
-			for x in range(40,50):
-				for y in range(50,75):
+			for x in range(15,30):
+				for y in range(55,75):
 					self.sub_objectives.append(Sub_Objective(x,y))	
 			for x in range(0,20):
 				for y in range(0,20):
@@ -86,7 +91,17 @@ class Objective():
 					self.sub_objectives.append(Sub_Objective(x,y))	
 			for x in range(25,35):
 				for y in range(25,35):
+					self.sub_objectives.append(Sub_Objective(x,y))
+		elif self.distribution_type=="fourth":
+			for x in range(60,75):
+				for y in range(60,75):
+					self.sub_objectives.append(Sub_Objective(x,y))	
+			for x in range(20,45):
+				for y in range(50,65):
 					self.sub_objectives.append(Sub_Objective(x,y))		
+		elif self.distribution_type=="none":
+			return
+				
 			
 		
 
@@ -143,7 +158,8 @@ class Sub_Environment:
 
 		try:	
 		 	int(self.get_state_index(k).split(",")[o_index])
-	    	except ValueError:
+	    	except (ValueError,IndexError):
+			return 0
 			''' '''
 			#print("Oops!  That was no valid number.  Try again..."),self.get_state_index(k).split(","),self.state
 
@@ -160,17 +176,17 @@ class Sub_Environment:
 
 		for r in self.region_list:
 			self.state=self.state
-			for obj_type in complete_environment.objective_map.keys():
+			for obj in complete_environment.objective_list:
 				flag=False
 				for claimed_objective in complete_environment.modification_list:
-					if claimed_objective.region.x==r[0] and claimed_objective.region.y==r[1] and claimed_objective.objective_type==obj_type:
+					if claimed_objective.region.x==r[0] and claimed_objective.region.y==r[1] and claimed_objective.objective_type==obj.frame_id:
 						flag=True
 
 				if flag==True:
 					self.state=self.state+str(0)+","
 				else:
 					#self.state=self.state+str(complete_environment.get_region_objective_state(obj_type,r))+","
-					self.state=self.state+str(complete_environment.pull_region_objective_state(obj_type,r))+","
+					self.state=self.state+str(complete_environment.pull_region_objective_state(obj.frame_id,r))+","
 
 			self.state=self.state+"."
 
@@ -194,7 +210,10 @@ class Sub_Environment:
 					state_string = agent_trajectory.state
 					state_string_list = state_string.split(".")
 					for i in range(len(state_string_list)-2):
-						self.interaction_state=self.interaction_state + "("+ str(state_string_list[i]) +","+str(agent_trajectory.task_trajectory[i])+"["
+						try:
+							self.interaction_state=self.interaction_state + "("+ str(state_string_list[i]) +","+str(agent_trajectory.task_trajectory[i])+"["
+						except IndexError:	
+							return						
 						for r in self.region_list:	
 							if agent_trajectory.region_trajectory[i].x == r[0] and agent_trajectory.region_trajectory[i].y == r[1]:
 								self.interaction_state= self.interaction_state + "1"
@@ -215,9 +234,11 @@ class Complete_Environment:
 		self.collective_trajectories_message=None
 		self.modification_list=[]
 		self.o_r_state={}
+		self.cross_trajectory={}
 		
-
+	
 		for objective_parameters in self.objective_parameter_list:
+
 			self.objective_list.append(Objective(objective_parameters))
 			self.objective_map[objective_parameters[2]]=len(self.objective_list)-1
 			self.o_r_state[objective_parameters[2]]={}
@@ -251,6 +272,7 @@ class Complete_Environment:
 
 
 		if len(self.objective_list)-1<objective_map[objective_type]:
+			print "weird"
 			return sub_objectives
 		for sub_objective in self.objective_list[objective_map[objective_type]].sub_objectives:
 			if sub_objective.region==r:
@@ -309,7 +331,8 @@ class Complete_Environment:
 			
 
 	def execute_objective(self, objective_type, location):
-
+		if objective_type=="travel" or objective_type=="wait":
+			return
 
 		if len(self.objective_list)-1<objective_map[objective_type]:
 			return
@@ -333,7 +356,7 @@ class Complete_Environment:
 
 
 
-	def generate_environment_msg(self):
+	def generate_environment_msg(self,collective_trajectory_message):
 		env_msg=environment_msg()
 		env_msg.frame_id="default"
 		
@@ -364,24 +387,64 @@ class Complete_Environment:
 				o_r_state_message.value=v
 				o_r_state_message.obj_type=o.frame_id
 
-				env_msg.o_r_state.append(o_r_state_message)				
+				env_msg.o_r_state.append(o_r_state_message)
+
+		helper={}
+
+		for a in collective_trajectory_message.agent_trajectory:
+			for r in a.region_trajectory:
+				if helper.get((r.x,r.y)) is None:
+					helper[(r.x,r.y)]=set()
+					helper[(r.x,r.y)].add(a.frame_id)
+				else:
+					helper[(r.x,r.y)].add(a.frame_id)
+
+
+		env_msg.cross_trajectory=[]
+
+		for k,v in helper.items():
+			
+			cross_trajectory_message=cross_trajectory_msg()
+			cross_trajectory_message.region.x=k[0]
+			cross_trajectory_message.region.y=k[1]
+			for val in v:
+				cross_trajectory_message.agent_id.append(val)
+
+
+
+			env_msg.cross_trajectory.append(cross_trajectory_message)
+
+
+				
 
 
 		return env_msg
 
 	def update(self,env_msg):
-		self.objective_list=[]
-		self.objective_map={}
+		#self.objective_list=[]
+		#self.objective_map={}
 
 		for o in self.objective_list:		
 			self.o_r_state[o.frame_id]={}
 
 		for o_r_state_msg in env_msg.o_r_state:
 				self.o_r_state[o_r_state_msg.obj_type][(o_r_state_msg.region.x,o_r_state_msg.region.y)]=int(o_r_state_msg.value)	
-		
 
+		self.cross_trajectory={}
+
+		for c_t in env_msg.cross_trajectory:
+
+			if self.cross_trajectory.get((c_t.region.x,c_t.region.y)) is None:
+				self.cross_trajectory[(c_t.region.x,c_t.region.y)]=set()
+
+			for agent_id in c_t.agent_id:
+				self.cross_trajectory[(c_t.region.x,c_t.region.y)].add(agent_id)
+		
+		c=0
 		for o in env_msg.objective:
-			self.objective_list.append(Objective([o.param1,o.param2,o.frame_id]))
+			
+			self.objective_list[c].sub_objectives=[]
+			c+=1
 			self.objective_map[o.frame_id]=len(self.objective_list)-1
 			for so in list(o.subobjective):
 				self.objective_list[-1].sub_objectives.append(Sub_Objective(so.x,so.y))
@@ -418,7 +481,7 @@ class Complete_Environment:
 		c=0
 		for o in self.objective_list:
 			for sub_objective in o.sub_objectives:
-				c+=1.
+				c+=o.individual_reward
 
 		return c
 

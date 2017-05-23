@@ -121,11 +121,14 @@ class Simulator:
 		agent_dict[agent_data.frame_id].x=int(agent_data.x)
 		agent_dict[agent_data.frame_id].y=int(agent_data.y)
 	#	agent_dict[agent_data.frame_id].current_sub_environment.state=agent_data.current_state
-		self.complete_environment.execute_objective("mine",(agent_dict[agent_data.frame_id].x,agent_dict[agent_data.frame_id].y))
+
 		#self.complete_environment.execute_objective("service",(agent_dict[agent_data.frame_id].x,agent_dict[agent_data.frame_id].y))
-
-		agent_dict[agent_data.frame_id].my_action=str(agent_data.current_trajectory.task_trajectory[int(agent_data.current_trajectory.task_index)])
-
+		try:
+			agent_dict[agent_data.frame_id].my_action=str(agent_data.current_trajectory.task_trajectory[int(agent_data.current_trajectory.task_index)])
+			self.complete_environment.execute_objective(agent_dict[agent_data.frame_id].my_action,(agent_dict[agent_data.frame_id].x,agent_dict[agent_data.frame_id].y))
+			agent_dict[agent_data.frame_id].current_state=agent_data.current_trajectory.state
+		except IndexError:
+			''' '''		
 
 		for i in range(len(self.collective_trajectory_message.agent_trajectory)):
 			if self.collective_trajectory_message.agent_trajectory[i].frame_id==agent_data.current_trajectory.frame_id:
@@ -174,7 +177,7 @@ class Simulator:
 		collective_interaction_pub.publish(self.collective_interaction_message)
 
 	def environment_pub(self):
-		env_pub.publish(self.complete_environment.generate_environment_msg())
+		env_pub.publish(self.complete_environment.generate_environment_msg(self.collective_trajectory_message))
 
 	def traj_pub(self):
 		collective_trajectory_pub.publish(self.collective_trajectory_message)

@@ -145,7 +145,7 @@ class Agent:
 		self.ON=0
 		self.my_action="none"
 		self.id=identification
-		self.steps=T+1
+		self.steps=T-10
 		self.available_flag=True
 		self.total_steps=0.
 		self.reset_flag=False
@@ -154,7 +154,7 @@ class Agent:
 		self.current_trajectory=None
 		self.current_sub_environment=None
 		self.collective_trajectories=collective_trajectories_msg()
-
+		self.current_state='none'
 		self.interaction_list=Interaction_List(agent_trajectory_length,self.id)
 		self.claimed_objective_sets=Claimed_Objective_Sets(1,agent_trajectory_length,self.id)
 
@@ -166,7 +166,7 @@ class Agent:
 		self.mcts.write(fp)
 		self.traj_flag=True
 		self.mcts_flag=True
-		self.steps=self.T+1
+		self.steps=self.T-10
 		self.current_trajectory=None
 		self.current_sub_environment=None
 		print self.total_steps	
@@ -220,6 +220,8 @@ class Agent:
 				self.tts.reset()
 				self.traj_flag=False
 			self.choose_trajectory(complete_environment,time_to_work)
+		if self.current_trajectory is None:
+			return
 		self.execute(self.current_trajectory.get_action(self,complete_environment))
 		
 

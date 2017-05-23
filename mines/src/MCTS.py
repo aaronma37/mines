@@ -40,7 +40,7 @@ class Solver:
 		start = time.time()
 		end = start
 		while end - start < time_to_work:
-			sub_environment=tts.get_random_sub_environment(agent,complete_environment)
+			sub_environment=tts.get_random_sub_environment((agent.x,agent.y),complete_environment)
 			self.search(agent,sub_environment,complete_environment,0)
 			end = time.time()
 
@@ -58,13 +58,15 @@ class Solver:
 		self.check_variables_init(save_state,objective_type)
 
 		if objective_type!="wait" and objective_type!="travel":
-			r = 1
+			r = complete_environment.objective_list[objective_map[objective_type]].individual_reward
 
 			t=task_classes.tau(objective_type,sub_environment.get_objective_index(0,objective_map[objective_type]))
+
 
 		else:
 			if objective_type!="travel":
 				r = 0
+				return 0
 				t=100
 			else:
 				r = 0
@@ -76,7 +78,7 @@ class Solver:
 
 		if t+depth>self.time_horizon:
 			return 0
-
+		
 
 		evolved_sub_environment=sub_environment.evolve(agent,complete_environment)
 

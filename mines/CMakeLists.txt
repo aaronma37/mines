@@ -48,7 +48,8 @@ add_message_files(
 	interaction_list.msg
 	interaction_set.msg
 	collective_trajectories.msg
-	o_r_state.msg)
+	o_r_state.msg
+	cross_trajectory.msg)
                                         #PoseWithName.msg
 
 #add_message_files( DIRECTORY msg FILES  pathData.msg )

@@ -10,7 +10,7 @@ import time
 from random import shuffle
 import task_classes
 from environment_classes import objective_map	
-
+import environment_classes
 Gamma=.99
 
 class Solver: 
@@ -41,26 +41,40 @@ class Solver:
 		end = start
 		while end - start < time_to_work:
 			sub_environment=tts.get_random_sub_environment((agent.x,agent.y),complete_environment)
-			self.search(agent,sub_environment,complete_environment,0)
+			self.search(sub_environment.get_total_state(),0)
 			end = time.time()
 
 			self.save_pre_Q(sub_environment)
 
 
-	def search(self,agent,sub_environment,complete_environment,depth):
+	def search(self,save_state,depth):
 
-		if sub_environment.get_k()==0:
+		if environment_classes.get_k_from_string(save_state)==0:
 			return 0
 
-		save_state = sub_environment.state + sub_environment.interaction_state
-		objective_type = self.arg_max_ucb(sub_environment,complete_environment)
+		#save_state = sub_environment.get_total_state() #sub_environment.state + sub_environment.interaction_state
+		objective_type = self.arg_max_ucb(save_state)
 
 		self.check_variables_init(save_state,objective_type)
 
 		if objective_type!="wait" and objective_type!="travel":
-			r = complete_environment.objective_list[objective_map[objective_type]].individual_reward
+			
+			own_reward_flag=True
+			r=0
+			#need to precalculate tau#
 
-			t=task_classes.tau(objective_type,sub_environment.get_objective_index(0,objective_map[objective_type]))
+			for interact_string_by_agent in save_state.split('|')[2].split('+')[:-1]:
+				if environment_classes.check_interact_intersect(interact_string_by_agent,objective_type)==True:
+					own_reward_flag=False
+					r=r+self.estimate(interact_string_by_agent,"none")-self.estimate(interact_string_by_agent,objective_type)
+					t=task_classes.coupled_tau(save_state,objective_type)
+
+
+			if own_reward_flag==True:			
+				r = environment_classes.objective_parameter_list[objective_map[objective_type]][3]
+				t=task_classes.tau(save_state,objective_type)
+
+
 
 
 		else:
@@ -72,22 +86,52 @@ class Solver:
 				r = 0
 				t=11
 
-		
-		#state,E = self.Phi.evolve(state,a,E)
-		#t=task_classes.tau(objective_type,sub_environment.get_objective_index(0,complete_environment.objective_map[objective_type]))
+		interact_string=''
+	
+		for interact_string_by_agent in save_state.split('|')[2].split('+')[:-1]:
+			new_interact_string_by_agent=environment_classes.interact_string_evolve(interact_string_by_agent,objective_type) #similar to other evolve	
+			interact_string=interact_string+new_interact_string_by_agent+'+'
 
-		if t+depth>self.time_horizon:
-			return 0
-		
+		save_state_2=environment_classes.string_evolve(save_state,objective_type)
+		save_state_2=environment_classes.modify_interact_string(save_state_2,interact_string)
 
-		evolved_sub_environment=sub_environment.evolve(agent,complete_environment)
-
-		r = math.pow(Gamma,t)*r + self.search(agent,evolved_sub_environment,complete_environment,depth+t)
+		r = math.pow(Gamma,t)*r + self.search(save_state_2,depth+t)
 
 		self.Q[save_state][objective_type]+=(r-self.Q[save_state][objective_type])/self.Na[save_state][objective_type]
 
 
 		return r
+
+	def estimate(self,initial_t,interact_string_by_agent,objective_type):
+		t=initial_t
+		r=0
+		
+		per_region_state=interact_string_by_agent.split('@')[0].split('.')[:-1] #list of strings
+		task_list = interact_string_by_agent.split('@')[1].split(',')[:-1]
+
+
+		if objective_type == "none":
+			for i in range(len(task_list)):
+				t+=task_classes.tau_objective(per_region_state[i].split(',')[environment_classes.objective_map[task_list[i]]],task_list[i])
+				r+=math.pow(gamma,t)*environment_classes.objective_parameter_list[objective_map[task_list[i]]][3]
+		else:
+			t+=task_classes.coupled_tau_objective(per_region_state[i].split(',')[environment_classes.objective_map[task_list[i]]],task_list[i])
+			r+=math.pow(gamma,t)*environment_classes.objective_parameter_list[objective_map[task_list[i]]][3]
+			for i in range(len(task_list)):
+				t+=task_classes.tau_objective(per_region_state[i].split(',')[environment_classes.objective_map[task_list[i]]],task_list[i])
+				r+=math.pow(gamma,t)*environment_classes.objective_parameter_list[objective_map[task_list[i]]][3]
+
+	
+
+		return r		
+
+
+
+
+
+
+
+
 
 	def save_pre_Q(self,sub_environment):
 		for i in range(sub_environment.get_k()):
@@ -145,27 +189,27 @@ class Solver:
 			for k,v in q.items():
 				print s,k,v
 
-	def arg_max_ucb(self,sub_environment,complete_environment):
-
-		objective_type_list = task_classes.get_available_objective_types(sub_environment,complete_environment)
+	def arg_max_ucb(self,save_state):
+		#save_state=sub_environment.get_total_state()
+		objective_type_list = task_classes.get_available_objective_types(save_state) #CHANGE
 
 		shuffle(objective_type_list)
 
-		if self.Q.get(sub_environment.state) is None:
+		if self.Q.get(save_state) is None:
 			return objective_type_list[0]
-		if self.Q[sub_environment.state].get(objective_type_list[0]) is None:
+		if self.Q[save_state].get(objective_type_list[0]) is None:
 			return objective_type_list[0]
 
 		max_a=objective_type_list[0]
-		max_ucb=self.ucb_from_state(self.Q[sub_environment.state][max_a],self.N[sub_environment.state],self.Na[sub_environment.state][max_a])
+		max_ucb=self.ucb_from_state(self.Q[save_state][max_a],self.N[save_state],self.Na[save_state][max_a])
 
 
 		for a in objective_type_list:
-			if self.Q[sub_environment.state].get(a) is None:
+			if self.Q[save_state].get(a) is None:
 				return a
 
-			if self.ucb_from_state(self.Q[sub_environment.state][a],self.N[sub_environment.state],self.Na[sub_environment.state][a])  > max_ucb:
-				max_ucb = self.ucb_from_state(self.Q[sub_environment.state][a],self.N[sub_environment.state],self.Na[sub_environment.state][a]) 
+			if self.ucb_from_state(self.Q[save_state][a],self.N[save_state],self.Na[save_state][a])  > max_ucb:
+				max_ucb = self.ucb_from_state(self.Q[save_state][a],self.N[save_state],self.Na[save_state][a]) 
 				max_a=a
 
 		return max_a

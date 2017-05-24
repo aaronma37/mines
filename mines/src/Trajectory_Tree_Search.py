@@ -63,16 +63,17 @@ class TTS:
 		print "choose over", len(self.T_full), "sub-environments and found: ", self.Q[env.state]
 		'''
 		if self.get_max2(self.naive_t,mcts) == False:
+			print "Using random trajectory :("
 			env = self.get_random_sub_environment(agent_loc,complete_environment)
 		else:
 			env = self.get_max2(self.naive_t,mcts)
-			print "choose over", len(self.naive_t), "sub-environments and found: ", mcts.arg_max_reward(env.state+env.interaction_state)
+			print "choose over", len(self.naive_t), "sub-environments and found: ", mcts.arg_max_reward(env.get_total_state())
 
 
 
 
 		self.naive_t.clear()
-		return env,self.get_trajectory(env,mcts,complete_environment)
+		return env,self.get_trajectory(env.get_total_state(),mcts,env,complete_environment),mcts.arg_max_reward(env.get_total_state())
 
 	def search(self,complete_environment,best_sub_environment,mcts):
 
@@ -89,7 +90,7 @@ class TTS:
 		if best_sub_environment.get_k()==self.L-1:
 			self.T_full.add(best_sub_environment)
 		#	print best_sub_environment.state+best_sub_environment.interaction_state, mcts.arg_max_reward(best_sub_environment.state+best_sub_environment.interaction_state)
-			return best_sub_environment,mcts.arg_max_reward(best_sub_environment.state+best_sub_environment.interaction_state)
+			return best_sub_environment,mcts.arg_max_reward(best_sub_environment.get_total_state())
 
 		start3=time.time()
 
@@ -177,9 +178,9 @@ class TTS:
 			return False
 
 		for sub_env in T:
-			if mcts.arg_max_reward(sub_env.state+sub_env.interaction_state) > max_expected:
+			if mcts.arg_max_reward(sub_env.get_total_state()) > max_expected:
 				best_env=sub_env
-				max_expected=mcts.arg_max_reward(sub_env.state+sub_env.interaction_state)
+				max_expected=mcts.arg_max_reward(sub_env.get_total_state())
 	
 
 
@@ -230,13 +231,25 @@ class TTS:
 		#self.naive_Q[sub_environment.state]
 		return sub_environment
 
-	def get_trajectory(self,sub_environment,mcts,complete_environment):
+	def get_trajectory(self,save_state,mcts,env,complete_environment):
+		save_state_copy=save_state	
 		ordered_objective_type_list=[]	
 
 		for k in range(self.L-1):	
-			ordered_objective_type_list.append(mcts.arg_max(sub_environment.cull_state_from_front(k)+sub_environment.interaction_state)) # an objective_type - string
+			ordered_objective_type_list.append(mcts.arg_max(save_state_copy))
 
-		trajectory=task_classes.Trajectory(sub_environment,ordered_objective_type_list,complete_environment)
+
+			interact_string=''
+	
+			for interact_string_by_agent in save_state_copy.split('|')[2].split('+')[:-1]:
+				new_interact_string_by_agent=environment_classes.interact_string_evolve(interact_string_by_agent,ordered_objective_type_list[-1]) #similar to other evolve	
+				interact_string=interact_string+new_interact_string_by_agent+'+'
+
+			save_state_copy=environment_classes.string_evolve(save_state_copy,ordered_objective_type_list[-1])			
+			save_state_copy=environment_classes.modify_interact_string(save_state_copy,interact_string)
+
+
+		trajectory=task_classes.Trajectory(env,ordered_objective_type_list,complete_environment)
 		return trajectory
 			
 			

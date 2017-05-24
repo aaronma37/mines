@@ -348,6 +348,7 @@ def draw_all(complete_environment,agent_dict,gui_data,step_num):
 		draw_text(1.2, 1.1-count/4.,"Agent: " + str(k))
 		draw_text(1.2,-.025+ 1.1-count/4.,"Action: " + str(a.my_action))
 		draw_text(1.2,-.05+ 1.1-count/4.,"State: " + str(a.current_state))
+		draw_text(1.2,-.075+ 1.1-count/4.,"State: " + str(a.my_action_index))
 		#draw_text(1.2,-.025+ 1.1-count/4.,"Battery: " + str(a.battery))
 		#draw_text(1.2,-.05+ 1.1-count/4.,"Region: " + str(a.trajectory.region_trajectory))
 		#draw_text(1.2,-.075+ 1.1-count/4.,"State: " + a.current_state)

@@ -16,12 +16,172 @@ size=10
 objective_parameter_list=[]
 objective_map={}
 objective_parameter_list.append(('none',2,"mine",1))
-objective_parameter_list.append(('fourth',2,"service",5))
-objective_parameter_list.append(('third',2,"service2",10))
+objective_parameter_list.append(('third',2,"service",5))
+objective_parameter_list.append(('fourth',2,"service2",5))
 objective_map["mine"]=0
 objective_map["service"]=1
 objective_map["service2"]=2
 
+
+
+def interact_string_evolve(interact_string_by_agent,objective_type):
+
+
+	per_region_state=interact_string_by_agent.split('@')[0].split('.')[:-1] #list of strings
+	task_list = interact_string_by_agent.split('@')[1].split(',')[:-1]
+	interact_list = interact_string_by_agent.split('@')[2].split(',')[:-1]
+
+	#print "bn"
+	#print per_region_state
+	#print task_list
+	#print interact_list
+
+	for i in range(len(interact_list)):
+		if interact_list[i]=='-':
+			continue
+		if int(interact_list[i])==0:
+			interact_list[i]='-'
+			o_states=per_region_state[i].split(',')[-1]
+			for o_state in o_states:
+				if int(o_state)>0:
+					o_state=str(int(o_state)-1)
+			per_region_state[i]=''
+			for o_state in o_states:
+				per_region_state[i]=per_region_state[i]+o_state+","
+			
+
+		else:
+			interact_list[i]=str(int(interact_list[i]))
+
+	reg_state=''
+	task_state=''
+	interact_state=''
+
+	for i in range(1,len(interact_list)):
+		reg_state=reg_state+per_region_state[i]+"."	
+		interact_state=interact_state+interact_list[i]+","
+
+	for i in range(1,len(task_list)):
+		task_state=task_state+task_list[i]+","
+
+	return reg_state + "@" + task_state + "@" +interact_state+"@"
+
+def check_interact_intersect(interact_string_by_agent,objective_type):
+
+	interact_list = interact_string_by_agent.split('@')[2].split(',')[:-1]
+	task_list = interact_string_by_agent.split('@')[1].split(',')[:-1]
+
+	for i in range(len(interact_list)):
+		if interact_list[i]=='-':
+			continue
+		if int(len(interact_list[i]))==0:
+			if task_list[i]==objective_type:
+				return True
+
+	return False
+	
+
+
+def get_intersect_list_from_k(string):
+	return string.split('|')[2].split('+')[k].split('@')[2]
+
+
+def get_k_from_string(string):
+	mod_string=string.split('|')
+	reg_state=mod_string[1]
+	reg_state_list=reg_state.split(',')[:-1]
+	return len(reg_state_list)
+
+def get_objective_state_from_string(k,state_string,obj_type):
+	mod_string=state_string.split('|')
+	o_state=mod_string[0]
+	region_o_state_list=o_state.split('.')[:-1]
+	o =region_o_state_list[k].split(',')
+	try:	
+	 	int(o[objective_map[obj_type]])
+    	except ValueError:
+		print "Value Error,", region_o_state_list[k],k,objective_map[obj_type]
+		return 0
+	return int(o[objective_map[obj_type]])
+
+def modify_interact_string(main_string,interact_string):
+	mod_string=main_string.split('|')
+	o_state=mod_string[0]
+	reg_state=mod_string[1]
+	return o_state+"|"+reg_state+"|"+interact_string+"|"
+
+def string_evolve(string,obj_type):
+
+	if objective_map.get(obj_type) is not None:
+
+		o_index=objective_map[obj_type]
+		mod_string=string.split('|')
+		o_state=mod_string[0]
+		region_o_state_list=o_state.split('.')[:-1]
+		reg_state=mod_string[1]
+		reg_state_list=reg_state.split(',')[:-1]
+		int_state=mod_string[2]
+
+
+			
+		for i in range(len(region_o_state_list)):
+			if i ==0:
+				continue
+			if reg_state_list[i]=='-':
+				continue
+
+			if int(reg_state_list[i])==0:
+				h_list=region_o_state_list[i].split(',')[:-1]
+
+				if int(h_list[o_index])>0:
+					h_list[o_index]=str(int(h_list[o_index])-1)
+					region_o_state_list[i]=''
+					for k in range(len(h_list)):
+						region_o_state_list[i]=region_o_state_list[i]+h_list[k]+','
+				
+		for i in range(len(reg_state_list)):
+			if reg_state_list[i]=='-':
+				continue
+			if reg_state_list[i]=='0':
+				reg_state_list[i]='-'
+				continue
+			reg_state_list[i]=str(int(reg_state_list[i])-1)
+
+		reg_state=''
+		for i in range(1,len(reg_state_list)):
+			reg_state=reg_state+reg_state_list[i]+','
+
+
+		o_state=''
+		for i in range(1,len(region_o_state_list)):
+			o_state=o_state+region_o_state_list[i]+'.'
+	else:
+		mod_string=string.split('|')
+		o_state=mod_string[0]
+		region_o_state_list=o_state.split('.')[:-1]
+		reg_state=mod_string[1]
+		reg_state_list=reg_state.split(',')[:-1]
+		int_state=mod_string[2]
+				
+		for i in range(len(reg_state_list)):
+			if reg_state_list[i]=='-':
+				continue
+			if reg_state_list[i]=='0':
+				reg_state_list[i]='-'
+				continue
+			reg_state_list[i]=str(int(reg_state_list[i])-1)
+
+		reg_state=''
+		for i in range(1,len(reg_state_list)):
+			reg_state=reg_state+reg_state_list[i]+','
+
+
+		o_state=''
+		for i in range(1,len(region_o_state_list)):
+			o_state=o_state+region_o_state_list[i]+'.'
+		
+
+	return o_state+"|"+reg_state+"|"+int_state+"|"
 
 
 def get_region(x,y):
@@ -74,18 +234,18 @@ class Objective():
 				for y in range(25,75):
 					self.sub_objectives.append(Sub_Objective(x,y))	
 		elif self.distribution_type=="third":
-			for x in range(15,30):
-				for y in range(55,75):
-					self.sub_objectives.append(Sub_Objective(x,y))	
+			#for x in range(15,30):
+			#	for y in range(55,75):
+			#		self.sub_objectives.append(Sub_Objective(x,y))	
 			for x in range(0,20):
 				for y in range(0,20):
 					self.sub_objectives.append(Sub_Objective(x,y))	
 			for x in range(80,90):
 				for y in range(15,25):
 					self.sub_objectives.append(Sub_Objective(x,y))	
-			for x in range(50,64):
-				for y in range(20,41):
-					self.sub_objectives.append(Sub_Objective(x,y))	
+			#for x in range(50,64):
+			#	for y in range(20,41):
+			#		self.sub_objectives.append(Sub_Objective(x,y))	
 			for x in range(41,43):
 				for y in range(80,90):
 					self.sub_objectives.append(Sub_Objective(x,y))	
@@ -93,12 +253,16 @@ class Objective():
 				for y in range(25,35):
 					self.sub_objectives.append(Sub_Objective(x,y))
 		elif self.distribution_type=="fourth":
-			for x in range(60,75):
-				for y in range(60,75):
+			for x in range(40,50):
+				for y in range(40,50):
 					self.sub_objectives.append(Sub_Objective(x,y))	
-			for x in range(20,45):
-				for y in range(50,65):
-					self.sub_objectives.append(Sub_Objective(x,y))		
+	
+		elif self.distribution_type=="test1":
+			self.sub_objectives.append(Sub_Objective(55,50))
+			self.sub_objectives.append(Sub_Objective(65,50))
+			self.sub_objectives.append(Sub_Objective(75,50))
+			self.sub_objectives.append(Sub_Objective(85,50))
+			self.sub_objectives.append(Sub_Objective(45,50))
 		elif self.distribution_type=="none":
 			return
 				
@@ -109,6 +273,7 @@ class Sub_Environment:
 	def __init__(self):
 		self.region_list=[]
 		self.state=None
+		self.region_list_correlation=None
 		self.interaction_state=None
 		self.interaction_set=set()
 		 
@@ -170,6 +335,23 @@ class Sub_Environment:
 		return len(self.region_list)-1
 
 		
+	def update_region_list_correlation(self):
+		self.region_list_correlation=''		
+		for i in range(len(self.region_list)):
+			 if i==0:
+				self.region_list_correlation=self.region_list_correlation+'-'+','
+			 else:
+				signal='-'
+				for j in xrange(i-1,-1,-1):
+					if self.region_list[i]==self.region_list[j]:
+						signal=str(j)
+				self.region_list_correlation=self.region_list_correlation+signal+','
+
+		self.region_list_correlation=self.region_list_correlation+"|"
+	
+	def get_total_state(self):
+		return self.state+self.region_list_correlation+self.interaction_state
+
 		
 	def update_state(self,complete_environment):
 		self.state=""
@@ -190,7 +372,13 @@ class Sub_Environment:
 
 			self.state=self.state+"."
 
+		self.state=self.state+"|"
 		self.update_interaction_state(complete_environment)
+		self.update_region_list_correlation()
+
+
+		
+		
 
 	def evolve(self,agent,complete_environment):
 		evolved_environment=Sub_Environment()
@@ -199,27 +387,33 @@ class Sub_Environment:
 		return evolved_environment
 
 	def update_interaction_state(self,complete_environment):
-		self.interaction_state='Interaction state: '		
+		self.interaction_state=''	
+
 		if complete_environment.interaction_list is None or len(self.interaction_set)==0:
 			return
-		#self.interaction_set=complete_environment.interaction_list.interaction_total_set
 
 		for agent_id in self.interaction_set:
 			for agent_trajectory in complete_environment.collective_trajectories_message.agent_trajectory:
 				if agent_id==agent_trajectory.frame_id: 
-					state_string = agent_trajectory.state
-					state_string_list = state_string.split(".")
-					for i in range(len(state_string_list)-2):
-						try:
-							self.interaction_state=self.interaction_state + "("+ str(state_string_list[i]) +","+str(agent_trajectory.task_trajectory[i])+"["
-						except IndexError:	
-							return						
-						for r in self.region_list:	
-							if agent_trajectory.region_trajectory[i].x == r[0] and agent_trajectory.region_trajectory[i].y == r[1]:
-								self.interaction_state= self.interaction_state + "1"
-							else:
-								self.interaction_state= self.interaction_state + "0"
-						self.interaction_state=self.interaction_state+"]"+")"
+					state_string = agent_trajectory.state.split('|')[0]
+					
+
+					action_string=''
+					for action in agent_trajectory.task_trajectory:
+						action_string=action_string +action+','
+
+					interact_string=''
+					for region in agent_trajectory.region_trajectory:
+						signal='-'
+						for j in xrange(len(self.region_list)-1,-1,-1):
+							if (region.x,region.y)==self.region_list[j]:
+								signal=str(j)
+						interact_string=interact_string+signal+','			
+			self.interaction_state=self.interaction_state+state_string+"@"+action_string+"@"+interact_string+"@" +"+"
+		self.interaction_state=self.interaction_state+"|"
+	
+
+
 		
 
 
@@ -459,6 +653,7 @@ class Complete_Environment:
 	def modify(self,effective_beta):
 		#self.calculate_o_r_state()
 		#return
+
 		self.modification_list=effective_beta.claimed_objective
 		#self.calculate_o_r_state()
 		return

@@ -111,7 +111,8 @@ class Claimed_Objective_Sets():
 
 	def construct_n_list(self,interaction_list):
 		self.n_list=[]		
-		for a in range(total_agents):
+		for a in range(5):
+			
 			self.n_list.append(0)
 			#self.n_list.append(len(interaction_list.others.agent_interaction[a].trajectory_index[interaction_list.interaction_intersection]))
 
@@ -119,6 +120,8 @@ class Claimed_Objective_Sets():
 
 	def construct_effective_claimed_objectives(self,self_id,interaction_list):	
 		#print "here"		
+		#NOTE need to fix this+need to make sure agents are added onto other agents correctly	
+
 		self.construct_n_list(interaction_list)
 		self.effective_claimed_objectives.claimed_objective=[]
 		#for a in range(len(self.collective_beta.agent_beta)):
@@ -145,11 +148,12 @@ class Agent:
 		self.ON=0
 		self.my_action="none"
 		self.id=identification
-		self.steps=T-10
+		self.steps=0
 		self.available_flag=True
 		self.total_steps=0.
 		self.reset_flag=False
 		self.traj_flag=True
+		self.my_action_index="none"		
 		self.mcts_flag=True
 		self.current_trajectory=None
 		self.current_sub_environment=None
@@ -157,16 +161,18 @@ class Agent:
 		self.current_state='none'
 		self.interaction_list=Interaction_List(agent_trajectory_length,self.id)
 		self.claimed_objective_sets=Claimed_Objective_Sets(1,agent_trajectory_length,self.id)
+		self.expected_reward=0
 
 
 
 	def reset(self,fp):
+		self.expected_reward=0
 		self.x=50
 		self.y=50
 		self.mcts.write(fp)
 		self.traj_flag=True
 		self.mcts_flag=True
-		self.steps=self.T-10
+		self.steps=0
 		self.current_trajectory=None
 		self.current_sub_environment=None
 		print self.total_steps	
@@ -185,7 +191,10 @@ class Agent:
 		self.available_flag=True
 
 
-	def step(self,complete_environment,time_to_work):	
+	def step(self,complete_environment,time_to_work):
+		if self.traj_flag==True:
+			self.tts.reset()
+			self.traj_flag=False	
 		if self.mcts_flag==True:
 			self.mcts.reset()
 			self.mcts_flag=False
@@ -206,25 +215,40 @@ class Agent:
 
 
 	def choose_trajectory(self,complete_environment,time_to_work):	
-		sub_environment,trajectory = self.tts.execute((self.x,self.y),complete_environment,time_to_work,self.mcts)
+		sub_environment,trajectory,expected_reward = self.tts.execute((self.x,self.y),complete_environment,time_to_work,self.mcts)
 		self.current_trajectory=trajectory
 		self.current_sub_environment=sub_environment
+		self.expected_reward=expected_reward
 
 
 	def move(self,complete_environment,time_to_work):
 		self.steps+=1.
 		self.total_steps+=1.
+		if self.steps<self.T-5:
+			self.tts.reset()
 		if self.steps>self.T:
 			self.steps=0
-			if self.traj_flag==True:
-				self.tts.reset()
-				self.traj_flag=False
+
 			self.choose_trajectory(complete_environment,time_to_work)
 		if self.current_trajectory is None:
 			return
 		self.execute(self.current_trajectory.get_action(self,complete_environment))
-		
 
+	def test_case_move(self,agent_index,total_agents,complete_environment,time_to_work):
+		self.steps+=1.
+		self.total_steps+=1.
+
+		if self.steps<(agent_index)*self.T:
+			self.tts.reset()
+
+		if self.steps>(agent_index+1)*self.T:
+			self.steps=-10000000
+			self.choose_trajectory(complete_environment,time_to_work)
+
+		if self.total_steps>(total_agents)*self.T:
+			if self.current_trajectory is None:
+				return
+			self.execute(self.current_trajectory.get_action(self,complete_environment))	
 
 	def execute(self,action_):
 		self.x,self.y = self.get_transition(action_,self.x,self.y)

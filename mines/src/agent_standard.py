@@ -48,6 +48,7 @@ agent_interaction_length = rospy.get_param("/agent_interaction_length")
 
 agent_trajectory_length = int(rospy.get_param("/agent_trajectory_length"))
 
+test_case=True
 
 ready_msg=Bool()
 ready_msg.data=True
@@ -59,31 +60,42 @@ a = Agent(event_time_horizon,rospy.get_name(),agent_trajectory_length,agent_inte
 
 
 sp=regulation_time
+num_ag=5.
+total_agents=5.
 
 if rospy.get_name()=="/a1":
 	print  "initializing /a1"
 	sleep_time=0
+	agent_index=0
 elif rospy.get_name()=="/a2":
 	print  "initializing /a2"
-	sleep_time=sp*event_time_horizon/16.
+	sleep_time=sp*event_time_horizon/num_ag
+	sleep_time=.5
+	agent_index=1
 elif rospy.get_name()=="/a3":
 	print  "initializing /a3"
-	sleep_time=2.*sp*event_time_horizon/16.
+	sleep_time=2.*sp*event_time_horizon/num_ag
+	sleep_time=1.
+	agent_index=2
 elif rospy.get_name()=="/a4":
 	print  "initializing /a4"
-	sleep_time=3.*sp*event_time_horizon/16.
+	sleep_time=3.*sp*event_time_horizon/num_ag
+	sleep_time=1.5
+	agent_index=3
 elif rospy.get_name()=="/a5":
 	print  "initializing /a5"
-	sleep_time=4.*sp*event_time_horizon/16.
+	sleep_time=4.*sp*event_time_horizon/num_ag
+	sleep_time=2.
+	agent_index=4
 elif rospy.get_name()=="/a6":
 	print  "initializing /a6"
-	sleep_time=5.*sp*event_time_horizon/16.
+	sleep_time=5.*sp*event_time_horizon/num_ag
 elif rospy.get_name()=="/a7":
 	print  "initializing /a7"
-	sleep_time=6.*sp*event_time_horizon/16.
+	sleep_time=6.*sp*event_time_horizon/num_ag
 elif rospy.get_name()=="/a8":
 	print  "initializing /a6"
-	sleep_time=7.*sp*event_time_horizon/16.
+	sleep_time=7.*sp*event_time_horizon/num_ag
 elif rospy.get_name()=="/a9":
 	print  "initializing /a6"
 	sleep_time=8.*sp*event_time_horizon/16.
@@ -229,6 +241,7 @@ class Simulator:
 			region_message.x=a.current_sub_environment.region_list[i][0]
 			region_message.y=a.current_sub_environment.region_list[i][1]
 			UUV_Data.current_trajectory.region_trajectory.append(region_message)
+		UUV_Data.expected_reward=a.expected_reward
 
 			
 		UUV_Data.current_trajectory.task_index=a.current_trajectory.current_index
@@ -269,7 +282,12 @@ class Simulator:
 					self.reset_fun(self.reset_data)
 					self.reset_flag=False
 				a.step(self.complete_environment,self.a_step_time/2.)
-				a.move(self.complete_environment,self.a_step_time/2.)
+				if test_case==False:
+					a.move(self.complete_environment,self.a_step_time/2.)
+				else:
+					#a.test_case_choose(self.complete_environment,self.a_step_time/2.)
+					a.test_case_move(agent_index,total_agents,self.complete_environment,self.a_step_time/2.)
+					#a.move(self.complete_environment,self.a_step_time/2.)	
 
 				self.update_messages()
 				self.send_messages()

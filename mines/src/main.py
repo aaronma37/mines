@@ -104,6 +104,7 @@ class Simulator:
 		self.sim_time=50
 		self.total_sims=500
 		self.cull=20
+		self.expected_final_performance=[]
 		self.initial_cost=self.complete_environment.get_aggregate_cost()
 		self.wait_flag=False
 		self.collective_beta_message=collective_beta_msg()
@@ -125,8 +126,10 @@ class Simulator:
 		#self.complete_environment.execute_objective("service",(agent_dict[agent_data.frame_id].x,agent_dict[agent_data.frame_id].y))
 		try:
 			agent_dict[agent_data.frame_id].my_action=str(agent_data.current_trajectory.task_trajectory[int(agent_data.current_trajectory.task_index)])
+			agent_dict[agent_data.frame_id].my_action_index=str(int(agent_data.current_trajectory.task_index))
 			self.complete_environment.execute_objective(agent_dict[agent_data.frame_id].my_action,(agent_dict[agent_data.frame_id].x,agent_dict[agent_data.frame_id].y))
 			agent_dict[agent_data.frame_id].current_state=agent_data.current_trajectory.state
+			agent_dict[agent_data.frame_id].expected_reward=agent_data.expected_reward
 		except IndexError:
 			''' '''		
 
@@ -184,8 +187,15 @@ class Simulator:
 
 
 	def write_performance(self,performance):
-		self.final_performance.append(performance)
+		self.final_performance.append(performance)	
+		self.expected_final_performance.append(0.)
+		for a in agent_dict.values():
+			self.expected_final_performance[-1]+=a.expected_reward
+
 		print self.final_performance, sum( self.final_performance)/len( self.final_performance)
+		print self.expected_final_performance
+
+
 
 	def reset_pub(self,recalculate_policy_flag):
 
@@ -199,7 +209,7 @@ class Simulator:
 	#restart_publisher.publish(performance_msg)
 		self.initial_cost=self.complete_environment.get_aggregate_cost()
 		time.sleep(1)
-
+		self.complete_environment.reset()
 		#time.sleep(2)
 		#self.complete_state.reset()	
 

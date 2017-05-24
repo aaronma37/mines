@@ -6,24 +6,66 @@ import random
 import numpy as np
 import math
 from environment_classes import objective_map
+import environment_classes
 
-def get_available_objective_types(sub_environment,complete_environment):
+def get_available_objective_types(state_string):
 	aot=[]
 	aot.append("wait")
 	aot.append("travel")
 	
 
 	for obj_type in objective_map.keys():
-		if sub_environment.get_objective_index(0,objective_map[obj_type]) > 0:
+		if environment_classes.get_objective_state_from_string(0,state_string,obj_type) > 0:
 			aot.append(obj_type)
 
 	return aot
 	
 
 	
+def tau_objective(score,obj_type):
+	try:	
+         	int(score)
+    	except ValueError:
+        	#print("Oops!  That was no valid number.  Try again..."),score
+		return 1000
 
+	if obj_type=="wait":
+		return 1000
+	if obj_type=="travel":
+		return 7
+	if int(score)==0:
+		return 1000
+	elif int(score)==1:
+		return 15
+	elif int(score)==2:
+		return 12
+	else:
+		return 7
 
-def tau(objective_type,score):
+def coupled_tau_objective(score,obj_type):
+	return 0
+	try:	
+         	int(score)
+    	except ValueError:
+        	#print("Oops!  That was no valid number.  Try again..."),score
+		return 1000
+
+	if obj_type=="wait":
+		return 1000
+	if obj_type=="travel":
+		return 7
+	if int(score)==0:
+		return 1000
+	elif int(score)==1:
+		return 15/2.
+	elif int(score)==2:
+		return 12/2.
+	else:
+		return 7/2.
+
+def coupled_tau(save_state,obj_type):
+	return 0
+	score=environment_classes.get_objective_state_from_string(0,save_state,obj_type)
 
 	try:	
          	int(score)
@@ -31,9 +73,33 @@ def tau(objective_type,score):
         	#print("Oops!  That was no valid number.  Try again..."),score
 		return 1000
 
-	if objective_type=="wait":
+	if obj_type=="wait":
 		return 1000
-	if objective_type=="travel":
+	if obj_type=="travel":
+		return 7
+	if int(score)==0:
+		return 1000
+	elif int(score)==1:
+		return 15/2.
+	elif int(score)==2:
+		return 12/2.
+	else:
+		return 7/2.
+
+
+def tau(save_state,obj_type):
+
+	score=environment_classes.get_objective_state_from_string(0,save_state,obj_type)
+
+	try:	
+         	int(score)
+    	except ValueError:
+        	#print("Oops!  That was no valid number.  Try again..."),score
+		return 1000
+
+	if obj_type=="wait":
+		return 1000
+	if obj_type=="travel":
 		return 7
 	if int(score)==0:
 		return 1000
@@ -152,6 +218,7 @@ class Trajectory:
 		for i in range(self.current_index,len(self.task_list)):
 			if self.task_list[i].check_completion(agent,complete_state) == False:
 				if i!= self.current_index:
+					''' '''					
 					print "updated trajectory", self.current_index, i, self.task_list[i].objectives[0][0], self.task_list[i].state_i
 				self.current_index=i
 				break

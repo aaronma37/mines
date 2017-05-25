@@ -5,8 +5,8 @@
 <param name="number_of_charging_docks" type="int" value="2"/>
 <param name="agent_policy_steps" type="double" value="350"/>
 <param name="agent_poll_time" type="double" value="50"/>
-<param name="agent_step_time" type="double" value=".20000001"/>
-<param name="time_increment" type="double" value=".01"/>
+<param name="agent_step_time" type="double" value=".0250001"/>
+<param name="time_increment" type="double" value=".005"/>
 <param name="regulation_time" type="double" value=".1"/>
 
 <param name="agent_interaction_length" type="double" value="1"/>

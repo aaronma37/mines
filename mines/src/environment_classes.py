@@ -15,7 +15,7 @@ size=10
 
 objective_parameter_list=[]
 objective_map={}
-objective_parameter_list.append(('none',2,"mine",1))
+objective_parameter_list.append(('fifth',2,"mine",1))
 objective_parameter_list.append(('third',2,"service",5))
 objective_parameter_list.append(('fourth',2,"service2",5))
 objective_map["mine"]=0
@@ -215,6 +215,7 @@ class Objective():
 		self.granularity=objective_parameters[1]
 		self.frame_id=objective_parameters[2]
 		self.individual_reward=objective_parameters[3]
+
 		
 		
 	def distribute(self,distribution_type):
@@ -256,6 +257,11 @@ class Objective():
 			for x in range(40,50):
 				for y in range(40,50):
 					self.sub_objectives.append(Sub_Objective(x,y))	
+		elif self.distribution_type=="fifth":
+			for x in range(55,65):
+				for y in range(55,70):
+					self.sub_objectives.append(Sub_Objective(x,y))	
+	
 	
 		elif self.distribution_type=="test1":
 			self.sub_objectives.append(Sub_Objective(55,50))
@@ -276,6 +282,7 @@ class Sub_Environment:
 		self.region_list_correlation=None
 		self.interaction_state=None
 		self.interaction_set=set()
+		self.modification_list=[]
 		 
 	def set_region_list(self,region_list):
 		self.region_list=region_list
@@ -356,11 +363,20 @@ class Sub_Environment:
 	def update_state(self,complete_environment):
 		self.state=""
 
+		self.modification_list=[]
+		for agent_id,n_hash in complete_environment.beta_hash.items():
+			if agent_id in self.interaction_set and n_hash.get(1) is not None:
+				n=1
+			else:
+				n=0
+			for claimed_objective in n_hash[n]:
+				self.modification_list.append(claimed_objective)
+
 		for r in self.region_list:
 			self.state=self.state
 			for obj in complete_environment.objective_list:
 				flag=False
-				for claimed_objective in complete_environment.modification_list:
+				for claimed_objective in self.modification_list:
 					if claimed_objective.region.x==r[0] and claimed_objective.region.y==r[1] and claimed_objective.objective_type==obj.frame_id:
 						flag=True
 
@@ -426,7 +442,7 @@ class Complete_Environment:
 		self.objective_map={}
 		self.interaction_list=None
 		self.collective_trajectories_message=None
-		self.modification_list=[]
+		self.beta_hash={}
 		self.o_r_state={}
 		self.cross_trajectory={}
 		
@@ -650,11 +666,11 @@ class Complete_Environment:
 		#print "score", objective_type, len(obj.sub_objectives)
 			
 
-	def modify(self,effective_beta):
+	def modify(self,beta_hash):
 		#self.calculate_o_r_state()
 		#return
-
-		self.modification_list=effective_beta.claimed_objective
+		self.beta_hash=beta_hash
+		#self.modification_list=effective_beta.claimed_objective
 		#self.calculate_o_r_state()
 		return
 

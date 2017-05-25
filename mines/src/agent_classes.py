@@ -62,7 +62,7 @@ class Claimed_Objective_Sets():
 			self.owned_objectives.beta.append(beta_msg())
 		self.n_list=[] #naj
 		self.effective_claimed_objectives=beta_msg()
-		
+		self.beta_hash={}
 
 
 	def claimed_objective_list_construction(self,sub_environment,trajectory):
@@ -100,7 +100,8 @@ class Claimed_Objective_Sets():
 		for i in range(len(self.owned_objectives.beta)):
 			self.owned_objectives.beta[i].claimed_objective=[]
 			for k in range(self.L-1):
-				self.owned_objectives.beta[i].claimed_objective.append(self.claimed_objective_list.claimed_objective[k])
+				if i==0:
+					self.owned_objectives.beta[i].claimed_objective.append(self.claimed_objective_list.claimed_objective[k])
 
 
 	def collect_taken_objectives(self,collective_beta_message):
@@ -121,6 +122,15 @@ class Claimed_Objective_Sets():
 	def construct_effective_claimed_objectives(self,self_id,interaction_list):	
 		#print "here"		
 		#NOTE need to fix this+need to make sure agents are added onto other agents correctly	
+		
+		self.beta_hash={}
+
+		for a in self.collective_beta.agent_beta:
+			self.beta_hash[a.frame_id]={}
+			for n in range(self.N+1):
+				self.beta_hash[a.frame_id][n]=[]
+				for claimed_objective in a.beta[n].claimed_objective:
+					self.beta_hash[a.frame_id][n].append(claimed_objective)
 
 		self.construct_n_list(interaction_list)
 		self.effective_claimed_objectives.claimed_objective=[]
@@ -174,7 +184,8 @@ class Agent:
 		self.mcts_flag=True
 		self.steps=0
 		self.current_trajectory=None
-		self.current_sub_environment=None
+		self.current_sub_environment=None	
+		self.claimed_objective_sets.beta_hash={}
 		print self.total_steps	
 		self.total_steps=0.
 

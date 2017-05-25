@@ -194,6 +194,12 @@ class Simulator:
 
 		print self.final_performance, sum( self.final_performance)/len( self.final_performance)
 		print self.expected_final_performance
+		file = open(f_path+'/results.txt','w')
+		
+		for r in self.expected_final_performance:
+			file.write(str(r)+"\n")
+
+		file.close()
 
 
 

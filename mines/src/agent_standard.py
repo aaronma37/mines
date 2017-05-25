@@ -154,7 +154,7 @@ class Simulator:
 
 	def environment_cb(self,env_msg):
 		self.complete_environment.update(env_msg)
-		self.complete_environment.modify(a.claimed_objective_sets.effective_claimed_objectives)
+		self.complete_environment.modify(a.claimed_objective_sets.beta_hash)
 		self.complete_environment.update_from_agent(a)
 		self.update_flag=True
 

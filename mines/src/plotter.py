@@ -23,7 +23,7 @@ for n in N_LIST:
 	trials[n]={}
 	for t in t_values:
 		try:
-			f = open('/home/aaron/mines_temp/test_7_results_'+ str(n) +'_' + str(t) +'.txt','r')
+			f = open('/home/aaron/mines_temp/parameter_2_'+ str(n) +'_' + str(t) +'.txt','r')
 		except IOError:
 	#		print ('results_'+ str(n) +'_' + str(t) +'.txt'), " not found"
 			continue	
@@ -242,7 +242,7 @@ ax.set_xscale('log')
 ax.set_ylabel('Discounted reward')
 ax.set_xlabel('Time per action(s)')
 #ax.set_title('Expected reward vs time')
-ax.set_ylim(0,1)
+# ax.set_ylim(0,1)
 ax.grid(True)
 
 
@@ -250,14 +250,14 @@ ax2.set_xscale('log')
 ax2.set_ylabel('Discounted reward')
 ax2.set_xlabel('Simulations')
 #ax2.set_title('Expected reward vs # trials')
-ax2.set_ylim(0,1)
+# ax2.set_ylim(0,1)
 ax2.grid(True)
 
 ax3.set_xscale('log')
 ax3.set_ylabel('Q ratio')
 ax3.set_xlabel('Trials')
 ax3.set_title('Q convergence')
-ax2.set_ylim(0,1)
+# ax2.set_ylim(0,1)
 ax3.grid(True)
 
 line_colors=['r','c','b']

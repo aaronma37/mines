@@ -41,74 +41,94 @@ class Solver:
 		start = time.time()
 		end = start
 		num=0.
+                max_reward=0
 		while end - start < time_to_work:
-			sub_environment=tts.get_random_sub_environment((agent.x,agent.y),complete_environment)
+			#sub_environment=tts.get_random_sub_environment((agent.x,agent.y),complete_environment)
 			#print sub_environment.get_total_state(), sub_environment.region_list
-			self.search(sub_environment.get_total_state(),0)
+                        r =  self.search(complete_environment.get_full_state(environment_classes.get_region(agent.x,agent.y)),0,environment_classes.get_region(agent.x,agent.y))  
+                        if r > max_reward:
+                            max_reward=r
+
 			num+=1.
 			end = time.time()
 
+                        
 			#self.save_pre_Q(sub_environment)
-		#print num
-		return num
+		# print max_reward
+		return num,max_reward
 
-	def search(self,save_state,depth):
+	def search(self,save_state,depth,agent_location):
 
-		if environment_classes.get_k_from_string(save_state)==0:
+                if depth>100:
 			return 0
 
 		#save_state = sub_environment.get_total_state() #sub_environment.state + sub_environment.interaction_state
-		objective_type = self.arg_max_ucb(save_state)
+		# objective_type = self.arg_max_ucb(save_state)
 
-		self.check_variables_init(save_state,objective_type)
-
-		if objective_type!="wait" and objective_type!="travel":
+                action= self.arg_max_ucb_full(save_state)
+		self.check_variables_init(save_state,action)
+                action_string=action.split(",")
+                objective_type=action_string[2]
+                transition_region=(int(action_string[0]),int(action_string[1]))
+                if objective_type=='wait':
+                    return 0
+                elif objective_type=='travel':
+                    r=0
+                    t=11
+                else:
+                    print environment_classes.get_score_at_region(save_state,objective_type,agent_location), "HERE"
+                    t=task_classes.tau_objective(environment_classes.get_score_at_region(save_state,objective_type,agent_location),objective_type)
+                    r = environment_classes.get_reward_at_region(save_state,objective_type,agent_location)
+# 		if objective_type!="wait" and objective_type!="travel":
 			
-			own_reward_flag=True
-			r=0
-			#need to precalculate tau#
+# 			own_reward_flag=True
+# 			r=0
+# 			#need to precalculate tau#
 
-			for interact_string_by_agent in save_state.split('|')[2].split('+')[:-1]:
-				interaction_locations=environment_classes.get_interact_intersection(interact_string_by_agent,objective_type)
+# 			for interact_string_by_agent in save_state.split('|')[2].split('+')[:-1]:
+# 				interaction_locations=environment_classes.get_interact_intersection(interact_string_by_agent,objective_type)
 
-				if len(interaction_locations)>0:
-					own_reward_flag=False
-					r=r+self.estimate(depth,interact_string_by_agent,interaction_locations)-self.estimate(depth,interact_string_by_agent,[])
-					t=task_classes.coupled_tau(save_state,objective_type)								
+# 				if len(interaction_locations)>0:
+# 					own_reward_flag=False
+# 					r=r+self.estimate(depth,interact_string_by_agent,interaction_locations)-self.estimate(depth,interact_string_by_agent,[])
+# 					t=task_classes.coupled_tau(save_state,objective_type)								
 			
 
-			if own_reward_flag==True:			
-				r = environment_classes.objective_parameter_list[objective_map[objective_type]][3]
-				t=task_classes.tau(save_state,objective_type)
-			#else:
-			#	print "reward diff:", r, environment_classes.objective_parameter_list[objective_map[objective_type]][3]
+# 			if own_reward_flag==True:			
+# 				r = environment_classes.objective_parameter_list[objective_map[objective_type]][3]
+# 				t=task_classes.tau(save_state,objective_type)
+# 			#else:
+# 			#	print "reward diff:", r, environment_classes.objective_parameter_list[objective_map[objective_type]][3]
 
 
 
 
-		else:
-			if objective_type!="travel":
-				r = 0
-				return 0
-				t=100
-			else:
-				r = 0
-				t=11
+# 		else:
+# 			if objective_type!="travel":
+# 				r = 0
+# 				return 0
+# 				t=100
+# 			else:
+# 				r = 0
+# 				t=11
 
-		#if t+depth>10:
-		#	return 0.
-		interact_string=''
+# 		#if t+depth>10:
+# 		#	return 0.
+# 		interact_string=''
 	
-		for interact_string_by_agent in save_state.split('|')[2].split('+')[:-1]:
-			new_interact_string_by_agent=environment_classes.interact_string_evolve(interact_string_by_agent,objective_type) #similar to other evolve	
-			interact_string=interact_string+new_interact_string_by_agent+'+'
+# 		for interact_string_by_agent in save_state.split('|')[2].split('+')[:-1]:
+# 			new_interact_string_by_agent=environment_classes.interact_string_evolve(interact_string_by_agent,objective_type) #similar to other evolve	
+# 			interact_string=interact_string+new_interact_string_by_agent+'+'
 
-		save_state_2=environment_classes.string_evolve(save_state,objective_type)
-		save_state_2=environment_classes.modify_interact_string(save_state_2,interact_string)
-
-		r = math.pow(Gamma,t)*(r + self.search(save_state_2,depth+t))
-
-		self.Q[save_state][objective_type]+=(r-self.Q[save_state][objective_type])/self.Na[save_state][objective_type]
+# 		save_state_2=environment_classes.string_evolve(save_state,objective_type)
+# 		save_state_2=environment_classes.modify_interact_string(save_state_2,interact_string)
+                objective_region=agent_location
+                agent_location=(agent_location[0]+transition_region[0],agent_location[1]+transition_region[1])
+                save_state_2=environment_classes.string_evolve_full(save_state,objective_type,objective_region,agent_location)
+                print r
+		r = math.pow(Gamma,t)*(r + self.search(save_state_2,depth+t,agent_location))
+                print r,t
+		self.Q[save_state][action]+=(r-self.Q[save_state][action])/self.Na[save_state][action]
 
 
 		return r
@@ -225,6 +245,36 @@ class Solver:
 				max_a=a
 
 		return max_a
+
+        def arg_max_ucb_full(self,save_state):
+                objective_type_list =environment_classes.objective_list 
+                action_list=[]
+                for i in range(-1,2):
+                    for j in range(-1,2):
+                        for o in objective_type_list:
+                            action_list.append(str(i)+','+str(j)+','+o)
+
+		shuffle(action_list)
+
+		if self.Q.get(save_state) is None:
+			return action_list[0]
+		if self.Q[save_state].get(action_list[0]) is None:
+			return action_list[0]
+
+		max_a=action_list[0]
+		max_ucb=self.ucb_from_state(self.Q[save_state][max_a],self.N[save_state],self.Na[save_state][max_a])
+
+
+		for a in action_list:
+			if self.Q[save_state].get(a) is None:
+				return a
+
+			if self.ucb_from_state(self.Q[save_state][a],self.N[save_state],self.Na[save_state][a])  > max_ucb:
+				max_ucb = self.ucb_from_state(self.Q[save_state][a],self.N[save_state],self.Na[save_state][a]) 
+				max_a=a
+
+                return max_a
+
 
 
 	def ucb_from_state(self,r,n,na):

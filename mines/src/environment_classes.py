@@ -28,6 +28,51 @@ objective_map["service2"]=2
 #objective_map["service4"]=4
 #objective_map["service5"]=5
 
+
+
+objective_list=[]
+for i in range(len(objective_parameter_list)):
+    objective_list.append(objective_parameter_list[i][2])
+
+def get_score_at_region(save_state,objective_type,agent_region):
+    c=0
+    ss=save_state.split(',')
+
+    for i in range(10):
+        for j in range(10):
+            for o in objective_list:
+                if agent_region[0]==i and agent_region[1]==j and o==objective_type:
+                    return int(ss[c])
+                c+=1
+
+
+
+
+def get_reward_at_region(save_state,objective_type,agent_region):
+    score = get_score_at_region(save_state,objective_type,agent_region)
+    if score>0:
+        return objective_parameter_list[objective_map[objective_type]][3]  
+    else:
+        return 0
+
+
+
+def string_evolve_full(s,obj,o_r,agent_region):
+    s2 = ''
+    c=0
+    og_s=s.split(',')
+    for i in range(10):
+        for j in range(10):
+            for o in objective_list:
+                if o_r[0] == i and o_r[1]==j and o==obj:
+                    s2 = s2 + str(int(int(og_s[c])-1)) +','
+                else:
+                    s2 = s2 + og_s[c] + ','
+                c+=1
+
+    return s+str(agent_region[0])+','+str(agent_region[1])
+
+
 def interact_string_evolve(interact_string_by_agent,objective_type):
 
 
@@ -519,6 +564,34 @@ class Complete_Environment:
 			self.o_r_state[objective_parameters[2]]={}
 		self.agent_locations=[]
 		self.repopulate()
+
+        def get_full_state(self,agent_region):
+            s = ''
+            for i in range(10):
+                for j in range(10):
+                    for o in objective_list:
+                        s=s+str(self.get_region_objective_state(o,(i,j)))+','
+
+            return s+str(agent_region[0])+','+str(agent_region[1])
+
+
+        def evolve_full_state(self,s,obj,o_r,agent_region):
+            s2 = ''
+            c=0
+            og_s=s.split(',')
+            for i in range(10):
+                for j in range(10):
+                    for o in objective_list:
+                        if o_r[0] == i and o_r[1]==j and o==obj:
+                            s2 = s2 + str(int(int(og_s[c])-1)) +','
+                        else:
+                            s2 = s2 + og_s[c] + ','
+                        c+=1
+
+            return s+str(agent_region[0])+','+str(agent_region[1])
+
+
+
 
 	def reset(self):
 		self.objective_list=[]

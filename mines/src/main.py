@@ -33,7 +33,7 @@ from draw import gui_data
 
 time_increment = rospy.get_param("/time_increment")
 
-
+parameter_file = rospy.get_param("/testing_parameters_file")
 regulation_time = rospy.get_param("/regulation_time")
 number_of_charging_docks = rospy.get_param("/number_of_charging_docks")
 number_of_mines = rospy.get_param("/number_of_mines")
@@ -274,7 +274,7 @@ class Simulator:
 		#test 7 is third agent, starving#
 		#test 11 is ?#
 		print '-----------------------', self.test_counter/test_counter*100., '% complete'
-		file = open(f_path+'/test_11_results_' + str(self.num_agent_traj) + ".0_" + str(self.var_step_time) +'.txt','w')
+		file = open(f_path+'/' + parameter_file+'_' + str(self.num_agent_traj) + ".0_" + str(self.var_step_time) +'.txt','w')
 
 		for r in self.expected_final_performance[self.num_agent_traj][self.var_step_time]:
 			file.write(str(r)+", ")

@@ -264,11 +264,13 @@ class Simulator:
 				''' '''
 
 			UUV_Data.current_trajectory.region_trajectory.append(region_message)
+
+                # print a.think_step
 		UUV_Data.expected_reward=a.expected_reward
 
 			
 		UUV_Data.current_trajectory.task_index=a.current_trajectory.current_index
-		UUV_Data.steps=a.think_step
+		UUV_Data.steps=int(a.think_step)
 
 		for r in a.current_sub_environment.region_list:
 			region_message=region_msg()

@@ -89,7 +89,8 @@ def coupled_tau(save_state,obj_type):
 
 def tau(save_state,obj_type):
 
-	score=environment_classes.get_objective_state_from_string(0,save_state,obj_type)
+	# score=environment_classes.get_objective_state_from_string(0,save_state,obj_type)
+        score=0
 
 	try:	
          	int(score)

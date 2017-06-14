@@ -188,12 +188,13 @@ class Agent:
 		self.claimed_objective_sets=Claimed_Objective_Sets(2,agent_trajectory_length,self.id)
 		self.expected_reward=0
 		self.think_step=0.
-
+                self.max_reward=0.
 		self.current_step_time=0.
 		self.current_n=0.
 
 
 	def reset(self,fp,new_param):
+                self.max_reward=0.
 		self.expected_reward=0
 		self.think_step=0.
 		self.x=50
@@ -233,8 +234,10 @@ class Agent:
 		if self.mcts_flag==True:
 			self.mcts.reset()
 			self.mcts_flag=False
-		self.think_step = self.mcts.execute(self,complete_environment,self.tts,time_to_work)
-
+		self.think_step,max_r = self.mcts.execute(self,complete_environment,self.tts,time_to_work)
+                if max_r >self.max_reward:
+                    self.max_reward=max_r
+                
 	def test_case_step(self,complete_environment,time_to_work,test_type):
 		self.current_step_time=time_to_work
 		if test_type=="famine":
@@ -244,7 +247,9 @@ class Agent:
 			if self.mcts_flag==True:
 				self.mcts.reset()
 				self.mcts_flag=False
-			self.think_step = self.mcts.execute(self,complete_environment,self.tts,time_to_work)
+			self.think_step,max_r = self.mcts.execute(self,complete_environment,self.tts,time_to_work)
+                        if max_r > self.max_reward:
+                            self.max_reward=max_r
 		else:
 			if self.traj_flag==True:
 				self.tts.reset()
@@ -272,7 +277,7 @@ class Agent:
 		sub_environment,trajectory,expected_reward = self.tts.execute((self.x,self.y),complete_environment,time_to_work,self.mcts)
 		self.current_trajectory=trajectory
 		self.current_sub_environment=sub_environment
-		self.expected_reward=expected_reward
+		self.expected_reward=int(self.max_reward)
 		#print self.id		
 		#print self.current_trajectory.task_names
 		#print self.current_sub_environment.interaction_set

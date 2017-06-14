@@ -15,14 +15,18 @@ size=10
 
 objective_parameter_list=[]
 objective_map={}
-objective_parameter_list.append(('fifth',2,"mine",1))
-objective_parameter_list.append(('third',2,"service",5))
-objective_parameter_list.append(('fourth',2,"service2",5))
+objective_parameter_list.append(('test1',1,"mine",1))
+objective_parameter_list.append(('test2',1,"service",1))
+objective_parameter_list.append(('test3',1,"service2",1))
+#objective_parameter_list.append(('fourth',1,"service3",1))
+#objective_parameter_list.append(('test5',1,"service4",1))
+#objective_parameter_list.append(('test6',1,"service5",1))
 objective_map["mine"]=0
 objective_map["service"]=1
 objective_map["service2"]=2
-
-
+#objective_map["service3"]=3
+#objective_map["service4"]=4
+#objective_map["service5"]=5
 
 def interact_string_evolve(interact_string_by_agent,objective_type):
 
@@ -66,19 +70,31 @@ def interact_string_evolve(interact_string_by_agent,objective_type):
 
 	return reg_state + "@" + task_state + "@" +interact_state+"@"
 
-def check_interact_intersect(interact_string_by_agent,objective_type):
-
+def get_interact_intersection(interact_string_by_agent,objective_type):
+	
 	interact_list = interact_string_by_agent.split('@')[2].split(',')[:-1]
 	task_list = interact_string_by_agent.split('@')[1].split(',')[:-1]
 
-	for i in range(len(interact_list)):
+	complete_list=[]
+
+	#print interact_list
+
+	for i in range(len(interact_list)-1):
 		if interact_list[i]=='-':
 			continue
-		if int(len(interact_list[i]))==0:
+		if int(interact_list[i])==0:
 			if task_list[i]==objective_type:
-				return True
+			#	print task_list[i],objective_type,"added"
+				complete_list.append(i)
+			#else:
+				#print task_list[i],objective_type,"compe"
 
-	return False
+
+	#print task_list,objective_type
+	#if len(complete_list)>0:
+		
+	#	print complete_list
+	return complete_list
 	
 
 
@@ -264,11 +280,57 @@ class Objective():
 	
 	
 		elif self.distribution_type=="test1":
-			self.sub_objectives.append(Sub_Objective(55,50))
-			self.sub_objectives.append(Sub_Objective(65,50))
-			self.sub_objectives.append(Sub_Objective(75,50))
-			self.sub_objectives.append(Sub_Objective(85,50))
-			self.sub_objectives.append(Sub_Objective(45,50))
+			#self.sub_objectives.append(Sub_Objective(52,50))
+			#self.sub_objectives.append(Sub_Objective(58,50))
+			self.sub_objectives.append(Sub_Objective(62,50))
+			self.sub_objectives.append(Sub_Objective(68,50))
+			self.sub_objectives.append(Sub_Objective(72,50))
+			self.sub_objectives.append(Sub_Objective(78,50))
+
+		elif self.distribution_type=="test2":
+			self.sub_objectives.append(Sub_Objective(42,40))
+			self.sub_objectives.append(Sub_Objective(58,40))
+			self.sub_objectives.append(Sub_Objective(42,70))
+			self.sub_objectives.append(Sub_Objective(28,15))
+			self.sub_objectives.append(Sub_Objective(52,40))
+			self.sub_objectives.append(Sub_Objective(48,40))
+	
+
+		elif self.distribution_type=="test3":
+			self.sub_objectives.append(Sub_Objective(42,43))
+			self.sub_objectives.append(Sub_Objective(55,55))
+			self.sub_objectives.append(Sub_Objective(53,60))
+			self.sub_objectives.append(Sub_Objective(38,60))
+			self.sub_objectives.append(Sub_Objective(42,43))
+			self.sub_objectives.append(Sub_Objective(63,43))
+	
+
+		elif self.distribution_type=="test4":
+			self.sub_objectives.append(Sub_Objective(32,30))
+			self.sub_objectives.append(Sub_Objective(78,20))
+			self.sub_objectives.append(Sub_Objective(42,60))
+			self.sub_objectives.append(Sub_Objective(43,55))
+			self.sub_objectives.append(Sub_Objective(43,43))
+			self.sub_objectives.append(Sub_Objective(66,44))
+	
+
+		elif self.distribution_type=="test5":
+			self.sub_objectives.append(Sub_Objective(44,53))
+			self.sub_objectives.append(Sub_Objective(41,53))
+			self.sub_objectives.append(Sub_Objective(35,37))
+			self.sub_objectives.append(Sub_Objective(68,31))
+			self.sub_objectives.append(Sub_Objective(72,40))
+			self.sub_objectives.append(Sub_Objective(78,42))
+
+		elif self.distribution_type=="test7":
+			self.sub_objectives.append(Sub_Objective(45,45))
+			#self.sub_objectives.append(Sub_Objective(35,35))
+			#self.sub_objectives.append(Sub_Objective(25,35))
+		elif self.distribution_type=="test8":
+			self.sub_objectives.append(Sub_Objective(45,55))
+			#self.sub_objectives.append(Sub_Objective(35,35))
+			#self.sub_objectives.append(Sub_Obj
+	
 		elif self.distribution_type=="none":
 			return
 				
@@ -278,9 +340,9 @@ class Objective():
 class Sub_Environment:
 	def __init__(self):
 		self.region_list=[]
-		self.state=None
-		self.region_list_correlation=None
-		self.interaction_state=None
+		self.state=''
+		self.region_list_correlation=''
+		self.interaction_state=''
 		self.interaction_set=set()
 		self.modification_list=[]
 		 
@@ -369,6 +431,9 @@ class Sub_Environment:
 				n=1
 			else:
 				n=0
+			if n_hash.get(0) is None:
+				break
+
 			for claimed_objective in n_hash[n]:
 				self.modification_list.append(claimed_objective)
 
@@ -465,7 +530,6 @@ class Complete_Environment:
 
 	def update_from_agent(self,agent):
 		self.interaction_list=agent.interaction_list
-		self.collective_trajectories_message=agent.collective_trajectories
 
 	def repopulate(self):
 		for o in self.objective_list:
@@ -566,11 +630,15 @@ class Complete_Environment:
 
 
 
-	def generate_environment_msg(self,collective_trajectory_message):
+	def generate_environment_msg(self,collective_trajectory_message,trigger_agent,num_agent_traj,step_time):
 		env_msg=environment_msg()
 		env_msg.frame_id="default"
 		
 		env_msg.objective=[]
+		env_msg.trigger=trigger_agent
+		env_msg.num_agent_traj=num_agent_traj
+		env_msg.step_time=step_time
+
 
 		for o in self.objective_list:
 			env_msg.objective.append(objective_msg())
@@ -625,7 +693,7 @@ class Complete_Environment:
 			env_msg.cross_trajectory.append(cross_trajectory_message)
 
 
-				
+		env_msg.collective_trajectories=collective_trajectory_message		
 
 
 		return env_msg
@@ -659,7 +727,7 @@ class Complete_Environment:
 			for so in list(o.subobjective):
 				self.objective_list[-1].sub_objectives.append(Sub_Objective(so.x,so.y))
 
-
+		self.collective_trajectories_message=env_msg.collective_trajectories
 
 	def print_objective_score(self,objective_type):
 		obj=self.objective_list[objective_map[objective_type]]
@@ -670,6 +738,7 @@ class Complete_Environment:
 		#self.calculate_o_r_state()
 		#return
 		self.beta_hash=beta_hash
+		#print beta_hash
 		#self.modification_list=effective_beta.claimed_objective
 		#self.calculate_o_r_state()
 		return

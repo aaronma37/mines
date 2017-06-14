@@ -43,7 +43,7 @@ def tau_objective(score,obj_type):
 		return 7
 
 def coupled_tau_objective(score,obj_type):
-	return 0
+	#return 0
 	try:	
          	int(score)
     	except ValueError:
@@ -64,9 +64,9 @@ def coupled_tau_objective(score,obj_type):
 		return 7/2.
 
 def coupled_tau(save_state,obj_type):
-	return 0
 	score=environment_classes.get_objective_state_from_string(0,save_state,obj_type)
-
+	#return 3.5	
+	#return 0
 	try:	
          	int(score)
     	except ValueError:
@@ -206,6 +206,7 @@ class Task:
 class Trajectory:
 	def __init__(self,sub_environment,ordered_objective_type_list,complete_environment):
 		self.task_list=[]
+		self.task_names=ordered_objective_type_list
 		for i in range(len(ordered_objective_type_list)):
 			if ordered_objective_type_list[i] == "wait" or ordered_objective_type_list[i] == "travel":
 				self.task_list.append(Task(ordered_objective_type_list[i],0,sub_environment.region_list[i],sub_environment.region_list[i+1]))
@@ -235,8 +236,7 @@ class Trajectory:
 		if len(self.task_list)>k:
 			return self.task_list[k].objectives[0][0]
 		else:
-			print "list too big", len(self.task_list), k
-			return "error"
+			return False
 
 
 

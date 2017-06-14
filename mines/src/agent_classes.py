@@ -18,7 +18,8 @@ from mines.msg import collective_trajectories as collective_trajectories_msg
 from mines.msg import interaction_list as interaction_list_msg
 from mines.msg import interaction_set as interaction_set_msg	
 from mines.msg import region as region_msg
-
+import task_classes
+import environment_classes
 import MCTS
 import Trajectory_Tree_Search
 
@@ -51,9 +52,9 @@ class Interaction_List():
 		self.others=collective_interaction_msg
 
 class Claimed_Objective_Sets():
-	def __init__(self,N,L,frame_id):
+	def __init__(self,max_agents,L,frame_id):
 		self.L=L
-		self.N=N
+		self.N=max_agents
 		self.claimed_objective_list=beta_msg()#All claimed objectives
 		self.owned_objectives=beta_set_msg()# Offerings
 		self.owned_objectives.frame_id=frame_id
@@ -64,11 +65,18 @@ class Claimed_Objective_Sets():
 		self.effective_claimed_objectives=beta_msg()
 		self.beta_hash={}
 
+	def reset(self):
+		self.collective_beta=collective_beta_msg() #everyones beta offerings
+		for i in range(self.N+1):
+			self.owned_objectives.beta.append(beta_msg())
+
+		self.beta_hash={}
 
 	def claimed_objective_list_construction(self,sub_environment,trajectory):
 		self.claimed_objective_list=beta_msg()
 		for k in range(self.L-1):
-
+			if trajectory.get_task_at_k(k)==False:
+				break
 			if trajectory.get_task_at_k(k)!="wait" and trajectory.get_task_at_k(k)!="travel":
 				region=region_msg()
 				region.x=sub_environment.region_list[k][0]
@@ -80,7 +88,7 @@ class Claimed_Objective_Sets():
 				claimed_objective.objective_type=trajectory.get_task_at_k(k)
 				self.claimed_objective_list.claimed_objective.append(claimed_objective)
 			else:
-
+				continue
 				region=region_msg()
 				region.x=sub_environment.region_list[k][0]
 				region.y=sub_environment.region_list[k][1]
@@ -101,8 +109,10 @@ class Claimed_Objective_Sets():
 			self.owned_objectives.beta[i].claimed_objective=[]
 			for k in range(self.L-1):
 				if i==0:
-					self.owned_objectives.beta[i].claimed_objective.append(self.claimed_objective_list.claimed_objective[k])
-
+					try:
+						self.owned_objectives.beta[i].claimed_objective.append(self.claimed_objective_list.claimed_objective[k])
+					except IndexError:
+						''' '''
 
 	def collect_taken_objectives(self,collective_beta_message):
 		self.collective_beta=collective_beta_message
@@ -124,13 +134,15 @@ class Claimed_Objective_Sets():
 		#NOTE need to fix this+need to make sure agents are added onto other agents correctly	
 		
 		self.beta_hash={}
-
+		#print self.collective_beta
 		for a in self.collective_beta.agent_beta:
 			self.beta_hash[a.frame_id]={}
-			for n in range(self.N+1):
+			for n in range(len(a.beta)):
 				self.beta_hash[a.frame_id][n]=[]
 				for claimed_objective in a.beta[n].claimed_objective:
 					self.beta_hash[a.frame_id][n].append(claimed_objective)
+
+		#print self.beta_hash
 
 		self.construct_n_list(interaction_list)
 		self.effective_claimed_objectives.claimed_objective=[]
@@ -154,7 +166,7 @@ class Agent:
 		self.x=50
 		self.y=50
 		self.T=T
-
+		self.trajectory_length=agent_trajectory_length
 		self.ON=0
 		self.my_action="none"
 		self.id=identification
@@ -163,32 +175,43 @@ class Agent:
 		self.total_steps=0.
 		self.reset_flag=False
 		self.traj_flag=True
+
 		self.my_action_index="none"		
 		self.mcts_flag=True
-		self.current_trajectory=None
-		self.current_sub_environment=None
+
+		self.current_sub_environment=environment_classes.Sub_Environment()
+		self.current_trajectory=task_classes.Trajectory(self.current_sub_environment,[],[])
+
 		self.collective_trajectories=collective_trajectories_msg()
 		self.current_state='none'
 		self.interaction_list=Interaction_List(agent_trajectory_length,self.id)
-		self.claimed_objective_sets=Claimed_Objective_Sets(1,agent_trajectory_length,self.id)
+		self.claimed_objective_sets=Claimed_Objective_Sets(2,agent_trajectory_length,self.id)
 		self.expected_reward=0
+		self.think_step=0.
+
+		self.current_step_time=0.
+		self.current_n=0.
 
 
-
-	def reset(self,fp):
+	def reset(self,fp,new_param):
 		self.expected_reward=0
+		self.think_step=0.
 		self.x=50
 		self.y=50
-		self.mcts.write(fp)
+		if self.id=='/a3':
+			self.mcts.write(fp,self.current_n,self.current_step_time)
 		self.traj_flag=True
 		self.mcts_flag=True
 		self.steps=0
-		self.current_trajectory=None
-		self.current_sub_environment=None	
-		self.claimed_objective_sets.beta_hash={}
-		print self.total_steps	
+		self.current_sub_environment=environment_classes.Sub_Environment()
+		self.current_trajectory=task_classes.Trajectory(self.current_sub_environment,[],[])
+		self.claimed_objective_sets.reset()
+		#self.claimed_objective_sets.beta_hash={}
+		#print self.total_steps	
 		self.total_steps=0.
-
+		self.claimed_objective_sets=Claimed_Objective_Sets(2,self.trajectory_length,self.id)
+		self.tts = Trajectory_Tree_Search.TTS(self.trajectory_length,new_param[0])
+		self.current_n=new_param[0]
 
 
 
@@ -203,13 +226,33 @@ class Agent:
 
 
 	def step(self,complete_environment,time_to_work):
+		self.current_step_time=time_to_work
 		if self.traj_flag==True:
 			self.tts.reset()
 			self.traj_flag=False	
 		if self.mcts_flag==True:
 			self.mcts.reset()
 			self.mcts_flag=False
-		self.mcts.execute(self,complete_environment,self.tts,time_to_work)
+		self.think_step = self.mcts.execute(self,complete_environment,self.tts,time_to_work)
+
+	def test_case_step(self,complete_environment,time_to_work,test_type):
+		self.current_step_time=time_to_work
+		if test_type=="famine":
+			if self.traj_flag==True:
+				self.tts.reset()
+				self.traj_flag=False	
+			if self.mcts_flag==True:
+				self.mcts.reset()
+				self.mcts_flag=False
+			self.think_step = self.mcts.execute(self,complete_environment,self.tts,time_to_work)
+		else:
+			if self.traj_flag==True:
+				self.tts.reset()
+				self.traj_flag=False	
+			if self.mcts_flag==True:
+				self.mcts.reset()
+				self.mcts_flag=False
+			self.think_step = self.mcts.execute(self,complete_environment,self.tts,time_to_work)
 
 	def update_claimed_objectives(self):
 		self.interaction_list.update()
@@ -230,7 +273,9 @@ class Agent:
 		self.current_trajectory=trajectory
 		self.current_sub_environment=sub_environment
 		self.expected_reward=expected_reward
-
+		#print self.id		
+		#print self.current_trajectory.task_names
+		#print self.current_sub_environment.interaction_set
 
 	def move(self,complete_environment,time_to_work):
 		self.steps+=1.
@@ -246,20 +291,18 @@ class Agent:
 		self.execute(self.current_trajectory.get_action(self,complete_environment))
 
 	def test_case_move(self,agent_index,total_agents,complete_environment,time_to_work):
-		self.steps+=1.
-		self.total_steps+=1.
+		#self.steps+=1.
+		#self.total_steps+=1.
+		self.choose_trajectory(complete_environment,time_to_work)
+		
+		#if self.steps>(agent_index+1)*self.T:
+		#	self.steps=-10000000
+		#	self.choose_trajectory(complete_environment,time_to_work)
 
-		if self.steps<(agent_index)*self.T:
-			self.tts.reset()
-
-		if self.steps>(agent_index+1)*self.T:
-			self.steps=-10000000
-			self.choose_trajectory(complete_environment,time_to_work)
-
-		if self.total_steps>(total_agents)*self.T:
-			if self.current_trajectory is None:
-				return
-			self.execute(self.current_trajectory.get_action(self,complete_environment))	
+		#if self.total_steps>(total_agents)*self.T:
+		#	if self.current_trajectory is None:
+		#		return
+		#	self.execute(self.current_trajectory.get_action(self,complete_environment))	
 
 	def execute(self,action_):
 		self.x,self.y = self.get_transition(action_,self.x,self.y)

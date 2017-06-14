@@ -1,0 +1,1 @@
+int8 max_interaction_num

@@ -11,7 +11,7 @@ from random import shuffle
 import task_classes
 from environment_classes import objective_map	
 import environment_classes
-Gamma=.99
+Gamma=.98
 
 class Solver: 
 
@@ -22,6 +22,7 @@ class Solver:
 		self.Na={}
 		self.Q={}
 		self.pre_Q={}
+		self.Q_avg={}
 
 		self.great=[]
 		self.great2=[]
@@ -39,13 +40,17 @@ class Solver:
 	def execute(self,agent,complete_environment,tts,time_to_work):
 		start = time.time()
 		end = start
+		num=0.
 		while end - start < time_to_work:
 			sub_environment=tts.get_random_sub_environment((agent.x,agent.y),complete_environment)
+			#print sub_environment.get_total_state(), sub_environment.region_list
 			self.search(sub_environment.get_total_state(),0)
+			num+=1.
 			end = time.time()
 
-			self.save_pre_Q(sub_environment)
-
+			#self.save_pre_Q(sub_environment)
+		#print num
+		return num
 
 	def search(self,save_state,depth):
 
@@ -64,15 +69,19 @@ class Solver:
 			#need to precalculate tau#
 
 			for interact_string_by_agent in save_state.split('|')[2].split('+')[:-1]:
-				if environment_classes.check_interact_intersect(interact_string_by_agent,objective_type)==True:
-					own_reward_flag=False
-					r=r+self.estimate(interact_string_by_agent,"none")-self.estimate(interact_string_by_agent,objective_type)
-					t=task_classes.coupled_tau(save_state,objective_type)
+				interaction_locations=environment_classes.get_interact_intersection(interact_string_by_agent,objective_type)
 
+				if len(interaction_locations)>0:
+					own_reward_flag=False
+					r=r+self.estimate(depth,interact_string_by_agent,interaction_locations)-self.estimate(depth,interact_string_by_agent,[])
+					t=task_classes.coupled_tau(save_state,objective_type)								
+			
 
 			if own_reward_flag==True:			
 				r = environment_classes.objective_parameter_list[objective_map[objective_type]][3]
 				t=task_classes.tau(save_state,objective_type)
+			#else:
+			#	print "reward diff:", r, environment_classes.objective_parameter_list[objective_map[objective_type]][3]
 
 
 
@@ -86,6 +95,8 @@ class Solver:
 				r = 0
 				t=11
 
+		#if t+depth>10:
+		#	return 0.
 		interact_string=''
 	
 		for interact_string_by_agent in save_state.split('|')[2].split('+')[:-1]:
@@ -95,33 +106,34 @@ class Solver:
 		save_state_2=environment_classes.string_evolve(save_state,objective_type)
 		save_state_2=environment_classes.modify_interact_string(save_state_2,interact_string)
 
-		r = math.pow(Gamma,t)*r + self.search(save_state_2,depth+t)
+		r = math.pow(Gamma,t)*(r + self.search(save_state_2,depth+t))
 
 		self.Q[save_state][objective_type]+=(r-self.Q[save_state][objective_type])/self.Na[save_state][objective_type]
 
 
 		return r
 
-	def estimate(self,initial_t,interact_string_by_agent,objective_type):
+	def estimate(self,initial_t,interact_string_by_agent,interaction_locations):
 		t=initial_t
 		r=0
 		
 		per_region_state=interact_string_by_agent.split('@')[0].split('.')[:-1] #list of strings
 		task_list = interact_string_by_agent.split('@')[1].split(',')[:-1]
+		
+		for k in range(len(task_list)):
+			if task_list[k]=='wait' or task_list[k]=='travel':
+				t+=task_classes.tau_objective("dne",task_list[k])
+				r+=0.
+			else:
+				if k in interaction_locations:
+					t+=task_classes.coupled_tau_objective(per_region_state[k].split(',')[environment_classes.objective_map[task_list[k]]],task_list[k])
+				else:
+					t+=task_classes.tau_objective(per_region_state[k].split(',')[environment_classes.objective_map[task_list[k]]],task_list[k])
+			#	if t>10:
+			#		r+=0.
+			#	else:
+				r+=math.pow(Gamma,t)*environment_classes.objective_parameter_list[objective_map[task_list[k]]][3]
 
-
-		if objective_type == "none":
-			for i in range(len(task_list)):
-				t+=task_classes.tau_objective(per_region_state[i].split(',')[environment_classes.objective_map[task_list[i]]],task_list[i])
-				r+=math.pow(gamma,t)*environment_classes.objective_parameter_list[objective_map[task_list[i]]][3]
-		else:
-			t+=task_classes.coupled_tau_objective(per_region_state[i].split(',')[environment_classes.objective_map[task_list[i]]],task_list[i])
-			r+=math.pow(gamma,t)*environment_classes.objective_parameter_list[objective_map[task_list[i]]][3]
-			for i in range(len(task_list)):
-				t+=task_classes.tau_objective(per_region_state[i].split(',')[environment_classes.objective_map[task_list[i]]],task_list[i])
-				r+=math.pow(gamma,t)*environment_classes.objective_parameter_list[objective_map[task_list[i]]][3]
-
-	
 
 		return r		
 
@@ -218,11 +230,28 @@ class Solver:
 	def ucb_from_state(self,r,n,na):
 		return r+1.94*math.sqrt(math.log(1+n)/(1+na))
 
-	def write(self,fp):
-		file = open(fp+'/q.txt','w')
+	def write(self,fp,a,b):
+		if self.Q_avg.get(a) is None:
+			self.Q_avg[a]={}
+			self.Q_avg[a][b]={}
+			
+		elif self.Q_avg[a].get(b) is None:
+			self.Q_avg[a][b]={}
+
+
+		file = open(fp+'/q_test_11_'+str(a)+'_'+str(b)+'.txt','w')
 		for s,q in self.Q.items():
+			if self.Q_avg[a][b].get(s) is None:
+				self.Q_avg[a][b][s]={}
 			for k,v in q.items():
-				file.write(str(s)+"\n"+str(k)+"\n"+str(v) +"\n\n")
+				if self.Q_avg[a][b][s].get(k) is None:
+					self.Q_avg[a][b][s][k]=[]
+				self.Q_avg[a][b][s][k].append(v)
+				file.write(str(s)+"*"+str(k)+"*"+str(sum(self.Q_avg[a][b][s][k])/len(self.Q_avg[a][b][s][k])) +"*\n")
+
+		for s,q in self.Q_avg[a][b].items():
+			for k,v in q.items():
+				file.write(str(s)+"*"+str(k)+"*"+str(sum(self.Q_avg[a][b][s][k])/len(self.Q_avg[a][b][s][k])) +"*\n")
 
 		file.close()
 

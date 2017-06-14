@@ -67,7 +67,7 @@ class TTS:
 			env = self.get_random_sub_environment(agent_loc,complete_environment)
 		else:
 			env = self.get_max2(self.naive_t,mcts)
-			print "choose over", len(self.naive_t), "sub-environments and found: ", mcts.arg_max_reward(env.get_total_state())
+			#print "choose over", len(self.naive_t), "sub-environments and found: ", mcts.arg_max_reward(env.get_total_state())
 
 
 
@@ -216,6 +216,7 @@ class TTS:
 		sub_environment.set_random_region_list(environment_classes.get_region(agent_loc[0],agent_loc[1]),self.L)
 		
 		if complete_environment.collective_trajectories_message is not None:
+			#print complete_environment.collective_trajectories_message
 			for agent_trajectory in complete_environment.collective_trajectories_message.agent_trajectory:
 				if len(sub_environment.interaction_set)<self.max_interaction_num:
 					for r in sub_environment.region_list:

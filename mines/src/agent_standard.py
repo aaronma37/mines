@@ -31,6 +31,7 @@ from mines.msg import interaction_list as interaction_list_msg
 from mines.msg import collective_beta as collective_beta_msg
 from mines.msg import collective_interaction as collective_interaction_msg
 from mines.msg import collective_trajectories as collective_trajectories_msg
+from mines.msg import reset as reset_msg
 
 import environment_classes
 
@@ -147,15 +148,28 @@ class Simulator:
 	def __init__(self):
 		self.update_flag=False
 		self.reset_flag=False
+		self.trigger=False
+		self.over=False
 		self.complete_environment=environment_classes.Complete_Environment()
 		self.beta_set_message=beta_set_msg()
 		self.sleep_time=0.
 		self.a_step_time=a_step_time
+		self.agent_interaction_length=agent_trajectory_length
 
 	def environment_cb(self,env_msg):
 		self.complete_environment.update(env_msg)
 		self.complete_environment.modify(a.claimed_objective_sets.beta_hash)
 		self.complete_environment.update_from_agent(a)
+
+		if env_msg.trigger==rospy.get_name():
+			if self.over==False:
+				#print "trigger", rospy.get_name()
+				self.trigger=True
+				#print env_msg.step_time
+				self.a_step_time=env_msg.step_time
+				self.agent_interaction_length=env_msg.num_agent_traj
+		else:
+			self.trigger=False
 		self.update_flag=True
 
 	def update_environment(self):
@@ -185,15 +199,19 @@ class Simulator:
 			
 		alpha_pub.publish(alpha)
 
-	def reset_cb(self,data):
+	def reset_cb(self,reset_message):
 		#self.reset_flag=True
 		#self.reset_data=data
 		time.sleep(.5)
-		self.sleep_time=sleep_time
-		a.reset(f_path)
+		self.trigger=False
+		self.over=False
+		self.sleep_time=0
+		self.complete_environment=environment_classes.Complete_Environment()
+		a.reset(f_path,[reset_message.max_interaction_num])
+
 		a.x=50
 		a.y=50
-		time.sleep(.5)
+		#time.sleep(.5)
 		self.a_step_time+=time_increment
 
 
@@ -223,8 +241,9 @@ class Simulator:
 		UUV_Data.task_list=[]
 		UUV_Data.current_trajectory.task_trajectory=[]
 
-		if a.current_trajectory is None:
+		if a.current_trajectory is None or a.current_sub_environment is None:
 			return
+
 		for t in a.current_trajectory.task_list:
 			task_message=task_msg()
 			task_message.task=t.objectives[0][0]
@@ -238,13 +257,18 @@ class Simulator:
 		UUV_Data.current_trajectory.frame_id=rospy.get_name()
 		for i in range(len(a.current_sub_environment.region_list)):
 			region_message=region_msg()
-			region_message.x=a.current_sub_environment.region_list[i][0]
-			region_message.y=a.current_sub_environment.region_list[i][1]
+			try:
+				region_message.x=a.current_sub_environment.region_list[i][0]
+				region_message.y=a.current_sub_environment.region_list[i][1]
+			except IndexError:
+				''' '''
+
 			UUV_Data.current_trajectory.region_trajectory.append(region_message)
 		UUV_Data.expected_reward=a.expected_reward
 
 			
 		UUV_Data.current_trajectory.task_index=a.current_trajectory.current_index
+		UUV_Data.steps=a.think_step
 
 		for r in a.current_sub_environment.region_list:
 			region_message=region_msg()
@@ -256,7 +280,11 @@ class Simulator:
 
 
 	def send_messages(self):
-		pose_pub.publish(UUV_Data)
+		if len(UUV_Data.task_list)>0 and self.trigger==True:
+			pose_pub.publish(UUV_Data)
+			UUV_Data.task_list=[]
+			self.trigger=False
+			self.over=True
 
 		beta_message=a.claimed_objective_sets.owned_objectives
 		interaction_message=a.interaction_list.interaction_list
@@ -273,7 +301,7 @@ class Simulator:
 	def run(self):
 		while not rospy.is_shutdown():
 			start=time.time()
-			time.sleep(self.sleep_time)
+			#time.sleep(self.sleep_time)
 			self.sleep_time=0.
 			if a.available_flag is True or 1==1:
 				if self.update_flag is True:
@@ -281,21 +309,28 @@ class Simulator:
 				if self.reset_flag is True:
 					self.reset_fun(self.reset_data)
 					self.reset_flag=False
-				a.step(self.complete_environment,self.a_step_time/2.)
-				if test_case==False:
-					a.move(self.complete_environment,self.a_step_time/2.)
-				else:
-					#a.test_case_choose(self.complete_environment,self.a_step_time/2.)
-					a.test_case_move(agent_index,total_agents,self.complete_environment,self.a_step_time/2.)
-					#a.move(self.complete_environment,self.a_step_time/2.)	
 
+				if test_case==False:
+					a.step(self.complete_environment,self.a_step_time/2.)
+					a.move(self.complete_environment,self.a_step_time/2.)
+					to_wait = start-time.time() + regulation_time #self.a_step_time
+				else:
+					if self.trigger==True:
+					#a.test_case_choose(self.complete_environment,self.a_step_time/2.)
+						#print rospy.get_name(), " is beginning"
+						a.step(self.complete_environment,self.a_step_time)
+
+						a.test_case_move(agent_index,total_agents,self.complete_environment,self.a_step_time)
+					#a.move(self.complete_environment,self.a_step_time/2.)	
+						self.update_messages()
+						self.send_messages()
+						self.trigger=False
+						self.over=True
+					to_wait = .1
 				self.update_messages()
 				self.send_messages()
 				self.update_environment()
 
-
-
-			to_wait = start-time.time() + regulation_time #self.a_step_time
 		
 
 
@@ -318,7 +353,7 @@ def main(args):
 
 	sim = Simulator()
 	environment_sub =rospy.Subscriber('/environment', environment , sim.environment_cb)#CHANGE TO MATRIX
-	reset_sub =rospy.Subscriber('/reset', performance , sim.reset_cb)#CHANGE TO MATRIX
+	reset_sub =rospy.Subscriber('/reset', reset_msg , sim.reset_cb)#CHANGE TO MATRIX
 	restart_sub =rospy.Subscriber('/restart', performance , sim.restart_cb)#CHANGE TO MATRIX
 	#time.sleep(random.random()*5.)
 	collective_beta_sub =rospy.Subscriber('/Collective_beta', collective_beta_msg , sim.collective_beta_cb)#CHANGE TO MATRIX

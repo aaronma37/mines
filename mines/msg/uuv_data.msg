@@ -8,6 +8,7 @@ int32 time_away_from_network
 string current_state
 
 float64 expected_reward
+int32 steps
 
 mines/trajectory current_trajectory
 

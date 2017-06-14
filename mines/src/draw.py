@@ -33,7 +33,10 @@ objective_colors={}
 objective_colors["mine"]=(1, 0, 0)
 objective_colors["service"]=(.5, .5, .5)
 objective_colors["service2"]=(0, 1, .5)
-
+objective_colors["service3"]=(.5, 1, .5)
+objective_colors["service4"]=(1, 1, .5)
+objective_colors["service5"]=(0, .5, .5)
+objective_colors["service6"]=(.25, .25, .5)
 
 class gui_data:
 	def __init__(self):

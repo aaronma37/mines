@@ -59,6 +59,7 @@ def get_reward_at_region(save_state,objective_type,agent_region):
 
 def string_evolve_full(s,obj,o_r,agent_region):
     s2 = ''
+    print o_r,agent_region
     c=0
     og_s=s.split(',')
     for i in range(10):

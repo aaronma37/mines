@@ -76,7 +76,7 @@ class Solver:
                     r=0
                     t=11
                 else:
-                    print environment_classes.get_score_at_region(save_state,objective_type,agent_location), "HERE"
+                    # print environment_classes.get_score_at_region(save_state,objective_type,agent_location), "HERE"
                     t=task_classes.tau_objective(environment_classes.get_score_at_region(save_state,objective_type,agent_location),objective_type)
                     r = environment_classes.get_reward_at_region(save_state,objective_type,agent_location)
 # 		if objective_type!="wait" and objective_type!="travel":
@@ -125,9 +125,8 @@ class Solver:
                 objective_region=agent_location
                 agent_location=(agent_location[0]+transition_region[0],agent_location[1]+transition_region[1])
                 save_state_2=environment_classes.string_evolve_full(save_state,objective_type,objective_region,agent_location)
-                print r
 		r = math.pow(Gamma,t)*(r + self.search(save_state_2,depth+t,agent_location))
-                print r,t
+                # print save_state,'new', save_state_2
 		self.Q[save_state][action]+=(r-self.Q[save_state][action])/self.Na[save_state][action]
 
 

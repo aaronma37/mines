@@ -30,11 +30,11 @@
 <node pkg="mines" type="agent_standard.py" name="a1" output="screen">
 </node>
 
-/* <node pkg="mines" type="agent_standard.py" name="a2" output="screen"> */
-/* </node> */
+<node pkg="mines" type="agent_standard.py" name="a2" output="screen">
+</node>
 
-/* <node pkg="mines" type="agent_standard.py" name="a3" output="screen"> */
-/* </node> */
+<node pkg="mines" type="agent_standard.py" name="a3" output="screen">
+</node>
 
 
 

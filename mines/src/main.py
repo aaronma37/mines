@@ -251,7 +251,7 @@ class Simulator:
 
 		for a in self.agent_dict.values():
 			if int(a.think_step)<1:
-				if a.id=="/a3":
+				if a.id=="/a1":
 					self.test_counter-=1
 					print "FAILURE"
 					return
@@ -260,7 +260,7 @@ class Simulator:
 		self.think_steps[self.num_agent_traj][self.var_step_time].append(0.)
 		for a in self.agent_dict.values():
 			if test_type=="famine":
-				if a.id=="/a3":
+				if a.id=="/a1":
 					self.expected_final_performance[self.num_agent_traj][self.var_step_time][-1]+=a.expected_reward
 					self.think_steps[self.num_agent_traj][self.var_step_time][-1]+=a.think_step
 			else:

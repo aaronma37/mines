@@ -15,7 +15,7 @@
 
 <param name="test_type" type="string" value="all"/>
 
-<param name="agent_trajectory_length" type="double" value="4"/>
+<param name="agent_trajectory_length" type="double" value="10"/>
 <param name="total_trial_time" type="double" value="120"/>
 <param name="load_q" type="bool" value="False"/>
 <param name="write_q" type="bool" value="True"/>

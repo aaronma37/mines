@@ -17,36 +17,73 @@ pd[1.0]='s'
 pd[2.0]=','
 
 
+n=0.0
 
-for n in N_LIST:
-	data[n]={}
-	trials[n]={}
-	for t in t_values:
-		try:
-			f = open('/home/aaron/mines_temp/parameters_1_'+ str(n) +'_' + str(t) +'.txt','r')
-		except IOError:
-	#		print ('results_'+ str(n) +'_' + str(t) +'.txt'), " not found"
-			continue	
-		c=0
-		data[n][t]=[]
-		trials[n][t]=[]
-		for line in f:
-			l = line.split(',')
-	#		print "length:", len(l)
-			if c==0:
-				for score in l:
-					try:				
-						data[n][t].append(float(score))
-					except ValueError:
-						''' '''
-			else:
-				for score in l:
-					try:				
-						trials[n][t].append(float(score))
-		#				print score		
-					except ValueError:
-						''' '''
-			c+=1		
+data[1.0]={}
+trials[1.0]={}
+
+for t in t_values:
+        try:
+                f = open('/home/aaron/mines_temp/parameters_1_'+ str(n) +'_' + str(t) +'.txt','r')
+        except IOError:
+#		print ('results_'+ str(n) +'_' + str(t) +'.txt'), " not found"
+                continue	
+        c=0
+        data[1.0][t]=[]
+        trials[1.0][t]=[]
+        for line in f:
+                l = line.split(',')
+#		print "length:", len(l)
+                if c==0:
+                        for score in l:
+                                try:				
+                                        data[1.0][t].append(float(score))
+                                except ValueError:
+                                        ''' '''
+                else:
+                        for score in l:
+                                try:				
+                                        trials[1.0][t].append(float(score))
+        #				print score		
+                                except ValueError:
+                                        ''' '''
+                c+=1		
+
+
+
+n=0.0
+
+data[n]={}
+trials[n]={}
+for t in t_values:
+        try:
+                f = open('/home/aaron/mines_temp/parameter_2_'+ str(n) +'_' + str(t) +'.txt','r')
+        except IOError:
+#		print ('results_'+ str(n) +'_' + str(t) +'.txt'), " not found"
+                continue	
+        c=0
+        data[n][t]=[]
+        trials[n][t]=[]
+        for line in f:
+                l = line.split(',')
+#		print "length:", len(l)
+                if c==0:
+                        for score in l:
+                                try:				
+                                        data[n][t].append(float(score))
+                                except ValueError:
+                                        ''' '''
+                else:
+                        for score in l:
+                                try:				
+                                        trials[n][t].append(float(score))
+        #				print score		
+                                except ValueError:
+                                        ''' '''
+                c+=1		
+
+
+
 
 Q={}
 Q_trials={}

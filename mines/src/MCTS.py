@@ -54,7 +54,7 @@ class Solver:
 
 	def search(self,save_state,depth):
 
-		if environment_classes.get_k_from_string(save_state)==0:
+		if environment_classes.get_k_from_string(save_state)==0 or depth>100:
 			return 0
 
 		#save_state = sub_environment.get_total_state() #sub_environment.state + sub_environment.interaction_state

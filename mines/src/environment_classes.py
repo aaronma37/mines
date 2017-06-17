@@ -15,21 +15,21 @@ size=10
 
 objective_parameter_list=[]
 objective_map={}
-objective_parameter_list.append(('random',1,"mine",1))
-objective_parameter_list.append(('random',1,"service",1))
-objective_parameter_list.append(('random',1,"service2",1))
-objective_parameter_list.append(('random',1,"obj3",1))
-objective_parameter_list.append(('random',1,"obj4",1))
-objective_parameter_list.append(('random',1,"obj5",1))
+objective_parameter_list.append(('test1',1,"mine",1))
+objective_parameter_list.append(('test2',1,"service",1))
+objective_parameter_list.append(('test3',1,"service2",1))
+#objective_parameter_list.append(('test1',1,"obj3",1))
+#objective_parameter_list.append(('test2',1,"obj4",1))
+#objective_parameter_list.append(('test3',1,"obj5",1))
 #objective_parameter_list.append(('fourth',1,"service3",1))
 #objective_parameter_list.append(('test5',1,"service4",1))
 #objective_parameter_list.append(('test6',1,"service5",1))
 objective_map["mine"]=0
 objective_map["service"]=1
 objective_map["service2"]=2
-objective_map["obj3"]=3
-objective_map["obj4"]=4
-objective_map["obj5"]=5
+#objective_map["obj3"]=3
+#objective_map["obj4"]=4
+#objective_map["obj5"]=5
 
 
 
@@ -706,7 +706,40 @@ class Complete_Environment:
 		#		obj.sub_objectives.delete(sub_objective)
 
 
+	def easy_gen(self):
+		env_msg=environment_msg()
+		env_msg.frame_id="default"
+		
+		env_msg.objective=[]
 
+		for o in self.objective_list:
+			env_msg.objective.append(objective_msg())
+			env_msg.objective[-1].frame_id=o.frame_id
+			env_msg.objective[-1].param1=o.distribution_type
+			env_msg.objective[-1].param2=o.granularity
+
+			for so in o.sub_objectives:
+				env_msg.objective[-1].subobjective.append(subobjective_msg())
+				env_msg.objective[-1].subobjective[-1].x=so.x
+				env_msg.objective[-1].subobjective[-1].y=so.y
+				env_msg.objective[-1].subobjective[-1].rx=so.region[0]
+				env_msg.objective[-1].subobjective[-1].ry=so.region[1]
+
+
+		self.calculate_o_r_state()
+	
+
+		for o in self.objective_list:
+			for k,v in self.o_r_state[o.frame_id].items():
+				o_r_state_message=o_r_state_msg()
+				o_r_state_message.region.x=k[0]
+				o_r_state_message.region.y=k[1]
+				o_r_state_message.value=v
+				o_r_state_message.obj_type=o.frame_id
+
+				env_msg.o_r_state.append(o_r_state_message)
+
+		return env_msg
 
 
 	def generate_environment_msg(self,collective_trajectory_message,trigger_agent,num_agent_traj,step_time):

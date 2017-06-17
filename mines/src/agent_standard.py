@@ -157,6 +157,11 @@ class Simulator:
 		self.a_step_time=a_step_time
 		self.agent_interaction_length=agent_trajectory_length
 
+
+		self.complete_environment.reset()
+		self.complete_environment.update(self.complete_environment.easy_gen())
+                a.step(self.complete_environment,pre_train_time)
+
 	def environment_cb(self,env_msg):
 		self.complete_environment.update(env_msg)
 		self.complete_environment.modify(a.claimed_objective_sets.beta_hash)
@@ -224,7 +229,6 @@ class Simulator:
 		a.x=50	
 		a.y=50	
 
-		print "HEREERE"
 		
 	def restart_cb(self,data):
 		#a.restart(f_path)
@@ -283,6 +287,7 @@ class Simulator:
 
 
         def request_pre_train(self,pt_msg):
+	    print "request_pre_"
             if pt_msg.data==True:
                 a.step(self.complete_environment,pre_train_time)
 
@@ -346,7 +351,6 @@ class Simulator:
 
 			if to_wait >0:
 				time.sleep(to_wait)
-
 
 
 		

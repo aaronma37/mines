@@ -23,7 +23,7 @@ for n in N_LIST:
 	trials[n]={}
 	for t in t_values:
 		try:
-			f = open('/home/aaron/mines_temp/parameters_1_'+ str(n) +'_' + str(t) +'.txt','r')
+			f = open('/home/aaron/mines_temp/single_ddr_'+ str(n) +'_' + str(t) +'.txt','r')
 		except IOError:
 	#		print ('results_'+ str(n) +'_' + str(t) +'.txt'), " not found"
 			continue	

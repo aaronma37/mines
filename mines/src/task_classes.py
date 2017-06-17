@@ -26,7 +26,7 @@ def tau_objective(score,obj_type):
 	try:	
          	int(score)
     	except ValueError:
-        	#print("Oops!  That was no valid number.  Try again..."),score
+        	print("Oops!  That was no valid number.  Try again..."),score
 		return 1000
 
 	if obj_type=="wait":
@@ -47,7 +47,7 @@ def coupled_tau_objective(score,obj_type):
 	try:	
          	int(score)
     	except ValueError:
-        	#print("Oops!  That was no valid number.  Try again..."),score
+        	print("Oops!  That was no valid number.  Try again..."),score
 		return 1000
 
 	if obj_type=="wait":
@@ -103,7 +103,7 @@ def tau(save_state,obj_type):
 	if obj_type=="travel":
 		return 7
 	if int(score)==0:
-		return 1000
+		return 7
 	elif int(score)==1:
 		return 15
 	elif int(score)==2:

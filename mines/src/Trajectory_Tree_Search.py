@@ -178,6 +178,7 @@ class TTS:
 			return False
 
 		for sub_env in T:
+			print mcts.arg_max_reward(sub_env.get_total_state())
 			if mcts.arg_max_reward(sub_env.get_total_state()) > max_expected:
 				best_env=sub_env
 				max_expected=mcts.arg_max_reward(sub_env.get_total_state())
@@ -215,14 +216,14 @@ class TTS:
 		sub_environment=environment_classes.Sub_Environment()
 		sub_environment.set_random_region_list(environment_classes.get_region(agent_loc[0],agent_loc[1]),self.L)
 		
-		if complete_environment.collective_trajectories_message is not None:
-			#print complete_environment.collective_trajectories_message
-			for agent_trajectory in complete_environment.collective_trajectories_message.agent_trajectory:
-				if len(sub_environment.interaction_set)<self.max_interaction_num:
-					for r in sub_environment.region_list:
-						for region in agent_trajectory.region_trajectory:
-							if r[0]==region.x and r[1]==region.y:
-								sub_environment.interaction_set.add(agent_trajectory.frame_id)	
+	#	if complete_environment.collective_trajectories_message is not None:
+		#	#print complete_environment.collective_trajectories_message
+		#	for agent_trajectory in complete_environment.collective_trajectories_message.agent_trajectory:
+		#		if len(sub_environment.interaction_set)<self.max_interaction_num:
+		#			for r in sub_environment.region_list:
+		#				for region in agent_trajectory.region_trajectory:
+		#					if r[0]==region.x and r[1]==region.y:
+		#						sub_environment.interaction_set.add(agent_trajectory.frame_id)	
 		
 						
 

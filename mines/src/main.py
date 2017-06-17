@@ -56,7 +56,7 @@ total_time=regulation_time*agent_policy_steps
 
 rospy.init_node('main', anonymous=True)
 env_pub =rospy.Publisher('/environment', environment, queue_size=100)
-pre_train_pub = rospy.Publisher('pt', Bool, queue_size=1)
+pre_train_pub = rospy.Publisher('/pt', Bool, queue_size=1)
 reset_publisher = rospy.Publisher('/reset', reset_msg, queue_size=100)#CHANGE TO MATRIX
 restart_publisher = rospy.Publisher('/restart', performance, queue_size=100)#CHANGE TO MATRIX
 

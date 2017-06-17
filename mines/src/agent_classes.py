@@ -226,6 +226,19 @@ class Agent:
 		self.available_flag=True
 
 
+	def step_test(self,complete_environment,time_to_work):
+		self.current_step_time=time_to_work
+		if self.traj_flag==True:
+			self.tts.reset()
+			self.traj_flag=False	
+		if self.mcts_flag==True:
+			self.mcts.reset()
+			self.mcts_flag=False
+		self.think_step,max_r = self.mcts.execute_test(self,complete_environment,self.tts,time_to_work)
+                if max_r >self.max_reward:
+                    self.max_reward=max_r
+                
+
 	def step(self,complete_environment,time_to_work):
 		self.current_step_time=time_to_work
 		if self.traj_flag==True:
@@ -277,7 +290,7 @@ class Agent:
 		sub_environment,trajectory,expected_reward = self.tts.execute((self.x,self.y),complete_environment,time_to_work,self.mcts)
 		self.current_trajectory=trajectory
 		self.current_sub_environment=sub_environment
-		self.expected_reward=int(self.max_reward)
+		self.expected_reward=self.max_reward
 		#print self.id		
 		#print self.current_trajectory.task_names
 		#print self.current_sub_environment.interaction_set

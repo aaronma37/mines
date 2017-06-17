@@ -3,6 +3,7 @@
 
 from random import randint
 import random
+import copy
 import numpy as np
 import math
 from sets import Set
@@ -31,10 +32,38 @@ class Solver:
 
 
 	def reset(self):
+                return
 		self.N={}
 		self.Na={}#v.Na()
 		self.Q={}#v.Q()
 
+
+
+
+	def execute_test(self,agent,complete_environment,tts,time_to_work):
+		start = time.time()
+		end = start
+		num=0.
+                max_reward=0
+
+                Q=copy.deepcopy(self.Q)
+                N=copy.deepcopy(self.N)
+                Na=copy.deepcopy(self.Na)
+
+		while end - start < time_to_work:
+			#sub_environment=tts.get_random_sub_environment((agent.x,agent.y),complete_environment)
+			#print sub_environment.get_total_state(), sub_environment.region_list
+                        r =  self.search_test(complete_environment.get_full_state(environment_classes.get_region(agent.x,agent.y)),0,environment_classes.get_region(agent.x,agent.y),Q,N,Na)  
+                        if r > max_reward:
+                            max_reward=r
+
+			num+=1.
+			end = time.time()
+
+                        
+			#self.save_pre_Q(sub_environment)
+		# print max_reward
+		return num,max_reward
 
 
 	def execute(self,agent,complete_environment,tts,time_to_work):
@@ -56,6 +85,43 @@ class Solver:
 			#self.save_pre_Q(sub_environment)
 		# print max_reward
 		return num,max_reward
+
+
+
+        def search_test(self,save_state,depth,agent_location,Q,N,Na):
+
+                if depth>100:
+			return 0
+
+                action= self.arg_max_ucb_full(save_state)
+		self.check_variables_init_test(Q,N,Na,save_state,action)
+                action_string=action.split(",")
+                objective_type=action_string[2]
+                transition_region=(int(action_string[0]),int(action_string[1]))
+                if objective_type=='wait':
+                    return 0
+                elif objective_type=='travel':
+                    r=0
+                    t=11
+                else:
+                    # print environment_classes.get_score_at_region(save_state,objective_type,agent_location), "HERE"
+                    t=task_classes.tau_objective(environment_classes.get_score_at_region(save_state,objective_type,agent_location),objective_type)
+                    r = environment_classes.get_reward_at_region(save_state,objective_type,agent_location)
+                objective_region=agent_location
+                agent_location=(agent_location[0]+transition_region[0],agent_location[1]+transition_region[1])
+                save_state_2=environment_classes.string_evolve_full(save_state,objective_type,objective_region,agent_location)
+		r = math.pow(Gamma,t)*(r + self.search_test(save_state_2,depth+t,agent_location,Q,N,Na))
+		Q[save_state][action]+=(r-Q[save_state][action])/Na[save_state][action]
+
+
+		return r
+
+
+
+
+
+
+
 
 	def search(self,save_state,depth,agent_location):
 
@@ -170,6 +236,29 @@ class Solver:
 		
 		
 	
+
+	def check_variables_init_test(self,Q,N,Na,save_state,objective_type):
+
+		if N.get(save_state) == None:
+			N[save_state] = 1.
+		else:
+			N[save_state]+= 1.
+
+		if Na.get(save_state)==None:
+			Na[save_state]={}
+			Na[save_state][objective_type]=1.
+		elif Na[save_state].get(objective_type)==None:
+			Na[save_state][objective_type]=1.
+		else:
+			Na[save_state][objective_type]+=1.
+
+		if Q.get(save_state) == None:
+			Q[save_state]={}
+			Q[save_state][objective_type]=0.
+		elif Q[save_state].get(objective_type)==None:
+			Q[save_state][objective_type]=0.
+		
+
 
 	def check_variables_init(self,save_state,objective_type):
 

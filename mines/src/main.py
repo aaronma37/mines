@@ -56,7 +56,7 @@ total_time=regulation_time*agent_policy_steps
 
 rospy.init_node('main', anonymous=True)
 env_pub =rospy.Publisher('/environment', environment, queue_size=100)
-
+pre_train_pub = rospy.Publisher('pt', Bool, queue_size=1)
 reset_publisher = rospy.Publisher('/reset', reset_msg, queue_size=100)#CHANGE TO MATRIX
 restart_publisher = rospy.Publisher('/restart', performance, queue_size=100)#CHANGE TO MATRIX
 
@@ -117,7 +117,7 @@ class Simulator:
 
 		for k in range(100):
 			for t in t_list:
-				for n in range(3):
+				for n in range(1):
 					self.map_for_test.append((n,t))
 
 		#self.map_for_test=[(0,.001),(0,.003162),(0,.01),(0,.03162),(0,.1),(0,.3162),(0,1.),(0,3.162),(0,10.),(0,31.62),(0,100.)]
@@ -350,7 +350,10 @@ class Simulator:
 		self.wait_flag=False
 		self.complete_environment.reset()
 		self.sim_count=0
-
+                pt_msg=Bool()
+                pt_msg.data=True
+                pre_train_pub.publish(pt_msg)
+                time.sleep(10) 
 		while not rospy.is_shutdown():
 			draw.render_once(self.complete_environment,self.agent_dict,gd,self.reset_pub,time.time()-start2)
 

@@ -1,4 +1,5 @@
 <launch>
+<param name="pre_train_time" type ="double" value="10"/>
 <param name="multi_agent_model" type="string" value="pure"/>
 <param name="number_of_mines" type="int" value="10"/>
 <param name="event_time_horizon" type="int" value="60"/>
@@ -9,7 +10,7 @@
 <param name="time_increment" type="double" value="0"/>
 <param name="regulation_time" type="double" value=".1"/>
 
-<param name="testing_parameters_file" type="string" value="parameters_1"/>
+<param name="testing_parameters_file" type="string" value="single_mcts"/>
 
 <param name="agent_interaction_length" type="double" value="0"/>
 
@@ -31,11 +32,7 @@
 <node pkg="mines" type="agent_standard.py" name="a1" output="screen">
 </node>
 
-<node pkg="mines" type="agent_standard.py" name="a2" output="screen">
-</node>
 
-<node pkg="mines" type="agent_standard.py" name="a3" output="screen">
-</node>
 
 
 

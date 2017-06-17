@@ -37,6 +37,7 @@ import environment_classes
 
 ''' This is the ros file that runs an agent'''
 
+pre_train_time = rospy.get_param("/pre_train_time")
 f_path = rospy.get_param("/temp_file_path")
 regulation_time = rospy.get_param("/regulation_time")
 time_increment = rospy.get_param("/time_increment")
@@ -281,6 +282,10 @@ class Simulator:
 		a.update_claimed_objectives()
 
 
+        def request_pre_train(self,pt_msg):
+            if pt_msg.data==True:
+                a.step(self.complete_environment,pre_train_time)
+
 	def send_messages(self):
 		if len(UUV_Data.task_list)>0 and self.trigger==True:
 			pose_pub.publish(UUV_Data)
@@ -320,7 +325,7 @@ class Simulator:
 					if self.trigger==True:
 					#a.test_case_choose(self.complete_environment,self.a_step_time/2.)
 						#print rospy.get_name(), " is beginning"
-						a.step(self.complete_environment,self.a_step_time)
+						a.step_test(self.complete_environment,self.a_step_time)
 
 						a.test_case_move(agent_index,total_agents,self.complete_environment,self.a_step_time)
 					#a.move(self.complete_environment,self.a_step_time/2.)	
@@ -354,6 +359,7 @@ def main(args):
 	time.sleep(sleep_time)
 
 	sim = Simulator()
+        pt_sub = rospy.Subscriber('/pt',Bool,sim.request_pre_train)
 	environment_sub =rospy.Subscriber('/environment', environment , sim.environment_cb)#CHANGE TO MATRIX
 	reset_sub =rospy.Subscriber('/reset', reset_msg , sim.reset_cb)#CHANGE TO MATRIX
 	restart_sub =rospy.Subscriber('/restart', performance , sim.restart_cb)#CHANGE TO MATRIX

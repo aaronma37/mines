@@ -10,7 +10,7 @@
 <param name="time_increment" type="double" value="0"/>
 <param name="regulation_time" type="double" value=".1"/>
 
-<param name="testing_parameters_file" type="string" value="single_ddr"/>
+<param name="testing_parameters_file" type="string" value="single_ddr_ses_"/>
 
 <param name="agent_interaction_length" type="double" value="0"/>
 
@@ -18,7 +18,7 @@
 
 <param name="test_type" type="string" value="all"/>
 
-<param name="agent_trajectory_length" type="double" value="10"/>
+<param name="agent_trajectory_length" type="double" value="4"/>
 <param name="total_trial_time" type="double" value="120"/>
 <param name="load_q" type="bool" value="False"/>
 <param name="write_q" type="bool" value="True"/>

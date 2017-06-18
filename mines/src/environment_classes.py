@@ -15,21 +15,21 @@ size=10
 
 objective_parameter_list=[]
 objective_map={}
-objective_parameter_list.append(('test1',1,"mine",1))
-objective_parameter_list.append(('test2',1,"service",1))
-objective_parameter_list.append(('test3',1,"service2",1))
-#objective_parameter_list.append(('test1',1,"obj3",1))
-#objective_parameter_list.append(('test2',1,"obj4",1))
-#objective_parameter_list.append(('test3',1,"obj5",1))
+objective_parameter_list.append(('random',1,"mine",1))
+objective_parameter_list.append(('random',1,"service",1))
+objective_parameter_list.append(('random',1,"service2",1))
+objective_parameter_list.append(('random',1,"obj3",1))
+objective_parameter_list.append(('random',1,"obj4",1))
+objective_parameter_list.append(('random',1,"obj5",1))
 #objective_parameter_list.append(('fourth',1,"service3",1))
 #objective_parameter_list.append(('test5',1,"service4",1))
 #objective_parameter_list.append(('test6',1,"service5",1))
 objective_map["mine"]=0
 objective_map["service"]=1
 objective_map["service2"]=2
-#objective_map["obj3"]=3
-#objective_map["obj4"]=4
-#objective_map["obj5"]=5
+objective_map["obj3"]=3
+objective_map["obj4"]=4
+objective_map["obj5"]=5
 
 
 

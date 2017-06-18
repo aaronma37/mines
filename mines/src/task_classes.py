@@ -89,8 +89,8 @@ def coupled_tau(save_state,obj_type):
 
 def tau(save_state,obj_type):
 
-	# score=environment_classes.get_objective_state_from_string(0,save_state,obj_type)
-        score=0
+	score=environment_classes.get_objective_state_from_string(0,save_state,obj_type)
+
 
 	try:	
          	int(score)
@@ -103,7 +103,7 @@ def tau(save_state,obj_type):
 	if obj_type=="travel":
 		return 7
 	if int(score)==0:
-		return 7
+		return 1000
 	elif int(score)==1:
 		return 15
 	elif int(score)==2:

@@ -25,8 +25,13 @@ class TTS:
 		self.T_full=set()
 		self.max_interaction_num=max_interaction_num
 
+		self.W=set()
+		self.Wp=set()
+
 
 	def reset(self):
+		self.W.clear()
+		self.Wp.clear()
 		self.N={}
 		self.Q={}
 		self.T.clear()
@@ -211,6 +216,9 @@ class TTS:
 		if dict_name.get(state) == None:
 			dict_name[state] = default
 
+	def empty_environments(self):
+		self.naive_t.clear()
+
 	def get_random_sub_environment(self,agent_loc,complete_environment):
 
 		sub_environment=environment_classes.Sub_Environment()
@@ -232,6 +240,36 @@ class TTS:
 		self.naive_t.add(sub_environment)
 		#self.naive_Q[sub_environment.state]
 		return sub_environment
+
+	def SubEnvSearch(self,agent_loc,complete_environment,mcts):
+		score=0
+		best_sub_env=None		
+		for sub_env in self.Wp:
+			if mcts.QE[sub_env.get_total_state] > score:
+				score=mcts.QE[sub_env.get_total_state]
+				best_sub_env=sub_env
+
+		return get_next_best_sub_environment(self,best_sub_env,agent_loc,complete_environment)
+
+
+	def get_next_best_sub_environment(self,agent_loc,complete_environment):
+		return		
+		#self.Wp.add(environment_classes.get_valid_partial_environments(complete_environment))
+		#get list of sub envs
+		#add sub env list to partial set
+		#remove current from partial set
+		#find best in list of sub envs
+
+		#return if || init sub
+
+		#else repeat
+						
+
+
+		#sub_environment.update_state(complete_environment)
+		#self.naive_t.add(sub_environment)
+		#self.naive_Q[sub_environment.state]
+		#return sub_environment
 
 	def get_trajectory(self,save_state,mcts,env,complete_environment):
 		save_state_copy=save_state	

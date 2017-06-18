@@ -30,6 +30,10 @@ class Solver:
 		self.great3=[]
 		self.steps=[]
 
+		self.QE={}
+		self.NE={}
+		
+
 
 	def reset(self):
                 return
@@ -41,13 +45,15 @@ class Solver:
 
 
 	def execute_test(self,agent,complete_environment,tts,time_to_work):
-		start = time.time()
-		end = start
-		num=0.
 
+		num=0.
+		tts.empty_environments()
                 Q=copy.deepcopy(self.Q)
                 N=copy.deepcopy(self.N)
                 Na=copy.deepcopy(self.Na)
+		start = time.time()
+		end = start
+
 		while end - start < time_to_work:
 			sub_environment=tts.get_random_sub_environment((agent.x,agent.y),complete_environment)
                       #  self.search(sub_environment.get_total_state(),0)
@@ -196,14 +202,45 @@ class Solver:
 
 			save_state_2=environment_classes.string_evolve(save_state,objective_type)
 			save_state_2=environment_classes.modify_interact_string(save_state_2,interact_string)
-			print r, t, objective_type
+
 			r = math.pow(Gamma,t)*(r + self.search(save_state_2,depth+t))
 
 			self.Q[save_state][objective_type]+=(r-self.Q[save_state][objective_type])/self.Na[save_state][objective_type]
+			
+			#self.updateEValues(save_state,r)
 
 
 			return r
 
+	def updateEValues(self,save_state,r):
+		for s in self.cut_save_states(save_state):
+			if self.NE.get(s) is None:
+				self.NE[s]=1
+			else:
+				self.NE[s]+=1
+			if self.QE.get(s) is None:
+				self.QE[s]=r
+			else:
+				self.QE[s]+=(r-self.QE[s])/self.NE[s]				
+
+	def cut_save_states(self,save_state):
+		s=save_state.split('.')	
+		s_list=[]
+		ends=str(s[-1]).split(',')
+		h=''
+		for i in range(len(s)-1):
+			h=''
+
+			for j in range(i):
+				h=h+str(s[j])+'.'
+			h=h+'|'
+			
+			for j in range(i):
+
+				h=h+str(ends[j+1])+','
+			h=h+'|'
+			s_list.append(h)
+		return s_list
 
 
 	def estimate(self,initial_t,interact_string_by_agent,interaction_locations):
@@ -356,7 +393,7 @@ class Solver:
 			self.Q_avg[a][b]={}
 
 
-		file = open(fp+'/single_ddr_'+str(a)+'_'+str(b)+'.txt','w')
+		file = open(fp+'/single_ddr_q_'+str(a)+'_'+str(b)+'.txt','w')
 		for s,q in self.Q.items():
 			if self.Q_avg[a][b].get(s) is None:
 				self.Q_avg[a][b][s]={}

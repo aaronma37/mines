@@ -7,7 +7,7 @@ import time
 
 data={}
 trials={}
-N_LIST=[0.0,1.0,2.0]
+N_LIST=[0.0]
 
 t_values=[.0001,.0003162,.001,.003162,.01,.03162,.1,.3162,1.,3.162]
 
@@ -233,11 +233,11 @@ plt.rc('font', **font)
 yerr=error_list[n]
 fig = plt.figure(figsize=(7,6))
 fig2 = plt.figure(figsize=(7,6))
-fig3 = plt.figure(figsize=(7,6))
+# fig3 = plt.figure(figsize=(7,6))
 
 ax = fig.add_subplot(1, 1, 1)
 ax2 = fig2.add_subplot(1, 1, 1)
-ax3 = fig3.add_subplot(1, 1, 1)
+# ax3 = fig3.add_subplot(1, 1, 1)
 ax.set_xscale('log')
 ax.set_ylabel('Discounted reward')
 ax.set_xlabel('Time per action(s)')
@@ -253,19 +253,19 @@ ax2.set_xlabel('Simulations')
 # ax2.set_ylim(0,1)
 ax2.grid(True)
 
-ax3.set_xscale('log')
-ax3.set_ylabel('Q ratio')
-ax3.set_xlabel('Trials')
-ax3.set_title('Q convergence')
+# ax3.set_xscale('log')
+# ax3.set_ylabel('Q ratio')
+# ax3.set_xlabel('Trials')
+# ax3.set_title('Q convergence')
 # ax2.set_ylim(0,1)
-ax3.grid(True)
+# ax3.grid(True)
 
 line_colors=['r','c','b']
 plotter_symbols=['o','s','p']
 label1={}
 label1[N_LIST[0]]='N=0'
-label1[N_LIST[1]]='N=1'
-label1[N_LIST[2]]='N=2'
+# label1[N_LIST[1]]='N=1'
+# label1[N_LIST[2]]='N=2'
 ccc=0
 for n,q in data.items():
 
@@ -274,7 +274,7 @@ for n,q in data.items():
 	#plt.errorbar(x[n], mean_list[n], yerr=ucb_list[n], fmt='o')
 	ax.plot(x[n],  mean_list[n],label=label1[n],linewidth=2.0, marker=plotter_symbols[ccc],markersize=7,color=line_colors[ccc])
 	ax2.plot(trial_mean[n],  mean_list[n],label=label1[n],linewidth=2.0, marker=plotter_symbols[ccc],markersize=8,color=line_colors[ccc])
-	ax3.plot(x[n],  mean_q_error[n],label=label1[n],linewidth=2.0, marker=plotter_symbols[ccc],markersize=8,color=line_colors[ccc])
+	# ax3.plot(x[n],  mean_q_error[n],label=label1[n],linewidth=2.0, marker=plotter_symbols[ccc],markersize=8,color=line_colors[ccc])
         ccc+=1
 
 
@@ -285,7 +285,7 @@ legend2 = ax2.legend(loc='lower right', shadow=True, fontsize='x-large',frameon=
 # legend2.get_frame().set_facecolor('#00FFCC')
 
 
-legend3 = ax3.legend(loc='lower right', shadow=True, fontsize='x-large',frameon=False)
+# legend3 = ax3.legend(loc='lower right', shadow=True, fontsize='x-large',frameon=False)
 # legend3.get_frame().set_facecolor('#00FFCC')
 
 plt.show()

@@ -234,7 +234,7 @@ class Agent:
 		if self.mcts_flag==True:
 			self.mcts.reset()
 			self.mcts_flag=False
-		self.think_step = self.mcts.execute_test(self,complete_environment,self.tts,time_to_work)
+		self.think_step,self.expected_reward = self.mcts.execute_test(self,complete_environment,self.tts,time_to_work)
 
 	def step(self,complete_environment,time_to_work):
 		self.current_step_time=time_to_work
@@ -285,7 +285,7 @@ class Agent:
 		sub_environment,trajectory,expected_reward = self.tts.execute((self.x,self.y),complete_environment,time_to_work,self.mcts)
 		self.current_trajectory=trajectory
 		self.current_sub_environment=sub_environment
-		self.expected_reward=expected_reward
+		#self.expected_reward=expected_reward
 
 	def move(self,complete_environment,time_to_work):
 		self.steps+=1.

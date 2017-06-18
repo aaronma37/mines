@@ -32,11 +32,14 @@ class Solver:
 
 		self.QE={}
 		self.NE={}
+
+		self.temp_Q={}
+		self.temp_N={}
+		self.temp_Na={}
 		
 
 
 	def reset(self):
-                return
 		self.N={}
 		self.Na={}#v.Na()
 		self.Q={}#v.Q()
@@ -48,22 +51,25 @@ class Solver:
 
 		num=0.
 		tts.empty_environments()
-                Q=copy.deepcopy(self.Q)
-                N=copy.deepcopy(self.N)
-                Na=copy.deepcopy(self.Na)
+                self.temp_Q=copy.deepcopy(self.Q)
+                self.temp_N=copy.deepcopy(self.N)
+                self.temp_Na=copy.deepcopy(self.Na)
+		max_r=0
 		start = time.time()
 		end = start
 
 		while end - start < time_to_work:
 			sub_environment=tts.get_random_sub_environment((agent.x,agent.y),complete_environment)
                       #  self.search(sub_environment.get_total_state(),0)
-                        self.search_test(sub_environment.get_total_state(),0,Q,N,Na)
+                        r=self.search_test(sub_environment.get_total_state(),0,self.temp_Q,self.temp_N,self.temp_Na)
+			if r > max_r:
+				max_r=r
 			num+=1.
 			end = time.time()
 
 			#	self.save_pre_Q(sub_environment)
 		# print max_reward
-		return num
+		return num,max_r
 
 
 	def execute(self,agent,complete_environment,tts,time_to_work):
@@ -329,10 +335,10 @@ class Solver:
 
 
 	def arg_max_reward(self,state):
-		if self.Q.get(state)==None:
-			self.Q[state]={}
+		if self.temp_Q.get(state)==None:
+			self.temp_Q[state]={}
 
-		v=list(self.Q[state].values())
+		v=list(self.temp_Q[state].values())
 
 		if len(v)==0:
 			return 0
@@ -382,7 +388,7 @@ class Solver:
 
 
 	def ucb_from_state(self,r,n,na):
-		return r+1.94*math.sqrt(math.log(1+n)/(1+na))
+		return r+0*math.sqrt(math.log(1+n)/(1+na))
 
 	def write(self,fp,a,b):
 		if self.Q_avg.get(a) is None:

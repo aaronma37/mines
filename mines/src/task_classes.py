@@ -99,7 +99,7 @@ def tau(save_state,obj_type):
 		return 1000
 
 	if obj_type=="wait":
-		return 1000
+		return 7
 	if obj_type=="travel":
 		return 7
 	if int(score)==0:

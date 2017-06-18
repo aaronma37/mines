@@ -10,7 +10,7 @@
 <param name="time_increment" type="double" value="0"/>
 <param name="regulation_time" type="double" value=".1"/>
 
-<param name="testing_parameters_file" type="string" value="single_ddr_ses_"/>
+<param name="testing_parameters_file" type="string" value="single_ddr_train_10_"/>
 
 <param name="agent_interaction_length" type="double" value="0"/>
 

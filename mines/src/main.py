@@ -104,6 +104,7 @@ class Simulator:
 		self.complete_environment=environment_classes.Complete_Environment()
 		#self.map_for_test=[(1,.1),(1,.3162),(1,1.),(1,3.162),(1,10.),(1,31.62),(1,100.)]
 		t_list=[.0001,.0003162,.001,.003162,.01,.03162,.1,.3162,1.,3.162]#,10.]
+		#t_list=[10.]
 		self.map_for_test=[]
 		self.think_steps={}
 		self.expected_final_performance={}

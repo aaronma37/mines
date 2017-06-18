@@ -41,15 +41,16 @@ class Solver:
 
 
 	def execute_test(self,agent,complete_environment,tts,time_to_work):
-		start = time.time()
-		end = start
+
 		num=0.
                 max_reward=0
 
                 Q=copy.deepcopy(self.Q)
                 N=copy.deepcopy(self.N)
                 Na=copy.deepcopy(self.Na)
-
+		tts.empty_environments()
+		start = time.time()
+		end = start
 		while end - start < time_to_work:
 			#sub_environment=tts.get_random_sub_environment((agent.x,agent.y),complete_environment)
 			#print sub_environment.get_total_state(), sub_environment.region_list

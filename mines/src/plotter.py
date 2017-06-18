@@ -7,7 +7,7 @@ import time
 
 data={}
 trials={}
-N_LIST=[0.0,1.0,2.0]
+N_LIST=[0.0,1.0]
 
 t_values=[.0001,.0003162,.001,.003162,.01,.03162,.1,.3162,1.,3.162]
 
@@ -18,107 +18,140 @@ pd[2.0]=','
 
 
 
-for n in N_LIST:
-	data[n]={}
-	trials[n]={}
-	for t in t_values:
-		try:
-			f = open('/home/aaron/mines_temp/parameters_1_'+ str(n) +'_' + str(t) +'.txt','r')
-		except IOError:
-	#		print ('results_'+ str(n) +'_' + str(t) +'.txt'), " not found"
-			continue	
-		c=0
-		data[n][t]=[]
-		trials[n][t]=[]
-		for line in f:
-			l = line.split(',')
-	#		print "length:", len(l)
-			if c==0:
-				for score in l:
-					try:				
-						data[n][t].append(float(score))
-					except ValueError:
-						''' '''
-			else:
-				for score in l:
-					try:				
-						trials[n][t].append(float(score))
-		#				print score		
-					except ValueError:
-						''' '''
-			c+=1		
+n=0.0
+data[n]={}
+trials[n]={}
+for t in t_values:
+	try:
+		f = open('/home/aaron/mines_temp/single_mcts_'+ str(0.0) +'_' + str(t) +'.txt','r')
+	except IOError:
+#		print ('results_'+ str(n) +'_' + str(t) +'.txt'), " not found"
+		continue	
+	c=0
+	data[n][t]=[]
+	trials[n][t]=[]
+	for line in f:
+		l = line.split(',')
+#		print "length:", len(l)
+		if c==0:
+			for score in l:
+				try:				
+					data[n][t].append(float(score))
+				except ValueError:
+					''' '''
+		else:
+			for score in l:
+				try:				
+					trials[n][t].append(float(score))
+	#				print score		
+				except ValueError:
+					''' '''
+		c+=1
+
+n=1.0
+data[n]={}
+trials[n]={}
+for t in t_values:
+	try:
+		f = open('/home/aaron/mines_temp/single_ddr_'+ str(0.0) +'_' + str(t) +'.txt','r')
+	except IOError:
+#		print ('results_'+ str(n) +'_' + str(t) +'.txt'), " not found"
+		continue	
+	c=0
+	data[n][t]=[]
+	trials[n][t]=[]
+	for line in f:
+		l = line.split(',')
+#		print "length:", len(l)
+		if c==0:
+			for score in l:
+				try:				
+					data[n][t].append(float(score))
+				except ValueError:
+					''' '''
+		else:
+			for score in l:
+				try:				
+					trials[n][t].append(float(score))
+	#				print score		
+				except ValueError:
+					''' '''
+		c+=1
+
+
+		
 
 Q={}
 Q_trials={}
 
-for n in N_LIST:
-	Q[n]={}
-	#trials[n]={}
-	for t in t_values:
-		try:
-			f = open('/home/aaron/mines_temp/q_'+ str(int(n)) +'_' + str(t) +'.txt','r')
-		except IOError:
-			print ('/home/aaron/mines_temp/q_'+ str(int(n)) +'_' + str(t) +'.txt'), " not found"
-			continue	
-		Q[n][t]={}
-		#Q_trials[n][t]={}
-		for line in f:
-			l = line.split('*')
-			#print l, len(l)
-			if len(l)==4:
-				if Q[n][t].get(l[0]) is None:
-					Q[n][t][l[0]]={}
-					Q[n][t][l[0]][l[1]]=l[2]
-				elif Q[n][t][l[0]].get(l[1]) is None:
-					Q[n][t][l[0]][l[1]]=l[2]
-				else:	
-					Q[n][t][l[0]][l[1]]=l[2]
-					print 'error', n,t,l[0],l[1]
+#for n in N_LIST:
+#	Q[n]={}
+#	#trials[n]={}
+#	for t in t_values:
+#		try:
+#			f = open('/home/aaron/mines_temp/q_'+ str(int(n)) +'_' + str(t) +'.txt','r')
+#		except IOError:
+#			print ('/home/aaron/mines_temp/q_'+ str(int(n)) +'_' + str(t) +'.txt'), " not found"
+#			continue	
+#		Q[n][t]={}
+#		#Q_trials[n][t]={}
+#		for line in f:
+#			l = line.split('*')
+#			#print l, len(l)
+#			if len(l)==4:
+#				if Q[n][t].get(l[0]) is None:
+#					Q[n][t][l[0]]={}
+#					Q[n][t][l[0]][l[1]]=l[2]
+#				elif Q[n][t][l[0]].get(l[1]) is None:
+#					Q[n][t][l[0]][l[1]]=l[2]
+#				else:	
+#					Q[n][t][l[0]][l[1]]=l[2]
+#					print 'error', n,t,l[0],l[1]
 
 
 
 
-q_diff={}
-q_diff_list={}
-for n in N_LIST:
-	q_diff[n]={}
-	q_diff_list[n]={}
-	for t in t_values:
-		q_diff[n][t]={}	
-		q_diff_list[n][t]=[]
-		'''
-		for k,v in Q[n][t].items():
-			q_diff[n][t][k]={}
-			
-			for k2,v2 in v.items():
-				q_diff[n][t][k][k2]={}
-				if Q[n][t_values[-1]].get(k) is None:
-					#continue 
-					q_diff[n][t][k][k2]=1
-				elif Q[n][t_values[-1]][k].get(k2) is None:
-					#continue
-					q_diff[n][t][k][k2]=1
-				else:
-					
-					q_diff[n][t][k][k2]=abs(float(v2)-float(Q[n][t_values[-1]][k][k2]))
-				q_diff_list[n][t].append(q_diff[n][t][k][k2])
-	
-		'''
-
-		for k,v in Q[n][t_values[-1]].items():
-			q_diff[n][t][k]={}
-			for k2,v2 in v.items():
-				q_diff[n][t][k][k2]={}
-				if Q[n][t].get(k) is None:
-					#continue
-					q_diff[n][t][k][k2]=1
-				elif Q[n][t][k].get(k2) is None:
-					#continue
-					q_diff[n][t][k][k2]=1
-				else:
-					
-					q_diff[n][t][k][k2]=abs(float(v2)-float(Q[n][t][k][k2]))
-				q_diff_list[n][t].append(q_diff[n][t][k][k2])
+#q_diff={}
+#q_diff_list={}
+#for n in N_LIST:
+#	q_diff[n]={}
+#	q_diff_list[n]={}
+#	for t in t_values:
+#		q_diff[n][t]={}	
+#		q_diff_list[n][t]=[]
+#		'''
+#		for k,v in Q[n][t].items():
+#			q_diff[n][t][k]={}
+#			
+#			for k2,v2 in v.items():
+#				q_diff[n][t][k][k2]={}
+#				if Q[n][t_values[-1]].get(k) is None:
+#					#continue 
+#					q_diff[n][t][k][k2]=1
+#				elif Q[n][t_values[-1]][k].get(k2) is None:
+#					#continue
+#					q_diff[n][t][k][k2]=1
+#				else:
+#					
+#					q_diff[n][t][k][k2]=abs(float(v2)-float(Q[n][t_values[-1]][k][k2]))
+#				q_diff_list[n][t].append(q_diff[n][t][k][k2])
+#	
+#		'''
+#
+#		for k,v in Q[n][t_values[-1]].items():
+#			q_diff[n][t][k]={}
+#			for k2,v2 in v.items():
+#				q_diff[n][t][k][k2]={}
+#				if Q[n][t].get(k) is None:
+#					#continue
+#					q_diff[n][t][k][k2]=1
+#				elif Q[n][t][k].get(k2) is None:
+#					#continue
+#					q_diff[n][t][k][k2]=1
+#				else:
+#					
+#					q_diff[n][t][k][k2]=abs(float(v2)-float(Q[n][t][k][k2]))
+#				q_diff_list[n][t].append(q_diff[n][t][k][k2])
 		
 
 
@@ -222,7 +255,7 @@ for n, q in data.items():
 				error_list[n].append(std[n][t])
 				ucb_list[n].append(1.96*std[n][t]/math.sqrt(len(q[t])))
 				trial_mean[n].append(sum(trials[n][t])/len(trials[n][t]))
-				mean_q_error[n].append(sum(q_diff_list[n][t])/len(q_diff_list[n][t]))
+#				mean_q_error[n].append(sum(q_diff_list[n][t])/len(q_diff_list[n][t]))
 
 font = {'family' : 'normal',
                 'weight' : 'bold',
@@ -232,60 +265,60 @@ plt.rc('font', **font)
 
 yerr=error_list[n]
 fig = plt.figure(figsize=(7,6))
-fig2 = plt.figure(figsize=(7,6))
-fig3 = plt.figure(figsize=(7,6))
+#fig2 = plt.figure(figsize=(7,6))
+#fig3 = plt.figure(figsize=(7,6))
 
 ax = fig.add_subplot(1, 1, 1)
-ax2 = fig2.add_subplot(1, 1, 1)
-ax3 = fig3.add_subplot(1, 1, 1)
+#ax2 = fig2.add_subplot(1, 1, 1)
+#ax3 = fig3.add_subplot(1, 1, 1)
 ax.set_xscale('log')
 ax.set_ylabel('Discounted reward')
 ax.set_xlabel('Time per action(s)')
 #ax.set_title('Expected reward vs time')
-# ax.set_ylim(0,1)
+ax.set_ylim(0,1)
 ax.grid(True)
 
 
-ax2.set_xscale('log')
-ax2.set_ylabel('Discounted reward')
-ax2.set_xlabel('Simulations')
+#ax2.set_xscale('log')
+#ax2.set_ylabel('Discounted reward')
+#ax2.set_xlabel('Simulations')
 #ax2.set_title('Expected reward vs # trials')
 # ax2.set_ylim(0,1)
-ax2.grid(True)
+#ax2.grid(True)
 
-ax3.set_xscale('log')
-ax3.set_ylabel('Q ratio')
-ax3.set_xlabel('Trials')
-ax3.set_title('Q convergence')
+#ax3.set_xscale('log')
+#ax3.set_ylabel('Q ratio')
+#ax3.set_xlabel('Trials')
+#ax3.set_title('Q convergence')
 # ax2.set_ylim(0,1)
-ax3.grid(True)
+#ax3.grid(True)
 
 line_colors=['r','c','b']
 plotter_symbols=['o','s','p']
 label1={}
-label1[N_LIST[0]]='N=0'
-label1[N_LIST[1]]='N=1'
-label1[N_LIST[2]]='N=2'
+label1[N_LIST[0]]='MCTS'
+label1[N_LIST[1]]='DDRP'
+#label1[N_LIST[2]]='N=2'
 ccc=0
 for n,q in data.items():
 
 	#plt.plot(x[n], trial_mean[n])
-	ax.errorbar(x[n], mean_list[n], yerr=error_list[n], fmt='o')
-	#plt.errorbar(x[n], mean_list[n], yerr=ucb_list[n], fmt='o')
+	#ax.errorbar(x[n], mean_list[n], yerr=error_list[n], fmt='o')
+	ax.errorbar(x[n], mean_list[n], yerr=ucb_list[n], fmt='o')
 	ax.plot(x[n],  mean_list[n],label=label1[n],linewidth=2.0, marker=plotter_symbols[ccc],markersize=7,color=line_colors[ccc])
-	ax2.plot(trial_mean[n],  mean_list[n],label=label1[n],linewidth=2.0, marker=plotter_symbols[ccc],markersize=8,color=line_colors[ccc])
-	ax3.plot(x[n],  mean_q_error[n],label=label1[n],linewidth=2.0, marker=plotter_symbols[ccc],markersize=8,color=line_colors[ccc])
+#	ax2.plot(trial_mean[n],  mean_list[n],label=label1[n],linewidth=2.0, marker=plotter_symbols[ccc],markersize=8,color=line_colors[ccc])
+	#ax3.plot(x[n],  mean_q_error[n],label=label1[n],linewidth=2.0, marker=plotter_symbols[ccc],markersize=8,color=line_colors[ccc])
         ccc+=1
 
 
-legend = ax.legend(loc='lower right', shadow=True, fontsize='x-large',frameon=False)
+legend = ax.legend(loc='upper left', shadow=True, fontsize='x-large',frameon=False)
 # legend.get_frame().set_facecolor('#00FFCC')
 
-legend2 = ax2.legend(loc='lower right', shadow=True, fontsize='x-large',frameon=False)
+#legend2 = ax2.legend(loc='lower right', shadow=True, fontsize='x-large',frameon=False)
 # legend2.get_frame().set_facecolor('#00FFCC')
 
 
-legend3 = ax3.legend(loc='lower right', shadow=True, fontsize='x-large',frameon=False)
+#legend3 = ax3.legend(loc='lower right', shadow=True, fontsize='x-large',frameon=False)
 # legend3.get_frame().set_facecolor('#00FFCC')
 
 plt.show()

@@ -706,7 +706,40 @@ class Complete_Environment:
 		#		obj.sub_objectives.delete(sub_objective)
 
 
+	def easy_gen(self):
+		env_msg=environment_msg()
+		env_msg.frame_id="default"
+		
+		env_msg.objective=[]
 
+		for o in self.objective_list:
+			env_msg.objective.append(objective_msg())
+			env_msg.objective[-1].frame_id=o.frame_id
+			env_msg.objective[-1].param1=o.distribution_type
+			env_msg.objective[-1].param2=o.granularity
+
+			for so in o.sub_objectives:
+				env_msg.objective[-1].subobjective.append(subobjective_msg())
+				env_msg.objective[-1].subobjective[-1].x=so.x
+				env_msg.objective[-1].subobjective[-1].y=so.y
+				env_msg.objective[-1].subobjective[-1].rx=so.region[0]
+				env_msg.objective[-1].subobjective[-1].ry=so.region[1]
+
+
+		self.calculate_o_r_state()
+	
+
+		for o in self.objective_list:
+			for k,v in self.o_r_state[o.frame_id].items():
+				o_r_state_message=o_r_state_msg()
+				o_r_state_message.region.x=k[0]
+				o_r_state_message.region.y=k[1]
+				o_r_state_message.value=v
+				o_r_state_message.obj_type=o.frame_id
+
+				env_msg.o_r_state.append(o_r_state_message)
+
+		return env_msg
 
 
 	def generate_environment_msg(self,collective_trajectory_message,trigger_agent,num_agent_traj,step_time):

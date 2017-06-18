@@ -224,13 +224,16 @@ class TTS:
 							if r[0]==region.x and r[1]==region.y:
 								sub_environment.interaction_set.add(agent_trajectory.frame_id)	
 		
-						
+
 
 
 		sub_environment.update_state(complete_environment)
 		self.naive_t.add(sub_environment)
 		#self.naive_Q[sub_environment.state]
 		return sub_environment
+
+	def empty_environments(self):
+		self.naive_t.clear()		
 
 	def get_trajectory(self,save_state,mcts,env,complete_environment):
 		save_state_copy=save_state	

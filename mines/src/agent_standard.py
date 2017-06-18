@@ -157,6 +157,10 @@ class Simulator:
 		self.a_step_time=a_step_time
 		self.agent_interaction_length=agent_trajectory_length
 
+		self.complete_environment.reset()
+		self.complete_environment.update(self.complete_environment.easy_gen())
+                a.step(self.complete_environment,pre_train_time)
+
 	def environment_cb(self,env_msg):
 		self.complete_environment.update(env_msg)
 		self.complete_environment.modify(a.claimed_objective_sets.beta_hash)
@@ -359,7 +363,7 @@ def main(args):
 	time.sleep(sleep_time)
 
 	sim = Simulator()
-        pt_sub = rospy.Subscriber('/pt',Bool,sim.request_pre_train)
+
 	environment_sub =rospy.Subscriber('/environment', environment , sim.environment_cb)#CHANGE TO MATRIX
 	reset_sub =rospy.Subscriber('/reset', reset_msg , sim.reset_cb)#CHANGE TO MATRIX
 	restart_sub =rospy.Subscriber('/restart', performance , sim.restart_cb)#CHANGE TO MATRIX

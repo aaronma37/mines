@@ -61,6 +61,7 @@ class Solver:
 		while end - start < time_to_work:
 			sub_environment=tts.get_random_sub_environment((agent.x,agent.y),complete_environment)
                       #  self.search(sub_environment.get_total_state(),0)
+			print sub_environment.get_total_state()
                         r=self.search_test(sub_environment.get_total_state(),0,self.temp_Q,self.temp_N,self.temp_Na)
 			if r > max_r:
 				max_r=r
@@ -94,7 +95,7 @@ class Solver:
 
 
 	def search_test(self,save_state,depth,Q,N,Na):
-			print depth, 'df',environment_classes.get_k_from_string(save_state)
+			#print depth, 'df',environment_classes.get_k_from_string(save_state)
 			if environment_classes.get_k_from_string(save_state)==0 or depth>100:
 				return 0
 
@@ -121,8 +122,8 @@ class Solver:
 				if own_reward_flag==True:			
 					r = environment_classes.objective_parameter_list[objective_map[objective_type]][3]
 					t=task_classes.tau(save_state,objective_type)
-				#else:
-				#	print "reward diff:", r, environment_classes.objective_parameter_list[objective_map[objective_type]][3]
+				else:
+					print "reward diff:", r, environment_classes.objective_parameter_list[objective_map[objective_type]][3]
 
 
 
@@ -183,8 +184,8 @@ class Solver:
 				if own_reward_flag==True:			
 					r = environment_classes.objective_parameter_list[objective_map[objective_type]][3]
 					t=task_classes.tau(save_state,objective_type)
-				#else:
-				#	print "reward diff:", r, environment_classes.objective_parameter_list[objective_map[objective_type]][3]
+				else:
+					print "reward diff:", r, environment_classes.objective_parameter_list[objective_map[objective_type]][3]
 
 
 

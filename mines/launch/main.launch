@@ -10,7 +10,7 @@
 <param name="time_increment" type="double" value="0"/>
 <param name="regulation_time" type="double" value=".1"/>
 
-<param name="testing_parameters_file" type="string" value="single_ddr_train_10_"/>
+<param name="testing_parameters_file" type="string" value="multi_ddr_train_10_"/>
 
 <param name="agent_interaction_length" type="double" value="0"/>
 
@@ -32,7 +32,32 @@
 <node pkg="mines" type="agent_standard.py" name="a1" output="screen">
 </node>
 
+<node pkg="mines" type="agent_standard.py" name="a2" output="screen">
+</node>
 
+<node pkg="mines" type="agent_standard.py" name="a3" output="screen">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="a4" output="screen">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="a5" output="screen">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="a6" output="screen">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="a7" output="screen">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="a8" output="screen">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="a9" output="screen">
+</node>
+
+<node pkg="mines" type="agent_standard.py" name="a10" output="screen">
+</node>
 
 
 

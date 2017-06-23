@@ -15,21 +15,21 @@ size=10
 
 objective_parameter_list=[]
 objective_map={}
-objective_parameter_list.append(('random',1,"mine",1))
-objective_parameter_list.append(('random',1,"service",1))
-objective_parameter_list.append(('random',1,"service2",1))
-objective_parameter_list.append(('random',1,"obj3",1))
-objective_parameter_list.append(('random',1,"obj4",1))
-objective_parameter_list.append(('random',1,"obj5",1))
+objective_parameter_list.append(('test1',1,"mine",1))
+objective_parameter_list.append(('test7',1,"service",1))
+objective_parameter_list.append(('test8',1,"service2",1))
+#objective_parameter_list.append(('random',1,"obj3",1))
+#objective_parameter_list.append(('random',1,"obj4",1))
+#objective_parameter_list.append(('random',1,"obj5",1))
 #objective_parameter_list.append(('fourth',1,"service3",1))
 #objective_parameter_list.append(('test5',1,"service4",1))
 #objective_parameter_list.append(('test6',1,"service5",1))
 objective_map["mine"]=0
 objective_map["service"]=1
 objective_map["service2"]=2
-objective_map["obj3"]=3
-objective_map["obj4"]=4
-objective_map["obj5"]=5
+#objective_map["obj3"]=3
+#objective_map["obj4"]=4
+#objective_map["obj5"]=5
 
 
 
@@ -120,13 +120,11 @@ def interact_string_evolve(interact_string_by_agent,objective_type):
 	return reg_state + "@" + task_state + "@" +interact_state+"@"
 
 def get_interact_intersection(interact_string_by_agent,objective_type):
-	
 	interact_list = interact_string_by_agent.split('@')[2].split(',')[:-1]
 	task_list = interact_string_by_agent.split('@')[1].split(',')[:-1]
 
 	complete_list=[]
 
-	#print interact_list
 
 	for i in range(len(interact_list)-1):
 		if interact_list[i]=='-':
@@ -135,14 +133,14 @@ def get_interact_intersection(interact_string_by_agent,objective_type):
 			if task_list[i]==objective_type:
 			#	print task_list[i],objective_type,"added"
 				complete_list.append(i)
-			#else:
-				#print task_list[i],objective_type,"compe"
+			else:
+				print task_list[i],objective_type,"compe"
 
 
 	#print task_list,objective_type
 	#if len(complete_list)>0:
 		
-	#	print complete_list
+#	print complete_list
 	return complete_list
 	
 
@@ -327,7 +325,7 @@ class Objective():
 				for y in range(55,70):
 					self.sub_objectives.append(Sub_Objective(x,y))	
                 elif self.distribution_type=="random":
-                        for i in range(randint(0,15)):
+                        for i in range(randint(0,3)):
                             self.sub_objectives.append(Sub_Objective(randint(0,100),randint(0,100)))
 	
 		elif self.distribution_type=="test1":

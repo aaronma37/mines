@@ -105,10 +105,11 @@ class Simulator:
 		#self.map_for_test=[(1,.1),(1,.3162),(1,1.),(1,3.162),(1,10.),(1,31.62),(1,100.)]
 		t_list=[.0001,.0003162,.001,.003162,.01,.03162,.1,.3162,1.,3.162]#,10.]
 		#t_list=[10.]
+		n_list=[0,3,6,9]
 		self.map_for_test=[]
 		self.think_steps={}
 		self.expected_final_performance={}
-		for n in range(3):
+		for n in n_list:
 
 			self.think_steps[n]={}
 			self.expected_final_performance[n]={}
@@ -118,7 +119,7 @@ class Simulator:
 
 		for k in range(100):
 			for t in t_list:
-				for n in range(1):
+				for n in n_list:
 					self.map_for_test.append((n,t))
 
 		#self.map_for_test=[(0,.001),(0,.003162),(0,.01),(0,.03162),(0,.1),(0,.3162),(0,1.),(0,3.162),(0,10.),(0,31.62),(0,100.)]
@@ -156,6 +157,20 @@ class Simulator:
 			#test_type_flag=True
 		elif agent_data.frame_id=="/a3":
 			self.trigger_agent="/a4"
+		elif agent_data.frame_id=="/a4":
+			self.trigger_agent="/a5"
+		elif agent_data.frame_id=="/a5":
+			self.trigger_agent="/a6"
+		elif agent_data.frame_id=="/a6":
+			self.trigger_agent="/a7"
+		elif agent_data.frame_id=="/a7":
+			self.trigger_agent="/a8"
+		elif agent_data.frame_id=="/a8":
+			self.trigger_agent="/a9"
+		elif agent_data.frame_id=="/a9":
+			self.trigger_agent="/a10"
+		elif agent_data.frame_id=="/a10":
+			self.trigger_agent="/a11"
 
 
 
@@ -190,7 +205,7 @@ class Simulator:
 
 
 
-		if agent_data.frame_id=="/a1":
+		if agent_data.frame_id=="/a10":
 			self.reset_pub(True)
 
 
@@ -260,7 +275,7 @@ class Simulator:
 		self.think_steps[self.num_agent_traj][self.var_step_time].append(0.)
 		for a in self.agent_dict.values():
 			if test_type=="famine":
-				if a.id=="/a1":
+				if a.id=="/a10":
 					self.expected_final_performance[self.num_agent_traj][self.var_step_time][-1]+=a.expected_reward
 					self.think_steps[self.num_agent_traj][self.var_step_time][-1]+=a.think_step
 			else:
@@ -312,7 +327,7 @@ class Simulator:
 			#restart_publisher.publish(performance_msg)
 			self.a_step_time+=time_increment
 			self.total_time=regulation_time*agent_policy_steps
-			self.trigger_agent="/a1"
+			self.trigger_agent="/a10"
 		else:
 			if len(self.map_for_test)+1>=self.test_num is None:
 				rospy.signal_shutdown("Test finished")

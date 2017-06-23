@@ -23,7 +23,7 @@ import environment_classes
 import MCTS
 import Trajectory_Tree_Search
 
-total_agents=16
+total_agents=10
 
 class Claimed_Objective():
 	def __init__(self,state,region,objective_type):
@@ -122,7 +122,7 @@ class Claimed_Objective_Sets():
 
 	def construct_n_list(self,interaction_list):
 		self.n_list=[]		
-		for a in range(5):
+		for a in range(10):
 			
 			self.n_list.append(0)
 			#self.n_list.append(len(interaction_list.others.agent_interaction[a].trajectory_index[interaction_list.interaction_intersection]))
@@ -245,6 +245,7 @@ class Agent:
 			self.mcts.reset()
 			self.mcts_flag=False
 		self.think_step = self.mcts.execute(self,complete_environment,self.tts,time_to_work)
+
                 
 	def test_case_step(self,complete_environment,time_to_work,test_type):
 		self.current_step_time=time_to_work

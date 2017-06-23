@@ -92,18 +92,23 @@ elif rospy.get_name()=="/a5":
 elif rospy.get_name()=="/a6":
 	print  "initializing /a6"
 	sleep_time=5.*sp*event_time_horizon/num_ag
+	agent_index=5
 elif rospy.get_name()=="/a7":
 	print  "initializing /a7"
 	sleep_time=6.*sp*event_time_horizon/num_ag
+	agent_index=6
 elif rospy.get_name()=="/a8":
-	print  "initializing /a6"
+	print  "initializing /a8"
 	sleep_time=7.*sp*event_time_horizon/num_ag
+	agent_index=7
 elif rospy.get_name()=="/a9":
-	print  "initializing /a6"
+	print  "initializing /a9"
 	sleep_time=8.*sp*event_time_horizon/16.
+	agent_index=8
 elif rospy.get_name()=="/a10":
-	print  "initializing /a6"
+	print  "initializing /a10"
 	sleep_time=9.*sp*event_time_horizon/16.
+	agent_index=9
 elif rospy.get_name()=="/a11":
 	print  "initializing /a6"
 	sleep_time=10.*sp*event_time_horizon/16.
@@ -285,9 +290,8 @@ class Simulator:
 
 		a.update_claimed_objectives()
 
-
         def request_pre_train(self,pt_msg):
-	    print "request_pre_"
+
             if pt_msg.data==True:
                 a.step(self.complete_environment,pre_train_time)
 

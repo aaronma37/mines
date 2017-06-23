@@ -7,7 +7,7 @@ import time
 
 data={}
 trials={}
-N_LIST=[0.0,1.0,2.0]
+N_LIST=[0.0,3.0,6.0,9.0]
 
 t_values=[.0001,.0003162,.001,.003162,.01,.03162,.1,.3162,1.,3.162,10.]
 
@@ -18,97 +18,37 @@ pd[2.0]=','
 
 
 
-n=0.0
-data[n]={}
-trials[n]={}
-for t in t_values:
-	try:
-		f = open('/home/aaron/mines_temp/single_mcts_'+ str(0.0) +'_' + str(t) +'.txt','r')
-	except IOError:
-#		print ('results_'+ str(n) +'_' + str(t) +'.txt'), " not found"
-		continue	
-	c=0
-	data[n][t]=[]
-	trials[n][t]=[]
-	for line in f:
-		l = line.split(',')
-#		print "length:", len(l)
-		if c==0:
-			for score in l:
-				try:				
-					data[n][t].append(float(score))
-				except ValueError:
-					''' '''
-		else:
-			for score in l:
-				try:				
-					trials[n][t].append(float(score))
-	#				print score		
-				except ValueError:
-					''' '''
-		c+=1
-
-n=1.0
-data[n]={}
-trials[n]={}
-for t in t_values:
-	try:
-		f = open('/home/aaron/mines_temp/single_ddr_'+ str(0.0) +'_' + str(t) +'.txt','r')
-	except IOError:
-#		print ('results_'+ str(n) +'_' + str(t) +'.txt'), " not found"
-		continue	
-	c=0
-	data[n][t]=[]
-	trials[n][t]=[]
-	for line in f:
-		l = line.split(',')
-#		print "length:", len(l)
-		if c==0:
-			for score in l:
-				try:				
-					data[n][t].append(float(score))
-				except ValueError:
-					''' '''
-		else:
-			for score in l:
-				try:				
-					trials[n][t].append(float(score))
-	#				print score		
-				except ValueError:
-					''' '''
-		c+=1
 
 
-
-n=2.0
-data[n]={}
-trials[n]={}
-for t in t_values:
-	try:
-		f = open('/home/aaron/mines_temp/single_ddr_train_10__'+ str(0.0) +'_' + str(t) +'.txt','r')
-	except IOError:
-#		print ('results_'+ str(n) +'_' + str(t) +'.txt'), " not found"
-		continue	
-	c=0
-	data[n][t]=[]
-	trials[n][t]=[]
-	for line in f:
-		l = line.split(',')
-#		print "length:", len(l)
-		if c==0:
-			for score in l:
-				try:				
-					data[n][t].append(float(score))
-				except ValueError:
-					''' '''
-		else:
-			for score in l:
-				try:				
-					trials[n][t].append(float(score))
-	#				print score		
-				except ValueError:
-					''' '''
-		c+=1
+for n in N_LIST:
+	data[n]={}
+	trials[n]={}
+	for t in t_values:
+		try:
+			f = open('/home/aaron/mines_temp/multi_ddr_train_10__'+ str(n) +'_' + str(t) +'.txt','r')
+		except IOError:
+	#		print ('results_'+ str(n) +'_' + str(t) +'.txt'), " not found"
+			continue	
+		c=0
+		data[n][t]=[]
+		trials[n][t]=[]
+		for line in f:
+			l = line.split(',')
+	#		print "length:", len(l)
+			if c==0:
+				for score in l:
+					try:				
+						data[n][t].append(float(score))
+					except ValueError:
+						''' '''
+			else:
+				for score in l:
+					try:				
+						trials[n][t].append(float(score))
+		#				print score		
+					except ValueError:
+						''' '''
+			c+=1
 
 
 		
@@ -271,7 +211,7 @@ ax.set_xscale('log')
 ax.set_ylabel('Discounted reward')
 ax.set_xlabel('Time per action(s)')
 #ax.set_title('Expected reward vs time')
-#ax.set_ylim(0,1)
+#ax.set_ylim(0,2)
 ax.grid(True)
 
 
@@ -292,17 +232,18 @@ ax.grid(True)
 line_colors=['r','c','b']
 plotter_symbols=['o','s','p']
 label1={}
-label1[N_LIST[0]]='MCTS'
-label1[N_LIST[1]]='DDRP offline'
-label1[N_LIST[2]]='DDRP'
-
+label1[N_LIST[0]]='0'
+#,color=line_colors[ccc] , marker=plotter_symbols[ccc]
+label1[N_LIST[1]]='1'
+label1[N_LIST[2]]='2'
+label1[N_LIST[3]]='3'
 ccc=0
 for n,q in data.items():
 
 	#plt.plot(x[n], trial_mean[n])
 	#ax.errorbar(x[n], mean_list[n], yerr=error_list[n], fmt='o')
-	ax.errorbar(x[n], mean_list[n], yerr=ucb_list[n], fmt='o')
-	ax.plot(x[n],  mean_list[n],label=label1[n],linewidth=2.0, marker=plotter_symbols[ccc],markersize=7,color=line_colors[ccc])
+	ax.errorbar(x[n], mean_list[n],linewidth=2.0, yerr=ucb_list[n], fmt='o')
+	ax.plot(x[n],mean_list[n],label=label1[n],linewidth=2.0,markersize=10,)
 #	ax2.plot(trial_mean[n],  mean_list[n],label=label1[n],linewidth=2.0, marker=plotter_symbols[ccc],markersize=8,color=line_colors[ccc])
 	#ax3.plot(x[n],  mean_q_error[n],label=label1[n],linewidth=2.0, marker=plotter_symbols[ccc],markersize=8,color=line_colors[ccc])
         ccc+=1
